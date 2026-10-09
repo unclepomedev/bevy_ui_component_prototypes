@@ -1,16 +1,16 @@
 use super::{ButtonSize, IconButton, icon_button_node};
 use crate::{
+    Theme,
     behavior::{ButtonColors, pass_through},
-    style::color::{BORDER, TEXT_MAIN},
 };
 use bevy::prelude::*;
 
 pub trait IconButtonExt {
     fn spawn_icon_button(
         &mut self,
+        theme: &Theme,
         label: impl Into<String>,
         icon: Option<Handle<Image>>,
-        font: FontSource,
         size: ButtonSize,
         colors: ButtonColors,
         marker: impl Bundle,
@@ -20,9 +20,9 @@ pub trait IconButtonExt {
 impl IconButtonExt for ChildSpawnerCommands<'_> {
     fn spawn_icon_button(
         &mut self,
+        theme: &Theme,
         label: impl Into<String>,
         icon: Option<Handle<Image>>,
-        font: FontSource,
         size: ButtonSize,
         colors: ButtonColors,
         marker: impl Bundle,
@@ -33,7 +33,7 @@ impl IconButtonExt for ChildSpawnerCommands<'_> {
             icon_button_node(&size),
             colors,
             BackgroundColor(colors.normal),
-            BorderColor::all(BORDER),
+            BorderColor::all(theme.border),
             marker,
         ));
         ec.with_children(|p| {
@@ -51,11 +51,11 @@ impl IconButtonExt for ChildSpawnerCommands<'_> {
             p.spawn((
                 Text::new(label),
                 TextFont {
-                    font,
+                    font: theme.font.clone(),
                     font_size: size.font_size,
                     ..default()
                 },
-                TextColor(TEXT_MAIN),
+                TextColor(theme.text_main),
                 pass_through(),
             ));
         });

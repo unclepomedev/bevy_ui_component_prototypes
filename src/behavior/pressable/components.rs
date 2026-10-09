@@ -1,6 +1,6 @@
+use crate::ColorSet;
 use crate::style::color::*;
 use bevy::{picking::hover::PickingInteraction, prelude::*};
-
 // TODO: replace button-related components
 
 /// Presentation-agnostic interaction surface. Any pressable thing
@@ -59,6 +59,16 @@ impl ButtonColors {
             normal: DANGER_NORMAL,
             hovered: DANGER_HOVERED,
             pressed: DANGER_PRESSED,
+        }
+    }
+}
+
+impl From<ColorSet> for ButtonColors {
+    fn from(c: ColorSet) -> Self {
+        Self {
+            normal: c.normal,
+            hovered: c.hovered,
+            pressed: c.pressed,
         }
     }
 }

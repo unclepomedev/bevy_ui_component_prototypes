@@ -2,12 +2,12 @@ use super::{
     components::{ButtonColors, ButtonDisabled, Pressable, SelfStyled},
     events::Pressed,
 };
-use crate::style::color::{DISABLED, TEXT_MAIN, TEXT_MUTED};
+use crate::Theme;
 use bevy::{picking::hover::PickingInteraction, prelude::*};
-
 // TODO remove button-related components
 
 pub fn sync_pressable_visuals(
+    theme: Res<Theme>,
     mut removed_disabled: RemovedComponents<ButtonDisabled>,
     changed: ChangedPressables,
     mut pressables: PressableVisuals,
@@ -21,14 +21,14 @@ pub fn sync_pressable_visuals(
         };
 
         let (bg_color, content_color) = if disabled {
-            (DISABLED, TEXT_MUTED)
+            (theme.disabled_bg, theme.text_muted)
         } else {
             let bg = match interaction {
                 PickingInteraction::Pressed => colors.pressed,
                 PickingInteraction::Hovered => colors.hovered,
                 PickingInteraction::None => colors.normal,
             };
-            (bg, TEXT_MAIN)
+            (bg, theme.text_main)
         };
 
         *bg = BackgroundColor(bg_color);
@@ -37,7 +37,7 @@ pub fn sync_pressable_visuals(
                 tc.0 = content_color;
             }
             if let Ok(mut icon) = icons.get_mut(child) {
-                icon.color = if disabled { TEXT_MUTED } else { Color::WHITE };
+                icon.color = content_color;
             }
         }
     }
