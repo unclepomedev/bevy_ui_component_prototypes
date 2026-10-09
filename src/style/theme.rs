@@ -8,6 +8,7 @@ pub struct ColorSet {
     pub pressed: Color,
 }
 
+// TODO to Component
 #[derive(Resource, Clone)]
 pub struct Theme {
     pub neutral: ColorSet,
