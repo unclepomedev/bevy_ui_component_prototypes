@@ -47,7 +47,7 @@ pub struct ButtonStyles {
     pub danger: ButtonStyle,
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug)]
 pub struct Theme {
     pub buttons: ButtonStyles,
     pub font: FontSource,

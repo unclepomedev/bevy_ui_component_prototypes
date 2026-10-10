@@ -12,16 +12,17 @@ pub(crate) struct ThemeLookup<'w, 's> {
 }
 
 impl ThemeLookup<'_, '_> {
-    /// Starting from the current entity, trace back through the ancestors and return the first Theme found; if none is found, return Global.
+    /// Returns the theme applying to `entity`: the closest `Theme`
+    /// on the entity or one of its ancestors, falling back to the global theme.
     pub(crate) fn for_entity(&self, entity: Entity) -> &Theme {
         std::iter::once(entity)
             .chain(self.parents.iter_ancestors(entity))
             .find_map(|e| self.themes.get(e).ok())
-            .unwrap_or(self.global.as_ref())
+            .unwrap_or(&self.global)
     }
 
-    /// Determines whether all widgets need to be resynchronized.
-    /// This is called when, for example, the theme is changed.
+    /// Whether the resolved theme of any widget may have changed (the global theme
+    /// or a `Theme` component changed, or the hierarchy was modified).
     pub(crate) fn needs_resync(&self) -> bool {
         self.global.is_changed() || !self.changed_themes.is_empty() || !self.reparented.is_empty()
     }

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
+/// Fired when the entity is activated (pressed).
 #[derive(EntityEvent)]
-/// Fired when the entity is activated/pressed.
 pub struct Activated {
     pub entity: Entity,
 }

@@ -1,7 +1,7 @@
 use super::{components::Pressable, events::Activated};
 use bevy::{prelude::*, ui::InteractionDisabled};
 
-pub fn on_pressable_click(
+pub(super) fn on_pressable_click(
     trigger: On<PointerClick>,
     pressables: Query<(), (With<Pressable>, Without<InteractionDisabled>)>,
     mut commands: Commands,

@@ -17,7 +17,9 @@ use bevy_ui_component_prototypes::{
 
 /// Marker that identifies which button emitted an `Activated` event.
 #[derive(Component)]
-struct Tag(&'static str);
+struct Tag {
+    name: &'static str,
+}
 
 /// Target whose disabled state is toggled with [D].
 #[derive(Component)]
@@ -32,7 +34,9 @@ struct ScopedPanel;
 struct StatusText;
 
 #[derive(Resource, Default)]
-struct ActivationCount(u32);
+struct ActivationCount {
+    total: u32,
+}
 
 fn main() {
     App::new()
@@ -109,7 +113,7 @@ fn spawn_variant_row(root: &mut ChildSpawnerCommands, custom: ButtonVariant) {
                     .size(ButtonSize::medium())
                     .variant(variant)
                     .build(),
-                Tag(label),
+                Tag { name: label },
             ));
         }
     });
@@ -122,7 +126,7 @@ fn spawn_disable_target(root: &mut ChildSpawnerCommands) {
             .size(ButtonSize::small())
             .variant(ButtonVariant::Primary)
             .build(),
-        Tag("target"),
+        Tag { name: "target" },
         DisableTarget,
     ));
 }
@@ -150,7 +154,7 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
                     .size(ButtonSize::medium())
                     .variant(variant)
                     .build(),
-                Tag(label),
+                Tag { name: label },
             ));
         }
     });
@@ -177,10 +181,10 @@ fn on_activated(
     mut count: ResMut<ActivationCount>,
     mut status: Query<&mut Text, With<StatusText>>,
 ) {
-    count.0 += 1;
-    let name = tags.get(trigger.entity).map(|t| t.0).unwrap_or("?");
+    count.total += 1;
+    let name = tags.get(trigger.entity).map(|t| t.name).unwrap_or("?");
     for mut text in &mut status {
-        text.0 = format!("Activated: {name} (total {})", count.0);
+        text.0 = format!("Activated: {name} (total {})", count.total);
     }
 }
 
@@ -216,7 +220,7 @@ fn spawn_panel_button(mut commands: Commands, panels: Query<Entity, With<ScopedP
                 .size(ButtonSize::medium())
                 .variant(ButtonVariant::Danger)
                 .build(),
-            Tag("New"),
+            Tag { name: "New" },
             ChildOf(panel),
         ));
     }

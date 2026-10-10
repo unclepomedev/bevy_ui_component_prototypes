@@ -1,3 +1,4 @@
+#![warn(unreachable_pub)]
 mod behavior;
 mod style;
 mod view;
