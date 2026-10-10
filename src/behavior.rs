@@ -1,3 +1,4 @@
 mod pressable;
 
-pub(crate) use pressable::{ButtonColors, Pressable, PressablePlugin, pass_through};
+pub use pressable::{Pressable, Pressed};
+pub(crate) use pressable::{PressablePlugin, pass_through};

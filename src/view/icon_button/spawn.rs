@@ -1,8 +1,6 @@
 use super::{ButtonSize, IconButton, icon_button_node};
-use crate::{
-    Theme,
-    behavior::{ButtonColors, pass_through},
-};
+use crate::view::button_style::{ButtonIcon, ButtonLabel, ButtonVariant};
+use crate::{Theme, behavior::pass_through};
 use bevy::prelude::*;
 
 pub trait IconButtonExt {
@@ -12,7 +10,7 @@ pub trait IconButtonExt {
         label: impl Into<String>,
         icon: Option<Handle<Image>>,
         size: ButtonSize,
-        colors: ButtonColors,
+        variant: ButtonVariant,
         marker: impl Bundle,
     ) -> EntityCommands<'_>;
 }
@@ -24,22 +22,24 @@ impl IconButtonExt for ChildSpawnerCommands<'_> {
         label: impl Into<String>,
         icon: Option<Handle<Image>>,
         size: ButtonSize,
-        colors: ButtonColors,
+        variant: ButtonVariant,
         marker: impl Bundle,
     ) -> EntityCommands<'_> {
         let label = label.into();
+        let style = *theme.resolve_button(&variant);
         let mut ec = self.spawn((
             IconButton,
             icon_button_node(&size),
-            colors,
-            BackgroundColor(colors.normal),
-            BorderColor::all(theme.border),
+            variant,
+            BackgroundColor(style.bg.normal),
+            BorderColor::all(style.border.normal),
             marker,
         ));
         ec.with_children(|p| {
             if let Some(icon) = icon {
                 p.spawn((
-                    ImageNode::new(icon),
+                    ButtonIcon,
+                    ImageNode::new(icon).with_color(style.fg.normal),
                     Node {
                         width: Val::Px(size.icon_size),
                         height: Val::Px(size.icon_size),
@@ -49,13 +49,14 @@ impl IconButtonExt for ChildSpawnerCommands<'_> {
                 ));
             }
             p.spawn((
+                ButtonLabel,
                 Text::new(label),
                 TextFont {
                     font: theme.font.clone(),
                     font_size: size.font_size,
                     ..default()
                 },
-                TextColor(theme.text_main),
+                TextColor(style.fg.normal),
                 pass_through(),
             ));
         });

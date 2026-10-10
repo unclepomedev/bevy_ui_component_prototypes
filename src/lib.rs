@@ -1,15 +1,19 @@
-pub mod behavior;
+mod behavior;
 mod style;
-pub mod view;
+mod view;
 
-pub use style::theme::{ColorSet, Theme};
+pub use behavior::{Pressable, Pressed};
+pub use style::theme::{ButtonStyle, ButtonStyles, StateColors, Theme};
+pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonExt};
 
-use self::behavior::PressablePlugin;
+use behavior::PressablePlugin;
 use bevy::prelude::*;
+use view::ButtonStylePlugin;
 
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Theme>().add_plugins(PressablePlugin);
+        app.init_resource::<Theme>()
+            .add_plugins((PressablePlugin, ButtonStylePlugin));
     }
 }

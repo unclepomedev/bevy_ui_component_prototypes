@@ -4,10 +4,11 @@ use crate::style::{
     layout,
     spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
 };
+use crate::view::button_style::ButtonVariant;
 use bevy::prelude::*;
 
 #[derive(Component)]
-#[require(Pressable, Node = default_icon_button_node())]
+#[require(Pressable, ButtonVariant, Node = default_icon_button_node())]
 pub struct IconButton;
 
 /// Coherent footprint of an icon button: outer height, inner padding/gap,

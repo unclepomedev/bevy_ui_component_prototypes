@@ -1,0 +1,105 @@
+use crate::{
+    behavior::Pressable,
+    style::theme::{ButtonStyle, Theme},
+};
+use bevy::{
+    ecs::system::SystemParam, picking::hover::PickingInteraction, prelude::*,
+    ui::InteractionDisabled,
+};
+
+#[derive(Component, Clone, Debug, Default)]
+pub enum ButtonVariant {
+    #[default]
+    Neutral,
+    Primary,
+    Affirmative,
+    Danger,
+    Custom(Box<ButtonStyle>),
+}
+
+#[derive(Component)]
+pub(crate) struct ButtonLabel;
+#[derive(Component)]
+pub(crate) struct ButtonIcon;
+
+pub(crate) struct ButtonStylePlugin;
+impl Plugin for ButtonStylePlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, sync_button_style);
+    }
+}
+
+type ChangedButtons<'w, 's> = Query<
+    'w,
+    's,
+    Entity,
+    (
+        With<Pressable>,
+        Or<(
+            Changed<PickingInteraction>,
+            Changed<ButtonVariant>,
+            Added<InteractionDisabled>,
+        )>,
+    ),
+>;
+
+fn sync_button_style(
+    theme: Res<Theme>,
+    mut removed_disabled: RemovedComponents<InteractionDisabled>,
+    changed: ChangedButtons,
+    all: Query<Entity, (With<Pressable>, With<ButtonVariant>)>,
+    mut buttons: ButtonQuery,
+    mut content: ButtonContent,
+) {
+    let removed: Vec<Entity> = removed_disabled.read().collect();
+    let targets: Vec<Entity> = if theme.is_changed() {
+        all.iter().collect()
+    } else {
+        changed.iter().chain(removed).collect()
+    };
+
+    for entity in targets {
+        let Ok((interaction, variant, disabled, mut bg, mut border)) = buttons.get_mut(entity)
+        else {
+            continue;
+        };
+
+        let style = theme.resolve_button(variant);
+        *bg = BackgroundColor(style.bg.pick(interaction, disabled));
+        *border = BorderColor::all(style.border.pick(interaction, disabled));
+        content.apply_fg(entity, style.fg.pick(interaction, disabled));
+    }
+}
+
+#[derive(SystemParam)]
+struct ButtonContent<'w, 's> {
+    children: Query<'w, 's, &'static Children>,
+    labels: Query<'w, 's, &'static mut TextColor, With<ButtonLabel>>,
+    icons: Query<'w, 's, &'static mut ImageNode, With<ButtonIcon>>,
+}
+
+impl ButtonContent<'_, '_> {
+    fn apply_fg(&mut self, root: Entity, fg: Color) {
+        for descendant in self.children.iter_descendants(root) {
+            if let Ok(mut tc) = self.labels.get_mut(descendant) {
+                tc.0 = fg;
+            }
+            if let Ok(mut icon) = self.icons.get_mut(descendant) {
+                icon.color = fg;
+            }
+        }
+    }
+}
+
+type ButtonQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static PickingInteraction,
+        &'static ButtonVariant,
+        Has<InteractionDisabled>,
+        &'static mut BackgroundColor,
+        &'static mut BorderColor,
+    ),
+    With<Pressable>,
+>;
