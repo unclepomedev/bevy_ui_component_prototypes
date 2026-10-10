@@ -14,12 +14,14 @@ use bevy::{
 /// Behavior comes from [`Button`]: it emits [`bevy::ui_widgets::Activate`] on click and on Enter/Space while focused,
 /// uses [`bevy::ui::InteractionDisabled`], and exposes a button role to accessibility tools.
 /// `TabIndex(0)` makes it reachable with the Tab key when it is inside a `TabGroup`.
+/// A focus ring is drawn through `Outline` while the focus indicator is visible.
 #[derive(Component)]
 #[require(
     Button,
     PickingInteraction,
     TabIndex(0),
     ButtonVariant,
+    Outline = hidden_outline(),
     Node = default_icon_button_node()
 )]
 pub struct IconButton;
@@ -85,6 +87,12 @@ pub(crate) fn icon_button_node(size: &ButtonSize) -> Node {
         justify_content: JustifyContent::Center,
         ..layout::row_center()
     }
+}
+
+/// `Outline::default()` is a visible white line, so the ring starts hidden.
+/// It is toggled through its color, which avoids table moves.
+fn hidden_outline() -> Outline {
+    Outline::new(Val::Px(0.0), Val::Px(0.0), Color::NONE)
 }
 
 fn default_icon_button_node() -> Node {

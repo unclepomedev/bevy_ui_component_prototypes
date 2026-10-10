@@ -3,8 +3,12 @@
 //! Real pointer picking, layout, and text shaping are not covered by `examples/button_check.rs`.
 
 use bevy::{
-    a11y::AccessibilityNode, input_focus::tab_navigation::TabIndex,
-    picking::hover::PickingInteraction, prelude::*, ui::InteractionDisabled, ui_widgets::Button,
+    a11y::AccessibilityNode,
+    input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex},
+    picking::hover::PickingInteraction,
+    prelude::*,
+    ui::InteractionDisabled,
+    ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
     ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, Theme, UiComponentPrototypesPlugin,
@@ -15,6 +19,8 @@ use bevy_ui_component_prototypes::{
 // Behavior wiring
 // ---------------------------------------------------------------------------
 
+// Activation, keyboard handling and the disabled check live in `bevy::ui_widgets::Button`.
+// This only guards that our button actually carries what that behavior needs.
 #[test]
 fn icon_button_carries_the_bevy_button_behavior_components() {
     let mut app = test_app();
@@ -25,6 +31,8 @@ fn icon_button_carries_the_bevy_button_behavior_components() {
     assert!(world.get::<AccessibilityNode>(button).is_some());
     assert!(world.get::<PickingInteraction>(button).is_some());
     assert_eq!(world.get::<TabIndex>(button).map(|t| t.0), Some(0));
+    // `Outline::default()` would be a visible white line; the ring must start hidden.
+    assert_eq!(outline(&app, button).color, Color::NONE);
 }
 
 // ---------------------------------------------------------------------------
@@ -175,6 +183,107 @@ fn detaching_a_button_from_a_scope_makes_it_follow_the_global_theme() {
 }
 
 // ---------------------------------------------------------------------------
+// Focus
+// ---------------------------------------------------------------------------
+
+#[test]
+fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {
+    let mut app = test_app_with_focus_theme();
+    let button = spawn_primary(&mut app);
+    app.update();
+
+    focus(&mut app, button, true);
+    app.update();
+
+    let style = focus_theme().buttons.primary;
+    assert_eq!(bg(&app, button), style.bg.focused);
+    assert_eq!(label_color(&app, button), style.fg.focused);
+    let ring = outline(&app, button);
+    assert_eq!(ring.color, style.focus_ring.color);
+    assert_eq!(ring.width, style.focus_ring.width);
+}
+
+// Pointer clicks hide the indicator while the entity keeps focus.
+#[test]
+fn focus_is_not_shown_while_the_indicator_is_hidden() {
+    let mut app = test_app_with_focus_theme();
+    let button = spawn_primary(&mut app);
+    app.update();
+
+    focus(&mut app, button, false);
+    app.update();
+
+    assert_eq!(bg(&app, button), focus_theme().buttons.primary.bg.normal);
+    assert_eq!(outline(&app, button).color, Color::NONE);
+}
+
+#[test]
+fn hiding_the_indicator_removes_the_ring_and_focused_colors() {
+    let mut app = test_app_with_focus_theme();
+    let button = spawn_primary(&mut app);
+    app.update();
+    focus(&mut app, button, true);
+    app.update();
+
+    app.world_mut().resource_mut::<InputFocusVisible>().0 = false;
+    app.update();
+
+    assert_eq!(bg(&app, button), focus_theme().buttons.primary.bg.normal);
+    assert_eq!(outline(&app, button).color, Color::NONE);
+}
+
+#[test]
+fn moving_focus_moves_the_ring() {
+    let mut app = test_app_with_focus_theme();
+    let first = spawn_primary(&mut app);
+    let second = spawn_primary(&mut app);
+    app.update();
+    focus(&mut app, first, true);
+    app.update();
+
+    focus(&mut app, second, true);
+    app.update();
+
+    let style = focus_theme().buttons.primary;
+    assert_eq!(outline(&app, first).color, Color::NONE);
+    assert_eq!(bg(&app, first), style.bg.normal);
+    assert_eq!(outline(&app, second).color, style.focus_ring.color);
+    assert_eq!(bg(&app, second), style.bg.focused);
+}
+
+// Hover and press take the colors; the ring keeps marking keyboard focus.
+#[test]
+fn hover_wins_over_focus_for_colors_but_the_ring_stays() {
+    let mut app = test_app_with_focus_theme();
+    let button = spawn_primary(&mut app);
+    app.update();
+    focus(&mut app, button, true);
+    app.world_mut()
+        .entity_mut(button)
+        .insert(PickingInteraction::Hovered);
+    app.update();
+
+    let style = focus_theme().buttons.primary;
+    assert_eq!(bg(&app, button), style.bg.hovered);
+    assert_eq!(outline(&app, button).color, style.focus_ring.color);
+}
+
+#[test]
+fn disabled_button_shows_neither_ring_nor_focused_colors() {
+    let mut app = test_app_with_focus_theme();
+    let button = spawn_primary(&mut app);
+    app.update();
+    focus(&mut app, button, true);
+    app.world_mut()
+        .entity_mut(button)
+        .insert(InteractionDisabled);
+    app.update();
+
+    assert_eq!(bg(&app, button), focus_theme().buttons.primary.bg.disabled);
+    assert_eq!(outline(&app, button).color, Color::NONE);
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -219,6 +328,29 @@ fn spawn_primary_under(app: &mut App, parent: Entity) -> Entity {
             ChildOf(parent),
         ))
         .id()
+}
+
+/// Default theme whose `focused` colors differ from every other state, so a test can tell them apart.
+fn focus_theme() -> Theme {
+    let mut theme = Theme::default();
+    theme.buttons.primary.bg.focused = Color::srgb(0.1, 0.2, 0.3);
+    theme.buttons.primary.fg.focused = Color::srgb(0.9, 0.8, 0.7);
+    theme
+}
+
+fn test_app_with_focus_theme() -> App {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(focus_theme()));
+    app
+}
+
+fn focus(app: &mut App, button: Entity, visible: bool) {
+    app.insert_resource(InputFocus::from_entity(button));
+    app.insert_resource(InputFocusVisible(visible));
+}
+
+fn outline(app: &App, button: Entity) -> Outline {
+    *app.world().get::<Outline>(button).unwrap()
 }
 
 fn bg(app: &App, button: Entity) -> Color {
