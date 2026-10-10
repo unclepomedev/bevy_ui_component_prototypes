@@ -214,6 +214,5 @@ fn theme_for(swapped: bool) -> Theme {
             ..base.buttons.clone()
         },
         font: FontSource::sans_serif(),
-        ..base
     }
 }

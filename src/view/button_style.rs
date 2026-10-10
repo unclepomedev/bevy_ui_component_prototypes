@@ -92,10 +92,10 @@ impl ButtonContent<'_, '_> {
                     text_font.font = font.clone();
                 }
             }
-            if let Ok(mut icon) = self.icons.get_mut(descendant) {
-                if icon.color != fg {
-                    icon.color = fg;
-                }
+            if let Ok(mut icon) = self.icons.get_mut(descendant)
+                && icon.color != fg
+            {
+                icon.color = fg;
             }
         }
     }
