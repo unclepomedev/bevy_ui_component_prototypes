@@ -61,7 +61,7 @@ impl Theme {
             ButtonVariant::Primary => &self.buttons.primary,
             ButtonVariant::Affirmative => &self.buttons.affirmative,
             ButtonVariant::Danger => &self.buttons.danger,
-            ButtonVariant::Custom(style) => style,
+            ButtonVariant::Custom(style) => style.as_ref(),
         }
     }
 }
