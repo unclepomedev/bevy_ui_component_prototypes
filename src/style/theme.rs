@@ -51,9 +51,6 @@ pub struct ButtonStyles {
 #[derive(Resource, Clone)]
 pub struct Theme {
     pub buttons: ButtonStyles,
-    pub text_main: Color,
-    pub text_muted: Color,
-    pub border: Color,
     pub font: FontSource,
 }
 
@@ -93,9 +90,6 @@ impl Default for Theme {
                 affirmative: solid(AFFIRM_NORMAL, AFFIRM_HOVERED, AFFIRM_PRESSED),
                 danger: solid(DANGER_NORMAL, DANGER_HOVERED, DANGER_PRESSED),
             },
-            text_main: TEXT_MAIN,
-            text_muted: TEXT_MUTED,
-            border: BORDER,
             font: FontSource::default(),
         }
     }
