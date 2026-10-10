@@ -1,10 +1,13 @@
 use crate::{
+    Theme,
     behavior::Pressable,
-    style::theme::{ButtonStyle, Theme},
+    style::{theme::ButtonStyle, theme_lookup::ThemeLookup},
 };
 use bevy::{
-    ecs::system::SystemParam, picking::hover::PickingInteraction, prelude::*,
-    ui::InteractionDisabled,
+    ecs::system::SystemParam,
+    picking::hover::PickingInteraction,
+    prelude::*,
+    ui::{InteractionDisabled, UiSystems},
 };
 
 #[derive(Component, Clone, Debug, Default)]
@@ -17,6 +20,19 @@ pub enum ButtonVariant {
     Custom(Box<ButtonStyle>),
 }
 
+impl ButtonVariant {
+    /// Returns the style this variant selects from `theme`.
+    pub(crate) fn resolve<'a>(&'a self, theme: &'a Theme) -> &'a ButtonStyle {
+        match self {
+            Self::Neutral => &theme.buttons.neutral,
+            Self::Primary => &theme.buttons.primary,
+            Self::Affirmative => &theme.buttons.affirmative,
+            Self::Danger => &theme.buttons.danger,
+            Self::Custom(style) => style,
+        }
+    }
+}
+
 #[derive(Component)]
 pub(crate) struct ButtonLabel;
 #[derive(Component)]
@@ -25,7 +41,7 @@ pub(crate) struct ButtonIcon;
 pub(crate) struct ButtonStylePlugin;
 impl Plugin for ButtonStylePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, sync_button_style);
+        app.add_systems(PostUpdate, sync_button_style.before(UiSystems::Prepare));
     }
 }
 
@@ -44,7 +60,7 @@ type ChangedButtons<'w, 's> = Query<
 >;
 
 fn sync_button_style(
-    theme: Res<Theme>,
+    mut lookup: ThemeLookup,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     changed: ChangedButtons,
     all: Query<Entity, (With<Pressable>, With<ButtonVariant>)>,
@@ -52,7 +68,7 @@ fn sync_button_style(
     mut content: ButtonContent,
 ) {
     let removed: Vec<Entity> = removed_disabled.read().collect();
-    let targets: Vec<Entity> = if theme.is_changed() {
+    let targets: Vec<Entity> = if lookup.needs_resync() {
         all.iter().collect()
     } else {
         changed.iter().chain(removed).collect()
@@ -64,27 +80,35 @@ fn sync_button_style(
             continue;
         };
 
-        let style = theme.resolve_button(variant);
-        *bg = BackgroundColor(style.bg.pick(interaction, disabled));
-        *border = BorderColor::all(style.border.pick(interaction, disabled));
-        content.apply_fg(entity, style.fg.pick(interaction, disabled));
+        let theme = lookup.for_entity(entity);
+        let style = variant.resolve(theme);
+
+        bg.set_if_neq(BackgroundColor(style.bg.pick(interaction, disabled)));
+        border.set_if_neq(BorderColor::all(style.border.pick(interaction, disabled)));
+        content.apply(entity, style.fg.pick(interaction, disabled), &theme.font);
     }
 }
 
 #[derive(SystemParam)]
 struct ButtonContent<'w, 's> {
     children: Query<'w, 's, &'static Children>,
-    labels: Query<'w, 's, &'static mut TextColor, With<ButtonLabel>>,
+    labels: Query<'w, 's, (&'static mut TextColor, &'static mut TextFont), With<ButtonLabel>>,
     icons: Query<'w, 's, &'static mut ImageNode, With<ButtonIcon>>,
 }
 
 impl ButtonContent<'_, '_> {
-    fn apply_fg(&mut self, root: Entity, fg: Color) {
+    /// Applies the foreground color and the theme font to the button's descendants.
+    fn apply(&mut self, root: Entity, fg: Color, font: &FontSource) {
         for descendant in self.children.iter_descendants(root) {
-            if let Ok(mut tc) = self.labels.get_mut(descendant) {
-                tc.0 = fg;
+            if let Ok((mut color, mut text_font)) = self.labels.get_mut(descendant) {
+                color.set_if_neq(TextColor(fg));
+                if text_font.font != *font {
+                    text_font.font = font.clone();
+                }
             }
-            if let Ok(mut icon) = self.icons.get_mut(descendant) {
+            if let Ok(mut icon) = self.icons.get_mut(descendant)
+                && icon.color != fg
+            {
                 icon.color = fg;
             }
         }

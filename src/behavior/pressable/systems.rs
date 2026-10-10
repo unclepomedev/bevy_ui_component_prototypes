@@ -1,7 +1,7 @@
-use super::{components::Pressable, events::Pressed};
+use super::{components::Pressable, events::Activated};
 use bevy::{prelude::*, ui::InteractionDisabled};
 
-pub fn on_pressable_click(
+pub(super) fn on_pressable_click(
     trigger: On<PointerClick>,
     pressables: Query<(), (With<Pressable>, Without<InteractionDisabled>)>,
     mut commands: Commands,
@@ -10,7 +10,7 @@ pub fn on_pressable_click(
         return;
     }
     if pressables.get(trigger.entity).is_ok() {
-        commands.trigger(Pressed {
+        commands.trigger(Activated {
             entity: trigger.entity,
         });
     }

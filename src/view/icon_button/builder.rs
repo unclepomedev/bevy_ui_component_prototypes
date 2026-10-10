@@ -1,6 +1,5 @@
 use super::{ButtonSize, IconButton, icon_button_node};
 use crate::{
-    Theme,
     behavior::pass_through,
     view::button_style::{ButtonIcon, ButtonLabel, ButtonVariant},
 };
@@ -41,27 +40,23 @@ impl IconButtonBuilder {
         self
     }
 
-    pub fn build(self, theme: &Theme) -> impl Bundle + use<> {
+    pub fn build(self) -> impl Bundle {
         let Self {
             label,
             icon,
             size,
             variant,
         } = self;
-        let style = *theme.resolve_button(&variant);
-        let font = theme.font.clone();
 
         (
             IconButton,
             icon_button_node(&size),
             variant,
-            BackgroundColor(style.bg.normal),
-            BorderColor::all(style.border.normal),
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 if let Some(icon) = icon {
                     parent.spawn((
                         ButtonIcon,
-                        ImageNode::new(icon).with_color(style.fg.normal),
+                        ImageNode::new(icon),
                         Node {
                             width: Val::Px(size.icon_size),
                             height: Val::Px(size.icon_size),
@@ -74,11 +69,9 @@ impl IconButtonBuilder {
                     ButtonLabel,
                     Text::new(label),
                     TextFont {
-                        font,
                         font_size: size.font_size,
                         ..default()
                     },
-                    TextColor(style.fg.normal),
                     pass_through(),
                 ));
             })),

@@ -2,58 +2,68 @@
 //!
 //! Execution: cargo run --example button_check
 //!
-//! Things to verify:
-//!   1. The five buttons in the top row change color on hover/press/release and revert to their original state.
-//!   2. Press the [D] key to toggle `InteractionDisabled` for the "target" button in the bottom row
-//!      (turns gray / clicking does not trigger the `Pressed` state / reverts when disabled).
-//!   3. Press the [T] key to swap the theme (swaps the color schemes of Primary and Affirmative).
+//! What to verify:
+//!   1. The five buttons in the top row change color on hover / press / release and return to normal afterward.
+//!   2. [D] toggles InteractionDisabled on "target": it turns gray, clicking it emits no `Activated`, and removing the component restores it.
+//!   3. [T] swaps the global theme (colors and font). The top row and "target" change; the framed panel, which has its own `Theme`, does not.
+//!   4. [S] swaps the framed panel's own `Theme`. Only the panel changes.
+//!   5. [N] spawns a new button inside the panel at runtime. It must appear already styled with the panel's theme (no unstyled flash).
 
-use bevy::{prelude::*, ui::InteractionDisabled};
+use bevy::{input::common_conditions::input_just_pressed, prelude::*, ui::InteractionDisabled};
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyles, ButtonVariant, Pressed, Theme, UiComponentPrototypesPlugin,
-    icon_button,
+    Activated, ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, Theme,
+    UiComponentPrototypesPlugin, icon_button,
 };
 
-/// A visual indicator that shows which button was pressed when an event occurs.
+/// Marker that identifies which button emitted an `Activated` event.
 #[derive(Component)]
-struct Tag(&'static str);
+struct Tag {
+    name: &'static str,
+}
 
-/// The target for toggling "disabled" using [D].
+/// Target whose disabled state is toggled with [D].
 #[derive(Component)]
 struct DisableTarget;
 
-/// Text displaying the last button pressed.
+/// Panel that carries its own `Theme` component.
+#[derive(Component)]
+struct ScopedPanel;
+
+/// Text showing the most recently activated button.
 #[derive(Component)]
 struct StatusText;
 
 #[derive(Resource, Default)]
-struct PressCount(u32);
+struct ActivationCount {
+    total: u32,
+}
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, UiComponentPrototypesPlugin))
-        .init_resource::<PressCount>()
+        .init_resource::<ActivationCount>()
         .add_systems(Startup, setup)
-        .add_systems(Update, hotkeys)
-        .add_observer(on_pressed)
+        .add_systems(
+            Update,
+            (
+                toggle_disabled.run_if(input_just_pressed(KeyCode::KeyD)),
+                swap_global_theme.run_if(input_just_pressed(KeyCode::KeyT)),
+                swap_panel_theme.run_if(input_just_pressed(KeyCode::KeyS)),
+                spawn_panel_button.run_if(input_just_pressed(KeyCode::KeyN)),
+            ),
+        )
+        .add_observer(on_activated)
         .run();
 }
 
-fn setup(mut commands: Commands, theme: Res<Theme>) {
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+
+fn setup(mut commands: Commands, global: Res<GlobalTheme>) {
     commands.spawn(Camera2d);
 
-    let mut custom = theme.buttons.neutral;
-    custom.fg.normal = Color::srgb(1.0, 0.85, 0.3);
-    custom.fg.hovered = Color::srgb(1.0, 0.95, 0.6);
-    custom.fg.pressed = Color::srgb(0.8, 0.65, 0.2);
-
-    let variants: [(&'static str, ButtonVariant); 5] = [
-        ("Neutral", ButtonVariant::Neutral),
-        ("Primary", ButtonVariant::Primary),
-        ("Affirmative", ButtonVariant::Affirmative),
-        ("Danger", ButtonVariant::Danger),
-        ("Custom", ButtonVariant::Custom(Box::new(custom))),
-    ];
+    let custom = custom_variant(&global);
 
     commands
         .spawn(Node {
@@ -66,89 +76,169 @@ fn setup(mut commands: Commands, theme: Res<Theme>) {
             ..default()
         })
         .with_children(|root| {
-            root.spawn(Node {
-                column_gap: Val::Px(16.0),
-                ..default()
-            })
-            .with_children(|row| {
-                for (label, variant) in variants {
-                    row.spawn((
-                        icon_button(label)
-                            .size(ButtonSize::medium())
-                            .variant(variant)
-                            .build(&theme),
-                        Tag(label),
-                    ));
-                }
-            });
-
-            root.spawn((
-                icon_button("target (toggle disabled with D)")
-                    .size(ButtonSize::small())
-                    .variant(ButtonVariant::Primary)
-                    .build(&theme),
-                Tag("target"),
-                DisableTarget,
-            ));
-
-            root.spawn(Text::new(
-                "[D] toggle disabled on target\n\
-             [T] swap theme: Primary <-> Affirmative colors swap (target is Primary).\n\
-             Neutral / Danger stay the same; Custom is theme-independent by design.",
-            ));
-            root.spawn((Text::new("Pressed: (nothing yet)"), StatusText));
+            spawn_variant_row(root, custom);
+            spawn_disable_target(root);
+            spawn_scoped_panel(root);
+            spawn_help(root);
         });
 }
 
-fn on_pressed(
-    trigger: On<Pressed>,
+/// A `Custom` variant: the neutral style with only the text colors changed.
+fn custom_variant(global: &GlobalTheme) -> ButtonVariant {
+    let mut style = global.buttons.neutral;
+    style.fg.normal = Color::srgb(1.0, 0.85, 0.3);
+    style.fg.hovered = Color::srgb(1.0, 0.95, 0.6);
+    style.fg.pressed = Color::srgb(0.8, 0.65, 0.2);
+    ButtonVariant::Custom(Box::new(style))
+}
+
+/// One button per variant. Follows the global theme.
+fn spawn_variant_row(root: &mut ChildSpawnerCommands, custom: ButtonVariant) {
+    let variants = [
+        ("Neutral", ButtonVariant::Neutral),
+        ("Primary", ButtonVariant::Primary),
+        ("Affirmative", ButtonVariant::Affirmative),
+        ("Danger", ButtonVariant::Danger),
+        ("Custom", custom),
+    ];
+
+    root.spawn(Node {
+        column_gap: Val::Px(16.0),
+        ..default()
+    })
+    .with_children(|row| {
+        for (label, variant) in variants {
+            row.spawn((
+                icon_button(label)
+                    .size(ButtonSize::medium())
+                    .variant(variant)
+                    .build(),
+                Tag { name: label },
+            ));
+        }
+    });
+}
+
+/// Target for the disabled toggle. Follows the global theme.
+fn spawn_disable_target(root: &mut ChildSpawnerCommands) {
+    root.spawn((
+        icon_button("target (toggle disabled with D)")
+            .size(ButtonSize::small())
+            .variant(ButtonVariant::Primary)
+            .build(),
+        Tag { name: "target" },
+        DisableTarget,
+    ));
+}
+
+/// Framed panel with its own `Theme` (unaffected by the global theme).
+fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
+    root.spawn((
+        Node {
+            column_gap: Val::Px(16.0),
+            padding: UiRect::all(Val::Px(12.0)),
+            border: UiRect::all(Val::Px(2.0)),
+            ..default()
+        },
+        BorderColor::all(Color::srgb(0.5, 0.5, 0.6)),
+        Theme::default(),
+        ScopedPanel,
+    ))
+    .with_children(|panel| {
+        for (label, variant) in [
+            ("Scoped Primary", ButtonVariant::Primary),
+            ("Scoped Affirmative", ButtonVariant::Affirmative),
+        ] {
+            panel.spawn((
+                icon_button(label)
+                    .size(ButtonSize::medium())
+                    .variant(variant)
+                    .build(),
+                Tag { name: label },
+            ));
+        }
+    });
+}
+
+/// Key bindings and the status line.
+fn spawn_help(root: &mut ChildSpawnerCommands) {
+    root.spawn(Text::new(
+        "[D] toggle disabled on target\n\
+         [T] swap GLOBAL theme (colors + font); the framed panel is unaffected\n\
+         [S] swap the framed panel's own Theme only\n\
+         [N] spawn a new button inside the framed panel",
+    ));
+    root.spawn((Text::new("Activated: (nothing yet)"), StatusText));
+}
+
+// ---------------------------------------------------------------------------
+// Behavior
+// ---------------------------------------------------------------------------
+
+fn on_activated(
+    trigger: On<Activated>,
     tags: Query<&Tag>,
-    mut count: ResMut<PressCount>,
+    mut count: ResMut<ActivationCount>,
     mut status: Query<&mut Text, With<StatusText>>,
 ) {
-    count.0 += 1;
-    let name = tags.get(trigger.entity).map(|t| t.0).unwrap_or("?");
+    count.total += 1;
+    let name = tags.get(trigger.entity).map(|t| t.name).unwrap_or("?");
     for mut text in &mut status {
-        text.0 = format!("Pressed: {name} (total {})", count.0);
+        text.0 = format!("Activated: {name} (total {})", count.total);
     }
 }
 
-fn hotkeys(
-    keys: Res<ButtonInput<KeyCode>>,
+fn toggle_disabled(
     mut commands: Commands,
     targets: Query<(Entity, Has<InteractionDisabled>), With<DisableTarget>>,
-    mut theme: ResMut<Theme>,
-    mut use_alt: Local<bool>,
 ) {
-    if keys.just_pressed(KeyCode::KeyD) {
-        for (entity, disabled) in &targets {
-            if disabled {
-                commands.entity(entity).remove::<InteractionDisabled>();
-            } else {
-                commands.entity(entity).insert(InteractionDisabled);
-            }
-        }
-    }
-
-    if keys.just_pressed(KeyCode::KeyT) {
-        *use_alt = !*use_alt;
-        *theme = if *use_alt {
-            alt_theme()
+    for (entity, disabled) in &targets {
+        if disabled {
+            commands.entity(entity).remove::<InteractionDisabled>();
         } else {
-            Theme::default()
-        };
+            commands.entity(entity).insert(InteractionDisabled);
+        }
     }
 }
 
-/// A theme with the Primary and Affirmative color schemes swapped (to make the change visually clear).
-fn alt_theme() -> Theme {
+fn swap_global_theme(mut global: ResMut<GlobalTheme>, mut swapped: Local<bool>) {
+    *swapped = !*swapped;
+    *global = GlobalTheme(theme_for(*swapped));
+}
+
+fn swap_panel_theme(mut panels: Query<&mut Theme, With<ScopedPanel>>, mut swapped: Local<bool>) {
+    *swapped = !*swapped;
+    for mut theme in &mut panels {
+        *theme = theme_for(*swapped);
+    }
+}
+
+fn spawn_panel_button(mut commands: Commands, panels: Query<Entity, With<ScopedPanel>>) {
+    for panel in &panels {
+        commands.spawn((
+            icon_button("New")
+                .size(ButtonSize::medium())
+                .variant(ButtonVariant::Danger)
+                .build(),
+            Tag { name: "New" },
+            ChildOf(panel),
+        ));
+    }
+}
+
+/// When `swapped`, returns a theme with the Primary/Affirmative palettes
+/// exchanged and a different font, so that the change is easy to see.
+fn theme_for(swapped: bool) -> Theme {
     let base = Theme::default();
+    if !swapped {
+        return base;
+    }
     Theme {
         buttons: ButtonStyles {
             primary: base.buttons.affirmative,
             affirmative: base.buttons.primary,
-            ..base.buttons.clone()
+            ..base.buttons
         },
-        ..base
+        font: FontSource::sans_serif(),
     }
 }

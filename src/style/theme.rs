@@ -1,5 +1,4 @@
 use super::color::*;
-use crate::view::ButtonVariant;
 use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 #[derive(Clone, Copy, Debug)]
@@ -47,24 +46,14 @@ pub struct ButtonStyles {
     pub danger: ButtonStyle,
 }
 
-// TODO to Component
-#[derive(Resource, Clone)]
+#[derive(Component, Clone, Debug)]
 pub struct Theme {
     pub buttons: ButtonStyles,
     pub font: FontSource,
 }
 
-impl Theme {
-    pub fn resolve_button<'a>(&'a self, variant: &'a ButtonVariant) -> &'a ButtonStyle {
-        match variant {
-            ButtonVariant::Neutral => &self.buttons.neutral,
-            ButtonVariant::Primary => &self.buttons.primary,
-            ButtonVariant::Affirmative => &self.buttons.affirmative,
-            ButtonVariant::Danger => &self.buttons.danger,
-            ButtonVariant::Custom(style) => style.as_ref(),
-        }
-    }
-}
+#[derive(Resource, Deref, DerefMut, Default, Clone)]
+pub struct GlobalTheme(pub Theme);
 
 impl Default for Theme {
     fn default() -> Self {

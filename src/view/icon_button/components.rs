@@ -61,7 +61,7 @@ impl ButtonSize {
 }
 
 /// Border and corner radius are intentionally constant (chrome, not scale).
-pub fn icon_button_node(size: &ButtonSize) -> Node {
+pub(crate) fn icon_button_node(size: &ButtonSize) -> Node {
     Node {
         height: size.height,
         padding: size.padding,
