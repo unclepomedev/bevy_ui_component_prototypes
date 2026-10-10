@@ -1,4 +1,5 @@
 use crate::{
+    Theme,
     behavior::Pressable,
     style::{theme::ButtonStyle, theme_lookup::ThemeLookup},
 };
@@ -17,6 +18,19 @@ pub enum ButtonVariant {
     Affirmative,
     Danger,
     Custom(Box<ButtonStyle>),
+}
+
+impl ButtonVariant {
+    /// Returns the style this variant selects from `theme`.
+    pub(crate) fn resolve<'a>(&'a self, theme: &'a Theme) -> &'a ButtonStyle {
+        match self {
+            Self::Neutral => &theme.buttons.neutral,
+            Self::Primary => &theme.buttons.primary,
+            Self::Affirmative => &theme.buttons.affirmative,
+            Self::Danger => &theme.buttons.danger,
+            Self::Custom(style) => style,
+        }
+    }
 }
 
 #[derive(Component)]
@@ -67,7 +81,7 @@ fn sync_button_style(
         };
 
         let theme = lookup.for_entity(entity);
-        let style = theme.resolve_button(variant);
+        let style = variant.resolve(theme);
 
         bg.set_if_neq(BackgroundColor(style.bg.pick(interaction, disabled)));
         border.set_if_neq(BorderColor::all(style.border.pick(interaction, disabled)));
