@@ -19,8 +19,6 @@ use bevy_ui_component_prototypes::{
 // Behavior wiring
 // ---------------------------------------------------------------------------
 
-// Activation, keyboard handling and the disabled check live in `bevy::ui_widgets::Button`.
-// This only guards that our button actually carries what that behavior needs.
 #[test]
 fn icon_button_carries_the_bevy_button_behavior_components() {
     let mut app = test_app();

@@ -4,8 +4,9 @@
 //!
 //! What to verify:
 //!   1. The menu is text only. Hover brightens a label, press dims it, and CONTINUE is grayed out.
-//!   2. Tab / Shift+Tab (or hovering) moves the ">" marker. The marker is drawn by this example,
-//!      not by the crate: the theme only supplies colors, so the focus ring is turned off (`FocusRing::NONE`).
+//!   2. Hovering an item moves keyboard focus to it, so the pointer and Tab / Shift+Tab share one selection, and
+//!      there is a single ">" marker. The marker is drawn by this example, not by the crate: the theme only
+//!      supplies colors, so the focus ring is turned off (`FocusRing::NONE`).
 //!   3. Enter / Space on the focused item updates the "Activate:" line. CONTINUE never activates.
 //!   4. [D] enables / disables CONTINUE.
 //!   5. [T] swaps the global theme between this terminal theme and `Theme::default()`.
@@ -14,7 +15,7 @@
 use bevy::{
     input::common_conditions::input_just_pressed,
     input_focus::{
-        AutoFocus, InputFocus, InputFocusVisible,
+        AutoFocus, FocusCause, InputFocus, InputFocusVisible,
         tab_navigation::{TabGroup, TabNavigationPlugin},
     },
     picking::{Pickable, hover::PickingInteraction},
@@ -67,7 +68,6 @@ fn main() {
         .insert_resource(ClearColor(SCREEN))
         .insert_resource(GlobalTheme(terminal_theme()))
         .insert_resource(TerminalLook(true))
-        // A console-style menu always shows its focus indicator. A pointer click hides it again.
         .insert_resource(InputFocusVisible(true))
         .add_systems(Startup, setup)
         .add_systems(
@@ -75,7 +75,12 @@ fn main() {
             (
                 toggle_continue.run_if(input_just_pressed(KeyCode::KeyD)),
                 swap_theme.run_if(input_just_pressed(KeyCode::KeyT)),
-                update_markers,
+                // Console-style menu: hover moves focus, and the focus indicator stays visible
+                // (the crate's pointer focus would hide it on every click).
+                (hover_moves_focus, keep_focus_visible)
+                    .chain()
+                    .run_if(terminal_look),
+                update_markers.after(hover_moves_focus),
             ),
         )
         .add_observer(on_activate)
@@ -209,22 +214,43 @@ fn on_activate(
     }
 }
 
-/// Shows the marker next to the hovered or keyboard-focused item (never a disabled one).
+fn terminal_look(look: Res<TerminalLook>) -> bool {
+    look.0
+}
+
+/// The hovered item takes focus, so there is one selection shared by the pointer and the keyboard.
+fn hover_moves_focus(
+    mut focus: ResMut<InputFocus>,
+    hovered: Query<
+        (Entity, &PickingInteraction, Has<InteractionDisabled>),
+        Changed<PickingInteraction>,
+    >,
+) {
+    for (entity, interaction, disabled) in &hovered {
+        if *interaction != PickingInteraction::None && !disabled && focus.get() != Some(entity) {
+            focus.set(entity, FocusCause::Navigated);
+        }
+    }
+}
+
+fn keep_focus_visible(mut focus_visible: ResMut<InputFocusVisible>) {
+    if !focus_visible.0 {
+        focus_visible.0 = true;
+    }
+}
+
+/// Shows the marker next to the focused item (never a disabled one), under the terminal look only.
 fn update_markers(
     look: Res<TerminalLook>,
     focus: Res<InputFocus>,
-    focus_visible: Res<InputFocusVisible>,
-    buttons: Query<(&PickingInteraction, Has<InteractionDisabled>)>,
+    buttons: Query<Has<InteractionDisabled>>,
     mut markers: Query<(&Marker, &mut Visibility)>,
 ) {
-    let focused = focus.get().filter(|_| focus_visible.0);
     for (marker, mut visibility) in &mut markers {
-        let Ok((interaction, disabled)) = buttons.get(marker.button) else {
+        let Ok(disabled) = buttons.get(marker.button) else {
             continue;
         };
-        let active = look.0
-            && !disabled
-            && (*interaction != PickingInteraction::None || focused == Some(marker.button));
+        let active = look.0 && !disabled && focus.get() == Some(marker.button);
         visibility.set_if_neq(if active {
             Visibility::Inherited
         } else {
