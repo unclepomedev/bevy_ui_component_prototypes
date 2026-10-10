@@ -1,6 +1,6 @@
 use crate::{
     behavior::Pressable,
-    style::theme::{ButtonStyle, Theme},
+    style::{theme::ButtonStyle, theme_lookup::ThemeLookup},
 };
 use bevy::{
     ecs::system::SystemParam, picking::hover::PickingInteraction, prelude::*,
@@ -44,7 +44,7 @@ type ChangedButtons<'w, 's> = Query<
 >;
 
 fn sync_button_style(
-    theme: Res<Theme>,
+    lookup: ThemeLookup,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     changed: ChangedButtons,
     all: Query<Entity, (With<Pressable>, With<ButtonVariant>)>,
@@ -52,7 +52,7 @@ fn sync_button_style(
     mut content: ButtonContent,
 ) {
     let removed: Vec<Entity> = removed_disabled.read().collect();
-    let targets: Vec<Entity> = if theme.is_changed() {
+    let targets: Vec<Entity> = if lookup.needs_resync() {
         all.iter().collect()
     } else {
         changed.iter().chain(removed).collect()
@@ -64,7 +64,7 @@ fn sync_button_style(
             continue;
         };
 
-        let style = theme.resolve_button(variant);
+        let style = lookup.for_entity(entity).resolve_button(variant);
         *bg = BackgroundColor(style.bg.pick(interaction, disabled));
         *border = BorderColor::all(style.border.pick(interaction, disabled));
         content.apply_fg(entity, style.fg.pick(interaction, disabled));
