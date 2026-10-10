@@ -7,3 +7,6 @@ fmt-rs:
     just fix-rs
     cargo fmt --all
 fmt: fmt-rs
+
+example id:
+    cargo run --example {{ id }}
