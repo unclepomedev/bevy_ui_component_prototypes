@@ -10,3 +10,7 @@ fmt: fmt-rs
 
 example id:
     cargo run --example {{ id }}
+
+test:
+    cargo test
+t: test
