@@ -1,14 +1,27 @@
-use crate::behavior::Pressable;
 use crate::style::{
     font_size::{FONT_SIZE_LG, FONT_SIZE_MD, FONT_SIZE_SM},
     layout,
     spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
 };
 use crate::view::button_style::ButtonVariant;
-use bevy::prelude::*;
+use bevy::{
+    input_focus::tab_navigation::TabIndex, picking::hover::PickingInteraction, prelude::*,
+    ui_widgets::Button,
+};
 
+/// A themed button with an optional icon and a text label.
+///
+/// Behavior comes from [`Button`]: it emits [`bevy::ui_widgets::Activate`] on click and on Enter/Space while focused,
+/// uses [`bevy::ui::InteractionDisabled`], and exposes a button role to accessibility tools.
+/// `TabIndex(0)` makes it reachable with the Tab key when it is inside a `TabGroup`.
 #[derive(Component)]
-#[require(Pressable, ButtonVariant, Node = default_icon_button_node())]
+#[require(
+    Button,
+    PickingInteraction,
+    TabIndex(0),
+    ButtonVariant,
+    Node = default_icon_button_node()
+)]
 pub struct IconButton;
 
 /// Coherent footprint of an icon button: outer height, inner padding/gap,

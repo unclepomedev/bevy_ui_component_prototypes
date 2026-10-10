@@ -1,19 +1,46 @@
 #![warn(unreachable_pub)]
-mod behavior;
 mod style;
 mod view;
 
-pub use behavior::{Activated, Pressable};
 pub use style::theme::{ButtonStyle, ButtonStyles, GlobalTheme, StateColors, Theme};
 pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button};
 
-use crate::{behavior::PressablePlugin, view::ButtonStylePlugin};
-use bevy::prelude::*;
+use crate::view::ButtonStylePlugin;
+use bevy::{
+    input_focus::tab_navigation::TabNavigationPlugin, prelude::*, ui_widgets::ButtonPlugin,
+};
 
+/// Theming for the widgets in this crate.
+///
+/// This plugin does not add `UiWidgetsPlugins`. Add the plugins for the behavior you use yourself:
+/// - [`ButtonPlugin`] (included in `DefaultPlugins`): button activation
+/// - [`TabNavigationPlugin`]: Tab-key focus navigation
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GlobalTheme>()
-            .add_plugins((PressablePlugin, ButtonStylePlugin));
+            .add_plugins(ButtonStylePlugin);
+    }
+
+    fn finish(&self, app: &mut App) {
+        let plugins = [
+            ("ButtonPlugin", app.is_plugin_added::<ButtonPlugin>()),
+            (
+                "TabNavigationPlugin",
+                app.is_plugin_added::<TabNavigationPlugin>(),
+            ),
+        ];
+        let list = |added: bool| {
+            plugins
+                .iter()
+                .filter(|(_, is_added)| *is_added == added)
+                .map(|(name, _)| format!("\n  - {name}"))
+                .collect::<String>()
+        };
+        let missing = list(false);
+        info!(
+            "UiComponentPrototypesPlugin: behavior plugins\nadded:{}\nnot added:{missing}",
+            list(true)
+        );
     }
 }

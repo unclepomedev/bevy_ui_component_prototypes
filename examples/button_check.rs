@@ -4,18 +4,26 @@
 //!
 //! What to verify:
 //!   1. The five buttons in the top row change color on hover / press / release and return to normal afterward.
-//!   2. [D] toggles InteractionDisabled on "target": it turns gray, clicking it emits no `Activated`, and removing the component restores it.
+//!   2. [D] toggles InteractionDisabled on "target": it turns gray, clicking it emits no `Activate`, and removing the component restores it.
 //!   3. [T] swaps the global theme (colors and font). The top row and "target" change; the framed panel, which has its own `Theme`, does not.
 //!   4. [S] swaps the framed panel's own `Theme`. Only the panel changes.
 //!   5. [N] spawns a new button inside the panel at runtime. It must appear already styled with the panel's theme (no unstyled flash).
+//!   6. Tab moves keyboard focus between buttons, and Enter / Space on a focused button emits `Activate`.
+//!      TODO (no focus ring is drawn yet, so watch the "Activate:" line at the bottom).
 
-use bevy::{input::common_conditions::input_just_pressed, prelude::*, ui::InteractionDisabled};
+use bevy::{
+    input::common_conditions::input_just_pressed,
+    input_focus::tab_navigation::{TabGroup, TabNavigationPlugin},
+    prelude::*,
+    ui::InteractionDisabled,
+    ui_widgets::Activate,
+};
 use bevy_ui_component_prototypes::{
-    Activated, ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, Theme,
-    UiComponentPrototypesPlugin, icon_button,
+    ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    icon_button,
 };
 
-/// Marker that identifies which button emitted an `Activated` event.
+/// Marker that identifies which button emitted an `Activate` event.
 #[derive(Component)]
 struct Tag {
     name: &'static str,
@@ -40,7 +48,11 @@ struct ActivationCount {
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, UiComponentPrototypesPlugin))
+        .add_plugins((
+            DefaultPlugins,
+            TabNavigationPlugin,
+            UiComponentPrototypesPlugin,
+        ))
         .init_resource::<ActivationCount>()
         .add_systems(Startup, setup)
         .add_systems(
@@ -66,15 +78,18 @@ fn setup(mut commands: Commands, global: Res<GlobalTheme>) {
     let custom = custom_variant(&global);
 
     commands
-        .spawn(Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            row_gap: Val::Px(24.0),
-            ..default()
-        })
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                row_gap: Val::Px(24.0),
+                ..default()
+            },
+            TabGroup::default(),
+        ))
         .with_children(|root| {
             spawn_variant_row(root, custom);
             spawn_disable_target(root);
@@ -166,9 +181,10 @@ fn spawn_help(root: &mut ChildSpawnerCommands) {
         "[D] toggle disabled on target\n\
          [T] swap GLOBAL theme (colors + font); the framed panel is unaffected\n\
          [S] swap the framed panel's own Theme only\n\
-         [N] spawn a new button inside the framed panel",
+         [N] spawn a new button inside the framed panel\n\
+         [Tab] move focus   [Enter / Space] activate the focused button",
     ));
-    root.spawn((Text::new("Activated: (nothing yet)"), StatusText));
+    root.spawn((Text::new("Activate: (nothing yet)"), StatusText));
 }
 
 // ---------------------------------------------------------------------------
@@ -176,7 +192,7 @@ fn spawn_help(root: &mut ChildSpawnerCommands) {
 // ---------------------------------------------------------------------------
 
 fn on_activated(
-    trigger: On<Activated>,
+    trigger: On<Activate>,
     tags: Query<&Tag>,
     mut count: ResMut<ActivationCount>,
     mut status: Query<&mut Text, With<StatusText>>,
@@ -184,7 +200,7 @@ fn on_activated(
     count.total += 1;
     let name = tags.get(trigger.entity).map(|t| t.name).unwrap_or("?");
     for mut text in &mut status {
-        text.0 = format!("Activated: {name} (total {})", count.total);
+        text.0 = format!("Activate: {name} (total {})", count.total);
     }
 }
 
