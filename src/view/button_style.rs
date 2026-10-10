@@ -60,7 +60,7 @@ type ChangedButtons<'w, 's> = Query<
 >;
 
 fn sync_button_style(
-    lookup: ThemeLookup,
+    mut lookup: ThemeLookup,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     changed: ChangedButtons,
     all: Query<Entity, (With<Pressable>, With<ButtonVariant>)>,

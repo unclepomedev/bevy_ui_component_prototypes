@@ -9,6 +9,8 @@ pub(crate) struct ThemeLookup<'w, 's> {
     parents: Query<'w, 's, &'static ChildOf>,
     changed_themes: Query<'w, 's, (), Changed<Theme>>,
     reparented: Query<'w, 's, (), Changed<ChildOf>>,
+    removed_themes: RemovedComponents<'w, 's, Theme>,
+    unparented: RemovedComponents<'w, 's, ChildOf>,
 }
 
 impl ThemeLookup<'_, '_> {
@@ -21,9 +23,16 @@ impl ThemeLookup<'_, '_> {
             .unwrap_or(&self.global)
     }
 
-    /// Whether the resolved theme of any widget may have changed (the global theme
-    /// or a `Theme` component changed, or the hierarchy was modified).
-    pub(crate) fn needs_resync(&self) -> bool {
-        self.global.is_changed() || !self.changed_themes.is_empty() || !self.reparented.is_empty()
+    /// Whether the resolved theme of any widget may have changed.
+    /// Consumes pending removal messages so each removal triggers exactly one resync.
+    pub(crate) fn needs_resync(&mut self) -> bool {
+        let removed = !self.removed_themes.is_empty() || !self.unparented.is_empty();
+        self.removed_themes.clear();
+        self.unparented.clear();
+
+        removed
+            || self.global.is_changed()
+            || !self.changed_themes.is_empty()
+            || !self.reparented.is_empty()
     }
 }
