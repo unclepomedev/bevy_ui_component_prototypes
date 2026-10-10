@@ -4,7 +4,7 @@ mod helpers;
 mod systems;
 
 pub use components::Pressable;
-pub use events::Pressed;
+pub use events::Activated;
 pub(crate) use helpers::pass_through;
 
 use self::systems::on_pressable_click;

@@ -47,12 +47,14 @@ pub struct ButtonStyles {
     pub danger: ButtonStyle,
 }
 
-// TODO to Component
-#[derive(Resource, Clone)]
+#[derive(Component, Clone)]
 pub struct Theme {
     pub buttons: ButtonStyles,
     pub font: FontSource,
 }
+
+#[derive(Resource, Deref, DerefMut, Default, Clone)]
+pub struct GlobalTheme(pub Theme);
 
 impl Theme {
     pub fn resolve_button<'a>(&'a self, variant: &'a ButtonVariant) -> &'a ButtonStyle {

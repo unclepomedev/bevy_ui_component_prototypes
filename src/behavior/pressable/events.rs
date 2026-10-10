@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 #[derive(EntityEvent)]
-pub struct Pressed {
+/// Fired when the entity is activated/pressed.
+pub struct Activated {
     pub entity: Entity,
 }
