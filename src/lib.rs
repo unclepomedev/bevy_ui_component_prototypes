@@ -7,13 +7,16 @@ pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_bu
 
 use crate::view::ButtonStylePlugin;
 use bevy::{
-    input_focus::tab_navigation::TabNavigationPlugin, prelude::*, ui_widgets::ButtonPlugin,
+    input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
+    prelude::*,
+    ui_widgets::ButtonPlugin,
 };
 
 /// Theming for the widgets in this crate.
 ///
 /// This plugin does not add `UiWidgetsPlugins`. Add the plugins for the behavior you use yourself:
 /// - [`ButtonPlugin`] (included in `DefaultPlugins`): button activation
+/// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
@@ -25,6 +28,10 @@ impl Plugin for UiComponentPrototypesPlugin {
     fn finish(&self, app: &mut App) {
         let plugins = [
             ("ButtonPlugin", app.is_plugin_added::<ButtonPlugin>()),
+            (
+                "InputDispatchPlugin",
+                app.is_plugin_added::<InputDispatchPlugin>(),
+            ),
             (
                 "TabNavigationPlugin",
                 app.is_plugin_added::<TabNavigationPlugin>(),
