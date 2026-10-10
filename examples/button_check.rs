@@ -10,8 +10,8 @@
 
 use bevy::{prelude::*, ui::InteractionDisabled};
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyles, ButtonVariant, IconButtonExt, Pressed, Theme,
-    UiComponentPrototypesPlugin,
+    ButtonSize, ButtonStyles, ButtonVariant, Pressed, Theme, UiComponentPrototypesPlugin,
+    icon_button,
 };
 
 /// A visual indicator that shows which button was pressed when an event occurs.
@@ -72,25 +72,24 @@ fn setup(mut commands: Commands, theme: Res<Theme>) {
             })
             .with_children(|row| {
                 for (label, variant) in variants {
-                    row.spawn_icon_button(
-                        &theme,
-                        label,
-                        None,
-                        ButtonSize::medium(),
-                        variant,
+                    row.spawn((
+                        icon_button(label)
+                            .size(ButtonSize::medium())
+                            .variant(variant)
+                            .build(&theme),
                         Tag(label),
-                    );
+                    ));
                 }
             });
 
-            root.spawn_icon_button(
-                &theme,
-                "target (toggle disabled with D)",
-                None,
-                ButtonSize::small(),
-                ButtonVariant::Primary,
-                (Tag("target"), DisableTarget),
-            );
+            root.spawn((
+                icon_button("target (toggle disabled with D)")
+                    .size(ButtonSize::small())
+                    .variant(ButtonVariant::Primary)
+                    .build(&theme),
+                Tag("target"),
+                DisableTarget,
+            ));
 
             root.spawn(Text::new(
                 "[D] toggle disabled on target\n\

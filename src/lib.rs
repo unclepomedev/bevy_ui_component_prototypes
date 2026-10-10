@@ -4,7 +4,7 @@ mod view;
 
 pub use behavior::{Pressable, Pressed};
 pub use style::theme::{ButtonStyle, ButtonStyles, StateColors, Theme};
-pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonExt};
+pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button};
 
 use behavior::PressablePlugin;
 use bevy::prelude::*;
