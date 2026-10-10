@@ -2,11 +2,30 @@
 //!
 //! Real pointer picking, layout, and text shaping are not covered by `examples/button_check.rs`.
 
-use bevy::{picking::hover::PickingInteraction, prelude::*, ui::InteractionDisabled};
+use bevy::{
+    a11y::AccessibilityNode, input_focus::tab_navigation::TabIndex,
+    picking::hover::PickingInteraction, prelude::*, ui::InteractionDisabled, ui_widgets::Button,
+};
 use bevy_ui_component_prototypes::{
     ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, Theme, UiComponentPrototypesPlugin,
     icon_button,
 };
+
+// ---------------------------------------------------------------------------
+// Behavior wiring
+// ---------------------------------------------------------------------------
+
+#[test]
+fn icon_button_carries_the_bevy_button_behavior_components() {
+    let mut app = test_app();
+    let button = spawn_primary(&mut app);
+
+    let world = app.world();
+    assert!(world.get::<Button>(button).is_some());
+    assert!(world.get::<AccessibilityNode>(button).is_some());
+    assert!(world.get::<PickingInteraction>(button).is_some());
+    assert_eq!(world.get::<TabIndex>(button).map(|t| t.0), Some(0));
+}
 
 // ---------------------------------------------------------------------------
 // Initial styling

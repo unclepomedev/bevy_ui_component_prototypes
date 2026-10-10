@@ -1,6 +1,5 @@
 use crate::{
     Theme,
-    behavior::Pressable,
     style::{theme::ButtonStyle, theme_lookup::ThemeLookup},
 };
 use bevy::{
@@ -8,6 +7,7 @@ use bevy::{
     picking::hover::PickingInteraction,
     prelude::*,
     ui::{InteractionDisabled, UiSystems},
+    ui_widgets::Button,
 };
 
 #[derive(Component, Clone, Debug, Default)]
@@ -50,7 +50,7 @@ type ChangedButtons<'w, 's> = Query<
     's,
     Entity,
     (
-        With<Pressable>,
+        With<Button>,
         Or<(
             Changed<PickingInteraction>,
             Changed<ButtonVariant>,
@@ -63,7 +63,7 @@ fn sync_button_style(
     mut lookup: ThemeLookup,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     changed: ChangedButtons,
-    all: Query<Entity, (With<Pressable>, With<ButtonVariant>)>,
+    all: Query<Entity, (With<Button>, With<ButtonVariant>)>,
     mut buttons: ButtonQuery,
     mut content: ButtonContent,
 ) {
@@ -125,5 +125,5 @@ type ButtonQuery<'w, 's> = Query<
         &'static mut BackgroundColor,
         &'static mut BorderColor,
     ),
-    With<Pressable>,
+    With<Button>,
 >;
