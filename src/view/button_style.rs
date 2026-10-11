@@ -37,9 +37,9 @@ impl ButtonVariant {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 pub(crate) struct ButtonLabel;
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 pub(crate) struct ButtonIcon;
 
 pub(crate) struct ButtonStylePlugin;

@@ -3,6 +3,9 @@ name = "bevy_ui_component_prototypes"
 version = "0.0.1"
 edition = "2024"
 
+[features]
+bsn = ["bevy/bevy_scene"]
+
 [dependencies]
 bevy = { version = "0.20", default-features = false, features = ["bevy_ui", "bevy_picking", "bevy_ui_widgets", "bevy_log"] }
 
@@ -11,3 +14,7 @@ bevy = { version = "0.20", features = ["system_font_discovery"] }
 
 [lints.rust]
 linker_messages = "allow"
+
+[[example]]
+name = "bsn_menu"
+required-features = ["bsn"]

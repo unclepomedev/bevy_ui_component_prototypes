@@ -15,7 +15,7 @@ use bevy::{
 /// uses [`bevy::ui::InteractionDisabled`], and exposes a button role to accessibility tools.
 /// `TabIndex(0)` makes it reachable with the Tab key when it is inside a `TabGroup`.
 /// A focus ring is drawn through `Outline` while the focus indicator is visible.
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 #[require(
     Button,
     PickingInteraction,
