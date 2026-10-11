@@ -32,3 +32,6 @@ pub(crate) const TEXT_MUTED: Color = Color::srgb(0.5, 0.5, 0.5);
 // Border ===========
 /// Subtle divider / outline on panels and buttons.
 pub(crate) const BORDER: Color = Color::srgb(0.35, 0.35, 0.42);
+
+// Focus ring ===========
+pub(crate) const FOCUS_RING: Color = Color::srgb(0.85, 0.88, 1.0);

@@ -1,9 +1,13 @@
 use crate::{
-    Theme,
-    style::{theme::ButtonStyle, theme_lookup::ThemeLookup},
+    FocusRing, Theme,
+    style::{
+        theme::{ButtonStyle, VisualState},
+        theme_lookup::ThemeLookup,
+    },
 };
 use bevy::{
     ecs::system::SystemParam,
+    input_focus::{InputFocus, InputFocusVisible},
     picking::hover::PickingInteraction,
     prelude::*,
     ui::{InteractionDisabled, UiSystems},
@@ -61,31 +65,76 @@ type ChangedButtons<'w, 's> = Query<
 
 fn sync_button_style(
     mut lookup: ThemeLookup,
+    mut ring: FocusRingTracker,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
     changed: ChangedButtons,
     all: Query<Entity, (With<Button>, With<ButtonVariant>)>,
     mut buttons: ButtonQuery,
     mut content: ButtonContent,
 ) {
+    let (focused, focus_moved) = ring.update();
     let removed: Vec<Entity> = removed_disabled.read().collect();
     let targets: Vec<Entity> = if lookup.needs_resync() {
         all.iter().collect()
     } else {
-        changed.iter().chain(removed).collect()
+        changed.iter().chain(removed).chain(focus_moved).collect()
     };
 
     for entity in targets {
-        let Ok((interaction, variant, disabled, mut bg, mut border)) = buttons.get_mut(entity)
+        let Ok((interaction, variant, disabled, mut bg, mut border, mut outline)) =
+            buttons.get_mut(entity)
         else {
             continue;
         };
 
         let theme = lookup.for_entity(entity);
         let style = variant.resolve(theme);
+        let is_focused = focused == Some(entity);
+        let state = VisualState::resolve(interaction, is_focused, disabled);
 
-        bg.set_if_neq(BackgroundColor(style.bg.pick(interaction, disabled)));
-        border.set_if_neq(BorderColor::all(style.border.pick(interaction, disabled)));
-        content.apply(entity, style.fg.pick(interaction, disabled), &theme.font);
+        bg.set_if_neq(BackgroundColor(style.bg.pick(state)));
+        border.set_if_neq(BorderColor::all(style.border.pick(state)));
+        content.apply(entity, style.fg.pick(state), &theme.font);
+
+        // The ring marks keyboard focus regardless of hover or press, but never on a disabled button.
+        let focus_ring = if is_focused && !disabled {
+            style.focus_ring
+        } else {
+            FocusRing::NONE
+        };
+        outline.set_if_neq(Outline::new(
+            focus_ring.width,
+            focus_ring.offset,
+            focus_ring.color,
+        ));
+    }
+}
+
+/// Follows which button should show its focus ring.
+#[derive(SystemParam)]
+struct FocusRingTracker<'w, 's> {
+    // Optional so that apps (and headless tests) without `InputFocusPlugin` simply have no focused button.
+    focus: Option<Res<'w, InputFocus>>,
+    visible: Option<Res<'w, InputFocusVisible>>,
+    last: Local<'s, Option<Entity>>,
+}
+
+impl FocusRingTracker<'_, '_> {
+    /// Returns the entity whose focus indicator is visible right now, and the entities
+    /// whose ring state has changed since the previous call (the old and the new owner).
+    fn update(&mut self) -> (Option<Entity>, Vec<Entity>) {
+        let focused = self
+            .focus
+            .as_deref()
+            .and_then(InputFocus::get)
+            .filter(|_| self.visible.as_deref().is_some_and(|visible| visible.0));
+        let previous = std::mem::replace(&mut *self.last, focused);
+        let moved = if previous == focused {
+            Vec::new()
+        } else {
+            previous.into_iter().chain(focused).collect()
+        };
+        (focused, moved)
     }
 }
 
@@ -124,6 +173,7 @@ type ButtonQuery<'w, 's> = Query<
         Has<InteractionDisabled>,
         &'static mut BackgroundColor,
         &'static mut BorderColor,
+        &'static mut Outline,
     ),
     With<Button>,
 >;

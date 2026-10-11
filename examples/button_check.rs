@@ -8,8 +8,8 @@
 //!   3. [T] swaps the global theme (colors and font). The top row and "target" change; the framed panel, which has its own `Theme`, does not.
 //!   4. [S] swaps the framed panel's own `Theme`. Only the panel changes.
 //!   5. [N] spawns a new button inside the panel at runtime. It must appear already styled with the panel's theme (no unstyled flash).
-//!   6. Tab moves keyboard focus between buttons, and Enter / Space on a focused button emits `Activate`.
-//!      TODO (no focus ring is drawn yet, so watch the "Activate:" line at the bottom).
+//!   6. Tab moves keyboard focus between buttons, and a focus ring appears around the focused one;
+//!      Enter / Space on it emits `Activate`. Clicking a button hides the ring again.
 
 use bevy::{
     input::common_conditions::input_just_pressed,

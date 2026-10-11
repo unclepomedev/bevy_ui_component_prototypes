@@ -7,6 +7,7 @@ pub struct StateColors {
     pub hovered: Color,
     pub pressed: Color,
     pub disabled: Color,
+    pub focused: Color,
 }
 
 impl StateColors {
@@ -16,26 +17,44 @@ impl StateColors {
             hovered: c,
             pressed: c,
             disabled: c,
+            focused: c,
         }
     }
 
-    pub fn pick(&self, interaction: &PickingInteraction, disabled: bool) -> Color {
-        if disabled {
-            return self.disabled;
-        }
-        match interaction {
-            PickingInteraction::Pressed => self.pressed,
-            PickingInteraction::Hovered => self.hovered,
-            PickingInteraction::None => self.normal,
+    pub(crate) fn pick(&self, state: VisualState) -> Color {
+        match state {
+            VisualState::Normal => self.normal,
+            VisualState::Hovered => self.hovered,
+            VisualState::Pressed => self.pressed,
+            VisualState::Focused => self.focused,
+            VisualState::Disabled => self.disabled,
         }
     }
 }
 
+/// Outline drawn around a button while its focus indicator is visible.
 #[derive(Clone, Copy, Debug)]
+pub struct FocusRing {
+    pub color: Color,
+    pub width: Val,
+    pub offset: Val,
+}
+
+impl FocusRing {
+    /// No ring; focus is conveyed by the `focused` colors alone.
+    pub const NONE: Self = Self {
+        color: Color::NONE,
+        width: Val::Px(0.0),
+        offset: Val::Px(0.0),
+    };
+}
+
+#[derive(Clone, Debug, Copy)]
 pub struct ButtonStyle {
     pub bg: StateColors,
     pub fg: StateColors,
     pub border: StateColors,
+    pub focus_ring: FocusRing,
 }
 
 #[derive(Clone, Debug)]
@@ -63,14 +82,21 @@ impl Default for Theme {
                 hovered: h,
                 pressed: p,
                 disabled: DISABLED,
+                focused: h,
             },
             fg: StateColors {
                 normal: TEXT_MAIN,
                 hovered: TEXT_MAIN,
                 pressed: TEXT_MAIN,
                 disabled: TEXT_MUTED,
+                focused: TEXT_MAIN,
             },
             border: StateColors::uniform(BORDER),
+            focus_ring: FocusRing {
+                color: FOCUS_RING,
+                width: Val::Px(2.0),
+                offset: Val::Px(2.0),
+            },
         };
         Self {
             buttons: ButtonStyles {
@@ -80,6 +106,31 @@ impl Default for Theme {
                 danger: solid(DANGER_NORMAL, DANGER_HOVERED, DANGER_PRESSED),
             },
             font: FontSource::default(),
+        }
+    }
+}
+
+/// Which set of colors a button currently shows.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum VisualState {
+    Normal,
+    Hovered,
+    Pressed,
+    Focused,
+    Disabled,
+}
+
+impl VisualState {
+    /// Precedence: disabled > pressed > hovered > focused > normal.
+    pub(crate) fn resolve(interaction: &PickingInteraction, focused: bool, disabled: bool) -> Self {
+        if disabled {
+            return Self::Disabled;
+        }
+        match interaction {
+            PickingInteraction::Pressed => Self::Pressed,
+            PickingInteraction::Hovered => Self::Hovered,
+            PickingInteraction::None if focused => Self::Focused,
+            PickingInteraction::None => Self::Normal,
         }
     }
 }
