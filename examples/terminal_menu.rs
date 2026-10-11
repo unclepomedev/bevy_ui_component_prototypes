@@ -7,7 +7,8 @@
 //!   2. Hovering an item moves keyboard focus to it, so the pointer and Tab / Shift+Tab share one selection, and
 //!      there is a single ">" marker. The marker is drawn by this example, not by the crate: the theme only
 //!      supplies colors, so the focus ring is turned off (`FocusRing::NONE`).
-//!   3. Enter / Space on the focused item updates the "Activate:" line. CONTINUE never activates.
+//!   3. Enter / Space on the focused item updates the "Activate:" line. While disabled, CONTINUE never activates,
+//!      and Tab skips it (the crate takes disabled buttons out of the tab order).
 //!   4. [D] enables / disables CONTINUE.
 //!   5. [T] swaps the global theme between this terminal theme and `Theme::default()`.
 //!      Under the default theme the same buttons get solid backgrounds and the crate's focus ring.
@@ -218,14 +219,19 @@ fn terminal_look(look: Res<TerminalLook>) -> bool {
     look.0
 }
 
+type HoveredMenuButtons<'w, 's> = Query<
+    'w,
+    's,
+    (
+        Entity,
+        &'static PickingInteraction,
+        Has<InteractionDisabled>,
+    ),
+    (Changed<PickingInteraction>, With<Label>),
+>;
+
 /// The hovered item takes focus, so there is one selection shared by the pointer and the keyboard.
-fn hover_moves_focus(
-    mut focus: ResMut<InputFocus>,
-    hovered: Query<
-        (Entity, &PickingInteraction, Has<InteractionDisabled>),
-        Changed<PickingInteraction>,
-    >,
-) {
+fn hover_moves_focus(mut focus: ResMut<InputFocus>, hovered: HoveredMenuButtons) {
     for (entity, interaction, disabled) in &hovered {
         if *interaction != PickingInteraction::None && !disabled && focus.get() != Some(entity) {
             focus.set(entity, FocusCause::Navigated);

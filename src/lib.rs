@@ -5,7 +5,7 @@ mod view;
 pub use style::theme::{ButtonStyle, ButtonStyles, FocusRing, GlobalTheme, StateColors, Theme};
 pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button};
 
-use crate::view::ButtonStylePlugin;
+use crate::view::{ButtonStylePlugin, TabOrderPlugin};
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
     prelude::*,
@@ -22,7 +22,7 @@ pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GlobalTheme>()
-            .add_plugins(ButtonStylePlugin);
+            .add_plugins((ButtonStylePlugin, TabOrderPlugin));
     }
 
     fn finish(&self, app: &mut App) {

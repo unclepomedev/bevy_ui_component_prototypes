@@ -4,7 +4,11 @@
 
 use bevy::{
     a11y::AccessibilityNode,
-    input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex},
+    ecs::system::RunSystemOnce,
+    input_focus::{
+        InputFocus, InputFocusVisible,
+        tab_navigation::{NavAction, TabGroup, TabIndex, TabNavigation},
+    },
     picking::hover::PickingInteraction,
     prelude::*,
     ui::InteractionDisabled,
@@ -282,6 +286,92 @@ fn disabled_button_shows_neither_ring_nor_focused_colors() {
 }
 
 // ---------------------------------------------------------------------------
+// Tab order
+// ---------------------------------------------------------------------------
+
+#[test]
+fn disabled_button_leaves_the_tab_order_and_returns_when_enabled() {
+    let mut app = test_app();
+    let button = spawn_primary(&mut app);
+    app.update();
+
+    app.world_mut()
+        .entity_mut(button)
+        .insert(InteractionDisabled);
+    app.update();
+    assert_eq!(tab_index(&app, button), -1);
+
+    app.world_mut()
+        .entity_mut(button)
+        .remove::<InteractionDisabled>();
+    app.update();
+    assert_eq!(tab_index(&app, button), 0);
+}
+
+#[test]
+fn a_custom_tab_index_is_restored_after_re_enabling() {
+    let mut app = test_app();
+    let button = app.world_mut().spawn((spawn_bundle(), TabIndex(3))).id();
+    app.update();
+
+    app.world_mut()
+        .entity_mut(button)
+        .insert(InteractionDisabled);
+    app.update();
+    assert_eq!(tab_index(&app, button), -1);
+
+    app.world_mut()
+        .entity_mut(button)
+        .remove::<InteractionDisabled>();
+    app.update();
+    assert_eq!(tab_index(&app, button), 3);
+}
+
+#[test]
+fn a_button_spawned_disabled_starts_outside_the_tab_order() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn((spawn_bundle(), InteractionDisabled))
+        .id();
+    app.update();
+    assert_eq!(tab_index(&app, button), -1);
+
+    app.world_mut()
+        .entity_mut(button)
+        .remove::<InteractionDisabled>();
+    app.update();
+    assert_eq!(tab_index(&app, button), 0);
+}
+
+// End to end: Tab skips the disabled middle button, in both directions.
+#[test]
+fn tab_navigation_skips_a_disabled_button() {
+    let mut app = test_app();
+    let group = app.world_mut().spawn(TabGroup::default()).id();
+    let first = spawn_primary_under(&mut app, group);
+    let middle = spawn_primary_under(&mut app, group);
+    let last = spawn_primary_under(&mut app, group);
+    // Without the visibility plugins nothing is ever propagated, and Tab navigation skips hidden entities.
+    for button in [first, middle, last] {
+        app.world_mut()
+            .entity_mut(button)
+            .insert(InheritedVisibility::VISIBLE);
+    }
+
+    // Control: with every button enabled, Tab visits the middle one.
+    app.update();
+    assert_eq!(navigate(&mut app, first, NavAction::Next), middle);
+
+    app.world_mut()
+        .entity_mut(middle)
+        .insert(InteractionDisabled);
+    app.update();
+    assert_eq!(navigate(&mut app, first, NavAction::Next), last);
+    assert_eq!(navigate(&mut app, last, NavAction::Previous), first);
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -349,6 +439,26 @@ fn focus(app: &mut App, button: Entity, visible: bool) {
 
 fn outline(app: &App, button: Entity) -> Outline {
     *app.world().get::<Outline>(button).unwrap()
+}
+
+fn spawn_bundle() -> impl Bundle {
+    icon_button("button")
+        .size(ButtonSize::small())
+        .variant(ButtonVariant::Primary)
+        .build()
+}
+
+fn tab_index(app: &App, button: Entity) -> i32 {
+    app.world().get::<TabIndex>(button).unwrap().0
+}
+
+fn navigate(app: &mut App, from: Entity, action: NavAction) -> Entity {
+    app.world_mut()
+        .run_system_once(move |navigation: TabNavigation| {
+            navigation.navigate(&InputFocus::from_entity(from), action)
+        })
+        .unwrap()
+        .expect("tab navigation finds a target")
 }
 
 fn bg(app: &App, button: Entity) -> Color {
