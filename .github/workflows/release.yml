@@ -1,0 +1,53 @@
+name: Release to crates.io
+
+on:
+  push:
+    tags:
+      - '**[0-9]+.[0-9]+.[0-9]+*'
+
+jobs:
+  publish-crate:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+
+      - name: Check version consistency
+        shell: bash
+        run: |
+          CRATE_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "bevy_ui_component_prototypes") | .version')
+          TAG_VERSION=${GITHUB_REF_NAME#v}
+
+          echo "Crate: $CRATE_VERSION, Tag: $TAG_VERSION"
+
+          if [ "$CRATE_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Version mismatch! bevy_ui_component_prototypes ($CRATE_VERSION) != Tag ($TAG_VERSION)"
+            exit 1
+          fi
+
+      - name: Authenticate with crates.io
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
+
+      - name: Cargo Publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        shell: bash
+        run: |
+          set -e
+          cargo publish --dry-run --locked
+          for i in {1..10}; do
+            cargo publish --no-verify --locked && exit 0
+            echo "Attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
+          echo "Failed to publish after 10 attempts"
+          exit 1

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":timezone(Asia/Tokyo)",
+    ":maintainLockFilesWeekly",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "labels": [
+    "dependencies",
+    "renovate"
+  ],
+  "cargo": {
+    "managerFilePatterns": [
+      "/(^|/)Cargo\\.toml$/"
+    ]
+  },
+  "packageRules": [
+    {
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "rust dependencies",
+      "automerge": false
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "pinDigests": true
+    },
+    {
+      "groupName": "bevy",
+      "matchPackageNames": [
+        "bevy",
+        "/^bevy_/"
+      ]
+    }
+  ],
+  "schedule": [
+    "* 0-5 * * 1"
+  ],
+  "assignees": [
+    "unclepomedev"
+  ]
+}
