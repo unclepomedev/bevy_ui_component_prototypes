@@ -2,6 +2,10 @@
 name = "bevy_ui_component_prototypes"
 version = "0.0.1"
 edition = "2024"
+description = "Boilerplate for UI components in Bevy games"
+license = "MIT or Apache-2.0"
+repository = "https://github.com/unclepomedev/bevy_ui_component_prototypes"
+readme = "README.md"
 
 [dependencies]
 bevy = { version = "0.20", default-features = false, features = ["bevy_ui", "bevy_picking", "bevy_ui_widgets", "bevy_log"] }
