@@ -1,4 +1,4 @@
-use crate::style::theme::{ButtonStyle, Theme};
+use crate::style::{button::ButtonStyle, theme::Theme};
 use bevy::prelude::*;
 
 #[derive(Component, Clone, Debug, Default)]

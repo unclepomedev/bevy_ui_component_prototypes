@@ -2,8 +2,10 @@
 mod style;
 mod view;
 
-pub use style::theme::{
-    ButtonStyle, ButtonStyles, FocusRing, GlobalTheme, SlicedImage, StateColors, Theme,
+pub use crate::style::{
+    button::{ButtonStyle, ButtonStyles, FocusRing, SlicedImage},
+    state::StateColors,
+    theme::{GlobalTheme, Theme},
 };
 pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button};
 

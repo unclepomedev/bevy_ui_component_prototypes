@@ -7,10 +7,8 @@ pub(crate) use self::content::{ButtonIcon, ButtonLabel};
 pub use self::variant::ButtonVariant;
 
 use self::{content::ButtonContent, focus::FocusRingTracker, surface::ButtonSurface};
-use crate::style::{
-    theme::{ButtonLook, VisualState},
-    theme_lookup::ThemeLookup,
-};
+use super::theme_lookup::ThemeLookup;
+use crate::style::{button::ButtonLook, state::VisualState};
 use bevy::{
     ecs::system::SystemParam,
     picking::hover::PickingInteraction,

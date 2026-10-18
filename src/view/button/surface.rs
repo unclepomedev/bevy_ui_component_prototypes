@@ -1,5 +1,5 @@
 use super::content::ButtonIcon;
-use crate::style::theme::SlicedImage;
+use crate::style::button::SlicedImage;
 use bevy::{ecs::system::SystemParam, prelude::*};
 
 /// Draws or removes the image surface of a button.
