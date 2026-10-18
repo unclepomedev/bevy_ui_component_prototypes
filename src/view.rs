@@ -1,5 +1,6 @@
 mod button_style;
 mod icon_button;
+mod theme_lookup;
 
 pub(crate) use button_style::ButtonStylePlugin;
 pub use button_style::ButtonVariant;

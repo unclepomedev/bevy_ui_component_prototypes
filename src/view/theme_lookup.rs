@@ -1,4 +1,4 @@
-use super::theme::{GlobalTheme, Theme};
+use crate::style::theme::{GlobalTheme, Theme};
 use bevy::{ecs::system::SystemParam, prelude::*};
 
 /// The place where "which theme applies to this entity" is resolved.
@@ -24,7 +24,7 @@ impl ThemeLookup<'_, '_> {
     }
 
     /// Whether the resolved theme of any widget may have changed.
-    /// Consumes pending removal messages so each removal triggers exactly one resync.
+    /// Consumes pending removal messages so each removal triggers exactly one resyncing.
     pub(crate) fn needs_resync(&mut self) -> bool {
         let removed = !self.removed_themes.is_empty() || !self.unparented.is_empty();
         self.removed_themes.clear();
