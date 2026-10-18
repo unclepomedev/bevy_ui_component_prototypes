@@ -1,5 +1,5 @@
 use super::{ButtonSize, IconButton, icon_button_node};
-use crate::view::button_style::{ButtonIcon, ButtonLabel, ButtonVariant};
+use crate::view::button::{ButtonIcon, ButtonLabel, ButtonVariant};
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     picking::Pickable,

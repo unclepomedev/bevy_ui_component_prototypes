@@ -3,7 +3,7 @@ use crate::style::{
     layout,
     spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
 };
-use crate::view::button_style::ButtonVariant;
+use crate::view::button::ButtonVariant;
 use bevy::{
     input_focus::tab_navigation::TabIndex, picking::hover::PickingInteraction, prelude::*,
     ui_widgets::Button,
