@@ -49,7 +49,7 @@ impl FocusRing {
     };
 }
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct ButtonStyle {
     pub bg: StateColors,
     pub fg: StateColors,

@@ -124,6 +124,21 @@ fn global_theme_change_updates_unscoped_buttons_but_not_scoped_ones() {
     assert_eq!(bg(&app, scoped), Theme::default().buttons.primary.bg.normal);
 }
 
+#[test]
+fn theme_font_smoothing_is_applied_to_the_label_and_follows_theme_changes() {
+    let mut app = test_app();
+    let button = spawn_primary(&mut app);
+    app.update();
+    assert_eq!(label_smoothing(&app, button), FontSmoothing::AntiAliased);
+
+    app.insert_resource(GlobalTheme(Theme {
+        font_smoothing: FontSmoothing::None,
+        ..default()
+    }));
+    app.update();
+    assert_eq!(label_smoothing(&app, button), FontSmoothing::None);
+}
+
 // [S] swap the panel's own theme
 #[test]
 fn scoped_theme_change_updates_only_buttons_inside_the_scope() {
@@ -473,6 +488,16 @@ fn label_color(app: &App, button: Entity) -> Color {
         .unwrap()
         .iter()
         .find_map(|child| world.get::<TextColor>(child).map(|c| c.0))
+        .expect("button has a label child")
+}
+
+fn label_smoothing(app: &App, button: Entity) -> FontSmoothing {
+    let world = app.world();
+    world
+        .get::<Children>(button)
+        .unwrap()
+        .iter()
+        .find_map(|child| world.get::<TextFont>(child).map(|f| f.font_smoothing))
         .expect("button has a label child")
 }
 

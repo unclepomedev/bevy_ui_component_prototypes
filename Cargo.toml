@@ -11,6 +11,7 @@ readme = "README.md"
 bevy = { version = "0.20", default-features = false, features = ["bevy_ui", "bevy_picking", "bevy_ui_widgets", "bevy_log"] }
 
 [dev-dependencies]
+bevy_asset_loader = "0.28.1"
 bevy = { version = "0.20", features = ["system_font_discovery"] }
 
 [lints.rust]

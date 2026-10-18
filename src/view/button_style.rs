@@ -1,9 +1,6 @@
-use crate::{
-    FocusRing, Theme,
-    style::{
-        theme::{ButtonStyle, VisualState},
-        theme_lookup::ThemeLookup,
-    },
+use crate::style::{
+    theme::{ButtonStyle, FocusRing, Theme, VisualState},
+    theme_lookup::ThemeLookup,
 };
 use bevy::{
     ecs::system::SystemParam,
@@ -37,9 +34,9 @@ impl ButtonVariant {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 pub(crate) struct ButtonLabel;
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 pub(crate) struct ButtonIcon;
 
 pub(crate) struct ButtonStylePlugin;
