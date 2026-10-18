@@ -1,48 +1,101 @@
+mod content;
+mod focus;
+mod surface;
+mod variant;
+
+pub(crate) use self::content::{ButtonIcon, ButtonLabel};
+pub use self::variant::ButtonVariant;
+
+use self::{content::ButtonContent, focus::FocusRingTracker, surface::ButtonSurface};
 use crate::style::{
-    theme::{ButtonStyle, FocusRing, Theme, VisualState},
+    theme::{ButtonLook, VisualState},
     theme_lookup::ThemeLookup,
 };
 use bevy::{
     ecs::system::SystemParam,
-    input_focus::{InputFocus, InputFocusVisible},
     picking::hover::PickingInteraction,
     prelude::*,
     ui::{InteractionDisabled, UiSystems},
     ui_widgets::Button,
 };
 
-#[derive(Component, Clone, Debug, Default)]
-pub enum ButtonVariant {
-    #[default]
-    Neutral,
-    Primary,
-    Affirmative,
-    Danger,
-    Custom(Box<ButtonStyle>),
-}
-
-impl ButtonVariant {
-    /// Returns the style this variant selects from `theme`.
-    pub(crate) fn resolve<'a>(&'a self, theme: &'a Theme) -> &'a ButtonStyle {
-        match self {
-            Self::Neutral => &theme.buttons.neutral,
-            Self::Primary => &theme.buttons.primary,
-            Self::Affirmative => &theme.buttons.affirmative,
-            Self::Danger => &theme.buttons.danger,
-            Self::Custom(style) => style,
-        }
-    }
-}
-
-#[derive(Component, Clone, Default)]
-pub(crate) struct ButtonLabel;
-#[derive(Component, Clone, Default)]
-pub(crate) struct ButtonIcon;
-
 pub(crate) struct ButtonStylePlugin;
 impl Plugin for ButtonStylePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostUpdate, sync_button_style.before(UiSystems::Prepare));
+    }
+}
+
+/// Resolves each button's look from its theme and state and writes it to the button and its content.
+fn sync_button_style(
+    mut lookup: ThemeLookup,
+    mut ring: FocusRingTracker,
+    mut targets: StyleTargets,
+    mut buttons: ButtonQuery,
+    mut parts: ButtonParts,
+) {
+    let (focused, focus_moved) = ring.update();
+    let targets = targets.collect(lookup.needs_resync(), focus_moved);
+
+    for entity in targets {
+        let Ok((interaction, variant, disabled, mut bg, mut border, mut outline)) =
+            buttons.get_mut(entity)
+        else {
+            continue;
+        };
+
+        let theme = lookup.for_entity(entity);
+        let style = variant.resolve(theme);
+        let is_focused = focused == Some(entity);
+        let state = VisualState::resolve(interaction, is_focused, disabled);
+        let look = style.look(state, is_focused);
+
+        write_node(&look, &mut bg, &mut border, &mut outline);
+        parts
+            .surface
+            .apply(entity, style.surface.as_ref(), look.tint);
+        parts.content.apply(entity, look.fg, theme);
+    }
+}
+
+/// Writes the node-level colors and the focus ring, only where they changed.
+fn write_node(
+    look: &ButtonLook,
+    bg: &mut Mut<BackgroundColor>,
+    border: &mut Mut<BorderColor>,
+    outline: &mut Mut<Outline>,
+) {
+    bg.set_if_neq(BackgroundColor(look.background));
+    border.set_if_neq(BorderColor::all(look.border));
+    outline.set_if_neq(Outline::new(
+        look.ring.width,
+        look.ring.offset,
+        look.ring.color,
+    ));
+}
+
+/// Finds the buttons whose look may have changed from the last run.
+#[derive(SystemParam)]
+struct StyleTargets<'w, 's> {
+    changed: ChangedButtons<'w, 's>,
+    all: Query<'w, 's, Entity, (With<Button>, With<ButtonVariant>)>,
+    removed_disabled: RemovedComponents<'w, 's, InteractionDisabled>,
+}
+
+impl StyleTargets<'_, '_> {
+    /// Every button after a theme change, otherwise only the ones that changed
+    /// (including both ends of a focus move).
+    fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
+        let removed = self.removed_disabled.read();
+        if resync {
+            self.all.iter().collect()
+        } else {
+            self.changed
+                .iter()
+                .chain(removed)
+                .chain(focus_moved)
+                .collect()
+        }
     }
 }
 
@@ -60,108 +113,11 @@ type ChangedButtons<'w, 's> = Query<
     ),
 >;
 
-fn sync_button_style(
-    mut lookup: ThemeLookup,
-    mut ring: FocusRingTracker,
-    mut removed_disabled: RemovedComponents<InteractionDisabled>,
-    changed: ChangedButtons,
-    all: Query<Entity, (With<Button>, With<ButtonVariant>)>,
-    mut buttons: ButtonQuery,
-    mut content: ButtonContent,
-) {
-    let (focused, focus_moved) = ring.update();
-    let removed: Vec<Entity> = removed_disabled.read().collect();
-    let targets: Vec<Entity> = if lookup.needs_resync() {
-        all.iter().collect()
-    } else {
-        changed.iter().chain(removed).chain(focus_moved).collect()
-    };
-
-    for entity in targets {
-        let Ok((interaction, variant, disabled, mut bg, mut border, mut outline)) =
-            buttons.get_mut(entity)
-        else {
-            continue;
-        };
-
-        let theme = lookup.for_entity(entity);
-        let style = variant.resolve(theme);
-        let is_focused = focused == Some(entity);
-        let state = VisualState::resolve(interaction, is_focused, disabled);
-
-        bg.set_if_neq(BackgroundColor(style.bg.pick(state)));
-        border.set_if_neq(BorderColor::all(style.border.pick(state)));
-        content.apply(entity, style.fg.pick(state), theme);
-
-        // The ring marks keyboard focus regardless of hover or press, but never on a disabled button.
-        let focus_ring = if is_focused && !disabled {
-            style.focus_ring
-        } else {
-            FocusRing::NONE
-        };
-        outline.set_if_neq(Outline::new(
-            focus_ring.width,
-            focus_ring.offset,
-            focus_ring.color,
-        ));
-    }
-}
-
-/// Follows which button should show its focus ring.
+/// What the style sync writes besides the button node itself.
 #[derive(SystemParam)]
-struct FocusRingTracker<'w, 's> {
-    // Optional so that apps (and headless tests) without `InputFocusPlugin` simply have no focused button.
-    focus: Option<Res<'w, InputFocus>>,
-    visible: Option<Res<'w, InputFocusVisible>>,
-    last: Local<'s, Option<Entity>>,
-}
-
-impl FocusRingTracker<'_, '_> {
-    /// Returns the entity whose focus indicator is visible right now, and the entities
-    /// whose ring state has changed since the previous call (the old and the new owner).
-    fn update(&mut self) -> (Option<Entity>, Vec<Entity>) {
-        let focused = self
-            .focus
-            .as_deref()
-            .and_then(InputFocus::get)
-            .filter(|_| self.visible.as_deref().is_some_and(|visible| visible.0));
-        let previous = std::mem::replace(&mut *self.last, focused);
-        let moved = if previous == focused {
-            Vec::new()
-        } else {
-            previous.into_iter().chain(focused).collect()
-        };
-        (focused, moved)
-    }
-}
-
-#[derive(SystemParam)]
-struct ButtonContent<'w, 's> {
-    children: Query<'w, 's, &'static Children>,
-    labels: Query<'w, 's, (&'static mut TextColor, &'static mut TextFont), With<ButtonLabel>>,
-    icons: Query<'w, 's, &'static mut ImageNode, With<ButtonIcon>>,
-}
-
-impl ButtonContent<'_, '_> {
-    /// Applies the foreground color and the theme font to the button's descendants.
-    fn apply(&mut self, root: Entity, fg: Color, theme: &Theme) {
-        for descendant in self.children.iter_descendants(root) {
-            if let Ok((mut color, mut text_font)) = self.labels.get_mut(descendant) {
-                color.set_if_neq(TextColor(fg));
-                if text_font.font != theme.font {
-                    text_font.font = theme.font.clone();
-                }
-                if text_font.font_smoothing != theme.font_smoothing {
-                    text_font.font_smoothing = theme.font_smoothing;
-                }
-            }
-            if let Ok(mut icon) = self.icons.get_mut(descendant)
-                && icon.color != fg
-            {
-                icon.color = fg;
-            }
-        }
-    }
+struct ButtonParts<'w, 's> {
+    content: ButtonContent<'w, 's>,
+    surface: ButtonSurface<'w, 's>,
 }
 
 type ButtonQuery<'w, 's> = Query<

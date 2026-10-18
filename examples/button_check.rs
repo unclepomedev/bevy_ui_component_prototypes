@@ -100,7 +100,7 @@ fn setup(mut commands: Commands, global: Res<GlobalTheme>) {
 
 /// A `Custom` variant: the neutral style with only the text colors changed.
 fn custom_variant(global: &GlobalTheme) -> ButtonVariant {
-    let mut style = global.buttons.neutral;
+    let mut style = global.buttons.neutral.clone();
     style.fg.normal = Color::srgb(1.0, 0.85, 0.3);
     style.fg.hovered = Color::srgb(1.0, 0.95, 0.6);
     style.fg.pressed = Color::srgb(0.8, 0.65, 0.2);

@@ -101,12 +101,13 @@ fn terminal_theme() -> Theme {
         },
         border: StateColors::uniform(Color::NONE),
         focus_ring: FocusRing::NONE,
+        surface: None,
     };
     Theme {
         buttons: ButtonStyles {
-            neutral: ghost,
-            primary: ghost,
-            affirmative: ghost,
+            neutral: ghost.clone(),
+            primary: ghost.clone(),
+            affirmative: ghost.clone(),
             danger: ghost,
         },
         font: FontSource::serif(),
