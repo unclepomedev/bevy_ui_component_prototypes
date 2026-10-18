@@ -1,4 +1,9 @@
 use super::state::{StateColors, VisualState};
+use crate::style::color::{
+    AFFIRM_HOVERED, AFFIRM_NORMAL, AFFIRM_PRESSED, BG_HOVERED, BG_NORMAL, BG_PRESSED, BORDER,
+    DANGER_HOVERED, DANGER_NORMAL, DANGER_PRESSED, DISABLED, FOCUS_RING, PRIMARY_HOVERED,
+    PRIMARY_NORMAL, PRIMARY_PRESSED, TEXT_MAIN, TEXT_MUTED,
+};
 use bevy::{asset::Handle, color::Color, image::Image, prelude::*};
 
 /// Outline drawn around a button while its focus indicator is visible.
@@ -44,6 +49,52 @@ pub struct ButtonStyles {
     pub danger: ButtonStyle,
 }
 
+impl Default for ButtonStyles {
+    fn default() -> Self {
+        let solid = |n: Color, h: Color, p: Color| ButtonStyle {
+            bg: StateColors {
+                normal: n,
+                hovered: h,
+                pressed: p,
+                disabled: DISABLED,
+                focused: h,
+            },
+            fg: StateColors {
+                normal: TEXT_MAIN,
+                hovered: TEXT_MAIN,
+                pressed: TEXT_MAIN,
+                disabled: TEXT_MUTED,
+                focused: TEXT_MAIN,
+            },
+            border: StateColors::uniform(BORDER),
+            focus_ring: FocusRing {
+                color: FOCUS_RING,
+                width: Val::Px(2.0),
+                offset: Val::Px(2.0),
+            },
+            surface: None,
+        };
+        Self {
+            neutral: solid(BG_NORMAL, BG_HOVERED, BG_PRESSED),
+            primary: solid(PRIMARY_NORMAL, PRIMARY_HOVERED, PRIMARY_PRESSED),
+            affirmative: solid(AFFIRM_NORMAL, AFFIRM_HOVERED, AFFIRM_PRESSED),
+            danger: solid(DANGER_NORMAL, DANGER_HOVERED, DANGER_PRESSED),
+        }
+    }
+}
+
+/// What a button looks like in one state, resolved from a [`ButtonStyle`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct ButtonLook {
+    /// Color of the node's own background (transparent when an image surface is drawn).
+    pub(crate) background: Color,
+    /// Color multiplied into the image surface.
+    pub(crate) tint: Color,
+    pub(crate) border: Color,
+    pub(crate) fg: Color,
+    pub(crate) ring: FocusRing,
+}
+
 impl ButtonStyle {
     /// `focused` is whether this button owns the visible focus indicator.
     pub(crate) fn look(&self, state: VisualState, focused: bool) -> ButtonLook {
@@ -64,18 +115,6 @@ impl ButtonStyle {
             },
         }
     }
-}
-
-/// What a button looks like in one state, resolved from a [`ButtonStyle`].
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct ButtonLook {
-    /// Color of the node's own background (transparent when an image surface is drawn).
-    pub(crate) background: Color,
-    /// Color multiplied into the image surface.
-    pub(crate) tint: Color,
-    pub(crate) border: Color,
-    pub(crate) fg: Color,
-    pub(crate) ring: FocusRing,
 }
 
 // ============================================================================================
