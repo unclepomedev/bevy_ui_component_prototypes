@@ -256,5 +256,6 @@ fn theme_for(swapped: bool) -> Theme {
             ..base.buttons
         },
         font: FontSource::sans_serif(),
+        ..default()
     }
 }

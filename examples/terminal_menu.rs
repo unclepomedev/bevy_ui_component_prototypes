@@ -110,6 +110,7 @@ fn terminal_theme() -> Theme {
             danger: ghost,
         },
         font: FontSource::serif(),
+        ..default()
     }
 }
 
