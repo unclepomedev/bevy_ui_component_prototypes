@@ -94,7 +94,7 @@ fn sync_button_style(
 
         bg.set_if_neq(BackgroundColor(style.bg.pick(state)));
         border.set_if_neq(BorderColor::all(style.border.pick(state)));
-        content.apply(entity, style.fg.pick(state), &theme.font);
+        content.apply(entity, style.fg.pick(state), theme);
 
         // The ring marks keyboard focus regardless of hover or press, but never on a disabled button.
         let focus_ring = if is_focused && !disabled {
@@ -147,12 +147,15 @@ struct ButtonContent<'w, 's> {
 
 impl ButtonContent<'_, '_> {
     /// Applies the foreground color and the theme font to the button's descendants.
-    fn apply(&mut self, root: Entity, fg: Color, font: &FontSource) {
+    fn apply(&mut self, root: Entity, fg: Color, theme: &Theme) {
         for descendant in self.children.iter_descendants(root) {
             if let Ok((mut color, mut text_font)) = self.labels.get_mut(descendant) {
                 color.set_if_neq(TextColor(fg));
-                if text_font.font != *font {
-                    text_font.font = font.clone();
+                if text_font.font != theme.font {
+                    text_font.font = theme.font.clone();
+                }
+                if text_font.font_smoothing != theme.font_smoothing {
+                    text_font.font_smoothing = theme.font_smoothing;
                 }
             }
             if let Ok(mut icon) = self.icons.get_mut(descendant)
