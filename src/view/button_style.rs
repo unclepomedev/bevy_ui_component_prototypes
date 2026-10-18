@@ -8,7 +8,7 @@ pub use self::variant::ButtonVariant;
 
 use self::{content::ButtonContent, focus::FocusRingTracker, surface::ButtonSurface};
 use super::theme_lookup::ThemeLookup;
-use crate::style::{state::VisualState, theme::ButtonLook};
+use crate::style::{button::ButtonLook, state::VisualState};
 use bevy::{
     ecs::system::SystemParam,
     picking::hover::PickingInteraction,

@@ -2,9 +2,11 @@
 mod style;
 mod view;
 
-// TODO: organize
-pub use style::state::StateColors;
-pub use style::theme::{ButtonStyle, ButtonStyles, FocusRing, GlobalTheme, SlicedImage, Theme};
+pub use crate::style::{
+    button::{ButtonStyle, ButtonStyles, FocusRing, SlicedImage},
+    state::StateColors,
+    theme::{GlobalTheme, Theme},
+};
 pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button};
 
 use crate::view::{ButtonStylePlugin, TabOrderPlugin};
