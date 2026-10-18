@@ -69,6 +69,7 @@ pub struct ButtonStyles {
 pub struct Theme {
     pub buttons: ButtonStyles,
     pub font: FontSource,
+    pub font_smoothing: FontSmoothing,
 }
 
 #[derive(Resource, Deref, DerefMut, Default, Clone)]
@@ -106,6 +107,7 @@ impl Default for Theme {
                 danger: solid(DANGER_NORMAL, DANGER_HOVERED, DANGER_PRESSED),
             },
             font: FontSource::default(),
+            font_smoothing: FontSmoothing::default(),
         }
     }
 }

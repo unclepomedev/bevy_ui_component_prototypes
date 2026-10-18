@@ -392,6 +392,7 @@ fn swapped_theme() -> Theme {
             ..base.buttons
         },
         font: FontSource::sans_serif(),
+        ..default()
     }
 }
 
