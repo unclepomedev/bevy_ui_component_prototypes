@@ -4,6 +4,7 @@
 
 use bevy::{
     a11y::AccessibilityNode,
+    asset::uuid_handle,
     ecs::system::RunSystemOnce,
     input_focus::{
         InputFocus, InputFocusVisible,
@@ -11,12 +12,12 @@ use bevy::{
     },
     picking::hover::PickingInteraction,
     prelude::*,
-    ui::InteractionDisabled,
+    ui::{InteractionDisabled, VisualBox, widget::NodeImageMode},
     ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, Theme, UiComponentPrototypesPlugin,
-    icon_button,
+    ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, SlicedImage, Theme,
+    UiComponentPrototypesPlugin, icon_button,
 };
 
 // ---------------------------------------------------------------------------
@@ -137,6 +138,64 @@ fn theme_font_smoothing_is_applied_to_the_label_and_follows_theme_changes() {
     }));
     app.update();
     assert_eq!(label_smoothing(&app, button), FontSmoothing::None);
+}
+
+#[test]
+fn surface_theme_tints_the_image_and_keeps_the_background_transparent() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(surface_theme()));
+    let button = spawn_primary(&mut app);
+    app.update();
+
+    let style = surface_theme().buttons.primary;
+    let node = image_node(&app, button).expect("surface adds an ImageNode");
+    assert_eq!(node.image, panel_image());
+    assert!(matches!(node.image_mode, NodeImageMode::Sliced(_)));
+    assert_eq!(node.visual_box, VisualBox::BorderBox);
+    assert_eq!(node.color, style.bg.normal);
+    assert_eq!(bg(&app, button), Color::NONE);
+
+    for (state, expected) in [
+        (PickingInteraction::Hovered, style.bg.hovered),
+        (PickingInteraction::Pressed, style.bg.pressed),
+    ] {
+        app.world_mut().entity_mut(button).insert(state);
+        app.update();
+        assert_eq!(image_node(&app, button).unwrap().color, expected);
+    }
+
+    app.world_mut()
+        .entity_mut(button)
+        .insert((PickingInteraction::None, InteractionDisabled));
+    app.update();
+    assert_eq!(image_node(&app, button).unwrap().color, style.bg.disabled);
+}
+
+#[test]
+fn swapping_to_a_theme_without_surface_removes_the_image_and_restores_the_background() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(surface_theme()));
+    let button = spawn_primary(&mut app);
+    app.update();
+    assert!(image_node(&app, button).is_some());
+
+    app.insert_resource(GlobalTheme(Theme::default()));
+    app.update();
+    assert!(image_node(&app, button).is_none());
+    assert_eq!(bg(&app, button), Theme::default().buttons.primary.bg.normal);
+
+    app.insert_resource(GlobalTheme(surface_theme()));
+    app.update();
+    assert!(image_node(&app, button).is_some());
+    assert_eq!(bg(&app, button), Color::NONE);
+}
+
+#[test]
+fn default_theme_never_adds_an_image_node() {
+    let mut app = test_app();
+    let button = spawn_primary(&mut app);
+    app.update();
+    assert!(image_node(&app, button).is_none());
 }
 
 // [S] swap the panel's own theme
@@ -489,6 +548,35 @@ fn label_color(app: &App, button: Entity) -> Color {
         .iter()
         .find_map(|child| world.get::<TextColor>(child).map(|c| c.0))
         .expect("button has a label child")
+}
+
+fn panel_image() -> Handle<Image> {
+    uuid_handle!("6a1f5c3e-0b52-4d8e-9a77-3c1d2e4f5a60")
+}
+
+/// Default theme with a 9-sliced image on every button.
+fn surface_theme() -> Theme {
+    let mut theme = Theme::default();
+    let surface = SlicedImage {
+        image: panel_image(),
+        slicer: TextureSlicer {
+            border: BorderRect::all(8.0),
+            ..default()
+        },
+    };
+    for style in [
+        &mut theme.buttons.neutral,
+        &mut theme.buttons.primary,
+        &mut theme.buttons.affirmative,
+        &mut theme.buttons.danger,
+    ] {
+        style.surface = Some(surface.clone());
+    }
+    theme
+}
+
+fn image_node(app: &App, button: Entity) -> Option<&ImageNode> {
+    app.world().get::<ImageNode>(button)
 }
 
 fn label_smoothing(app: &App, button: Entity) -> FontSmoothing {

@@ -49,12 +49,22 @@ impl FocusRing {
     };
 }
 
-#[derive(Clone, Copy, Debug)]
+/// A 9-sliced image drawn as the button's surface.
+#[derive(Clone, Debug)]
+pub struct SlicedImage {
+    pub image: Handle<Image>,
+    pub slicer: TextureSlicer,
+}
+
+#[derive(Clone, Debug)]
 pub struct ButtonStyle {
+    /// Background color. With a `surface`, it tints the image instead, and the node's own background stays transparent.
     pub bg: StateColors,
     pub fg: StateColors,
     pub border: StateColors,
     pub focus_ring: FocusRing,
+    /// `None` draws `bg` as a plain background.
+    pub surface: Option<SlicedImage>,
 }
 
 #[derive(Clone, Debug)]
@@ -98,6 +108,7 @@ impl Default for Theme {
                 width: Val::Px(2.0),
                 offset: Val::Px(2.0),
             },
+            surface: None,
         };
         Self {
             buttons: ButtonStyles {

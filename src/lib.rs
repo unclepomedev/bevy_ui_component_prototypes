@@ -2,7 +2,9 @@
 mod style;
 mod view;
 
-pub use style::theme::{ButtonStyle, ButtonStyles, FocusRing, GlobalTheme, StateColors, Theme};
+pub use style::theme::{
+    ButtonStyle, ButtonStyles, FocusRing, GlobalTheme, SlicedImage, StateColors, Theme,
+};
 pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button};
 
 use crate::view::{ButtonStylePlugin, TabOrderPlugin};

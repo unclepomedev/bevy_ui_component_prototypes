@@ -1,5 +1,5 @@
 use crate::style::{
-    theme::{ButtonStyle, FocusRing, Theme, VisualState},
+    theme::{ButtonStyle, FocusRing, SlicedImage, Theme, VisualState},
     theme_lookup::ThemeLookup,
 };
 use bevy::{
@@ -7,7 +7,7 @@ use bevy::{
     input_focus::{InputFocus, InputFocusVisible},
     picking::hover::PickingInteraction,
     prelude::*,
-    ui::{InteractionDisabled, UiSystems},
+    ui::{InteractionDisabled, UiSystems, VisualBox, widget::NodeImageMode},
     ui_widgets::Button,
 };
 
@@ -60,6 +60,7 @@ type ChangedButtons<'w, 's> = Query<
     ),
 >;
 
+// TODO: refactor
 fn sync_button_style(
     mut lookup: ThemeLookup,
     mut ring: FocusRingTracker,
@@ -67,9 +68,10 @@ fn sync_button_style(
     changed: ChangedButtons,
     all: Query<Entity, (With<Button>, With<ButtonVariant>)>,
     mut buttons: ButtonQuery,
-    mut content: ButtonContent,
+    mut parts: ButtonParts,
 ) {
     let (focused, focus_moved) = ring.update();
+
     let removed: Vec<Entity> = removed_disabled.read().collect();
     let targets: Vec<Entity> = if lookup.needs_resync() {
         all.iter().collect()
@@ -89,9 +91,17 @@ fn sync_button_style(
         let is_focused = focused == Some(entity);
         let state = VisualState::resolve(interaction, is_focused, disabled);
 
-        bg.set_if_neq(BackgroundColor(style.bg.pick(state)));
+        let tint = style.bg.pick(state);
+        // With an image surface, the background color tints the image instead.
+        let background = if style.surface.is_some() {
+            Color::NONE
+        } else {
+            tint
+        };
+        bg.set_if_neq(BackgroundColor(background));
+        parts.surface.apply(entity, style.surface.as_ref(), tint);
         border.set_if_neq(BorderColor::all(style.border.pick(state)));
-        content.apply(entity, style.fg.pick(state), theme);
+        parts.content.apply(entity, style.fg.pick(state), theme);
 
         // The ring marks keyboard focus regardless of hover or press, but never on a disabled button.
         let focus_ring = if is_focused && !disabled {
@@ -132,6 +142,56 @@ impl FocusRingTracker<'_, '_> {
             previous.into_iter().chain(focused).collect()
         };
         (focused, moved)
+    }
+}
+
+/// What the style sync writes besides the button node itself.
+#[derive(SystemParam)]
+struct ButtonParts<'w, 's> {
+    content: ButtonContent<'w, 's>,
+    surface: ButtonSurface<'w, 's>,
+}
+
+/// Draws or removes the image surface of a button.
+#[derive(SystemParam)]
+struct ButtonSurface<'w, 's> {
+    commands: Commands<'w, 's>,
+    images: Query<'w, 's, &'static mut ImageNode, Without<ButtonIcon>>,
+}
+
+impl ButtonSurface<'_, '_> {
+    /// `ImageNode` exists only while the style has a surface, because a default one paints a white box.
+    fn apply(&mut self, button: Entity, surface: Option<&SlicedImage>, tint: Color) {
+        match (surface, self.images.get_mut(button)) {
+            (Some(surface), Ok(mut node)) => {
+                if node.color != tint {
+                    node.color = tint;
+                }
+                if node.image != surface.image {
+                    node.image = surface.image.clone();
+                }
+                let mode = NodeImageMode::Sliced(surface.slicer.clone());
+                if node.image_mode != mode {
+                    node.image_mode = mode;
+                }
+                if node.visual_box != VisualBox::BorderBox {
+                    node.visual_box = VisualBox::BorderBox;
+                }
+            }
+            (Some(surface), Err(_)) => {
+                self.commands.entity(button).try_insert(ImageNode {
+                    image: surface.image.clone(),
+                    color: tint,
+                    image_mode: NodeImageMode::Sliced(surface.slicer.clone()),
+                    visual_box: VisualBox::BorderBox,
+                    ..default()
+                });
+            }
+            (None, Ok(_)) => {
+                self.commands.entity(button).try_remove::<ImageNode>();
+            }
+            (None, Err(_)) => {}
+        }
     }
 }
 
