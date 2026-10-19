@@ -1,19 +1,35 @@
 use super::IconButton;
-use bevy::{input_focus::tab_navigation::TabIndex, prelude::*, ui::InteractionDisabled};
+use bevy::{
+    input_focus::tab_navigation::TabIndex,
+    prelude::*,
+    ui::{InteractionDisabled, auto_directional_navigation::AutoDirectionalNavigation},
+};
 
 /// The `TabIndex` an [`IconButton`] had before it was disabled.
 #[derive(Component)]
 struct SavedTabIndex(i32);
 
-/// Keeps disabled buttons out of sequential Tab navigation.
+/// The [`AutoDirectionalNavigation`] an [`IconButton`] had before it was disabled.
+#[derive(Component)]
+struct SavedAutoNavigation(AutoDirectionalNavigation);
+
+/// Keeps a disabled [`IconButton`] out of keyboard navigation until it is enabled again.
 ///
-/// Bevy's Tab navigation does not look at [`InteractionDisabled`], so a disabled button would still take a Tab stop.
-/// It leaves the tab order (`TabIndex(-1)`) and gets its previous index back when it is enabled again.
+/// - Tab: `TabIndex` is -1 while disabled, and the previous value is restored.
+/// - Arrows: [`AutoDirectionalNavigation`] is removed while disabled and put back if the button had it.
+///   One added to a disabled button is removed the same way.
+///
+/// A button that holds the focus when it becomes disabled keeps it, and the arrows cannot leave it
+/// (Tab can). Moving the focus first is up to the app.
 pub(crate) struct TabOrderPlugin;
 impl Plugin for TabOrderPlugin {
     fn build(&self, app: &mut App) {
+        // Neither navigation looks at `InteractionDisabled`, so the buttons have to be taken out by hand.
         app.add_observer(leave_tab_order)
-            .add_observer(restore_tab_order);
+            .add_observer(restore_tab_order)
+            .add_observer(leave_directional_navigation)
+            .add_observer(refuse_directional_navigation)
+            .add_observer(restore_directional_navigation);
     }
 }
 
@@ -44,5 +60,45 @@ fn restore_tab_order(
             .entity(removed.entity)
             .try_insert(TabIndex(saved.0))
             .try_remove::<SavedTabIndex>();
+    }
+}
+
+fn leave_directional_navigation(
+    added: On<Add<InteractionDisabled>>,
+    buttons: Query<&AutoDirectionalNavigation, With<IconButton>>,
+    mut commands: Commands,
+) {
+    if let Ok(navigation) = buttons.get(added.entity) {
+        set_aside(&mut commands, added.entity, *navigation);
+    }
+}
+
+fn refuse_directional_navigation(
+    added: On<Add<AutoDirectionalNavigation>>,
+    buttons: Query<&AutoDirectionalNavigation, (With<IconButton>, With<InteractionDisabled>)>,
+    mut commands: Commands,
+) {
+    if let Ok(navigation) = buttons.get(added.entity) {
+        set_aside(&mut commands, added.entity, *navigation);
+    }
+}
+
+fn set_aside(commands: &mut Commands, button: Entity, navigation: AutoDirectionalNavigation) {
+    commands
+        .entity(button)
+        .insert(SavedAutoNavigation(navigation))
+        .remove::<AutoDirectionalNavigation>();
+}
+
+fn restore_directional_navigation(
+    removed: On<Remove<InteractionDisabled>>,
+    saved: Query<&SavedAutoNavigation>,
+    mut commands: Commands,
+) {
+    if let Ok(saved) = saved.get(removed.entity) {
+        commands
+            .entity(removed.entity)
+            .try_insert(saved.0)
+            .try_remove::<SavedAutoNavigation>();
     }
 }

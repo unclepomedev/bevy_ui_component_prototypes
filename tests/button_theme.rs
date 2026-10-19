@@ -12,7 +12,10 @@ use bevy::{
     },
     picking::hover::PickingInteraction,
     prelude::*,
-    ui::{InteractionDisabled, VisualBox, widget::NodeImageMode},
+    ui::{
+        InteractionDisabled, VisualBox, auto_directional_navigation::AutoDirectionalNavigation,
+        widget::NodeImageMode,
+    },
     ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
@@ -443,6 +446,88 @@ fn tab_navigation_skips_a_disabled_button() {
     app.update();
     assert_eq!(navigate(&mut app, first, NavAction::Next), last);
     assert_eq!(navigate(&mut app, last, NavAction::Previous), first);
+}
+
+// Bevy's automatic arrow-key navigation ignores `InteractionDisabled` too.
+#[test]
+fn disabled_button_leaves_directional_navigation_and_returns_when_enabled() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn((spawn_bundle(), AutoDirectionalNavigation::default()))
+        .id();
+    app.update();
+
+    app.world_mut()
+        .entity_mut(button)
+        .insert(InteractionDisabled);
+    app.update();
+    assert!(
+        app.world()
+            .get::<AutoDirectionalNavigation>(button)
+            .is_none()
+    );
+
+    app.world_mut()
+        .entity_mut(button)
+        .remove::<InteractionDisabled>();
+    app.update();
+    assert!(
+        app.world()
+            .get::<AutoDirectionalNavigation>(button)
+            .is_some()
+    );
+}
+
+#[test]
+fn a_button_spawned_disabled_does_not_join_directional_navigation() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn((
+            spawn_bundle(),
+            AutoDirectionalNavigation::default(),
+            InteractionDisabled,
+        ))
+        .id();
+    app.update();
+    assert!(
+        app.world()
+            .get::<AutoDirectionalNavigation>(button)
+            .is_none()
+    );
+
+    app.world_mut()
+        .entity_mut(button)
+        .remove::<InteractionDisabled>();
+    app.update();
+    assert!(
+        app.world()
+            .get::<AutoDirectionalNavigation>(button)
+            .is_some()
+    );
+}
+
+// Re-enabling must not give directional navigation to a button that never had it.
+#[test]
+fn re_enabling_does_not_add_directional_navigation() {
+    let mut app = test_app();
+    let button = spawn_primary(&mut app);
+    app.update();
+
+    app.world_mut()
+        .entity_mut(button)
+        .insert(InteractionDisabled);
+    app.update();
+    app.world_mut()
+        .entity_mut(button)
+        .remove::<InteractionDisabled>();
+    app.update();
+    assert!(
+        app.world()
+            .get::<AutoDirectionalNavigation>(button)
+            .is_none()
+    );
 }
 
 // ---------------------------------------------------------------------------
