@@ -166,7 +166,6 @@ fn spawn_item(root: &mut ChildSpawnerCommands, label: &'static str, autofocus: b
         let mut button = row.spawn((
             icon_button(label).size(ButtonSize::medium()).build(),
             Label(label),
-            // Added at spawn: the crate can only take it away from a button that has it when it is disabled.
             AutoDirectionalNavigation::default(),
         ));
         if autofocus {
@@ -300,11 +299,18 @@ fn update_markers(
 fn toggle_continue(
     mut commands: Commands,
     items: Query<(Entity, Has<InteractionDisabled>), With<ContinueItem>>,
+    mut navigator: AutoDirectionalNavigator,
 ) {
     for (entity, disabled) in &items {
         if disabled {
             commands.entity(entity).remove::<InteractionDisabled>();
         } else {
+            // The arrows cannot leave a disabled button, so move off it while it still can be left.
+            if navigator.input_focus() == Some(entity) {
+                let _ = navigator
+                    .navigate(CompassOctant::South)
+                    .or_else(|_| navigator.navigate(CompassOctant::North));
+            }
             commands.entity(entity).insert(InteractionDisabled);
         }
     }

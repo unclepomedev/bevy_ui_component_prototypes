@@ -17,7 +17,10 @@ struct SavedAutoNavigation(AutoDirectionalNavigation);
 ///
 /// - Tab: `TabIndex` is -1 while disabled, and the previous value is restored.
 /// - Arrows: [`AutoDirectionalNavigation`] is removed while disabled and put back if the button had it.
-///   One added to a button that is already disabled stays.
+///   One added to a disabled button is removed the same way.
+///
+/// A button that holds the focus when it becomes disabled keeps it, and the arrows cannot leave it
+/// (Tab can). Moving the focus first is up to the app.
 pub(crate) struct TabOrderPlugin;
 impl Plugin for TabOrderPlugin {
     fn build(&self, app: &mut App) {
@@ -25,6 +28,7 @@ impl Plugin for TabOrderPlugin {
         app.add_observer(leave_tab_order)
             .add_observer(restore_tab_order)
             .add_observer(leave_directional_navigation)
+            .add_observer(refuse_directional_navigation)
             .add_observer(restore_directional_navigation);
     }
 }
@@ -65,11 +69,25 @@ fn leave_directional_navigation(
     mut commands: Commands,
 ) {
     if let Ok(navigation) = buttons.get(added.entity) {
-        commands
-            .entity(added.entity)
-            .insert(SavedAutoNavigation(*navigation))
-            .remove::<AutoDirectionalNavigation>();
+        set_aside(&mut commands, added.entity, *navigation);
     }
+}
+
+fn refuse_directional_navigation(
+    added: On<Add<AutoDirectionalNavigation>>,
+    buttons: Query<&AutoDirectionalNavigation, (With<IconButton>, With<InteractionDisabled>)>,
+    mut commands: Commands,
+) {
+    if let Ok(navigation) = buttons.get(added.entity) {
+        set_aside(&mut commands, added.entity, *navigation);
+    }
+}
+
+fn set_aside(commands: &mut Commands, button: Entity, navigation: AutoDirectionalNavigation) {
+    commands
+        .entity(button)
+        .insert(SavedAutoNavigation(navigation))
+        .remove::<AutoDirectionalNavigation>();
 }
 
 fn restore_directional_navigation(
