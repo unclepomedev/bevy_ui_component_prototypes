@@ -9,19 +9,26 @@
 //!      supplies colors, so the focus ring is turned off (`FocusRing::NONE`).
 //!   3. Enter / Space on the focused item updates the "Activate:" line. While disabled, CONTINUE never activates,
 //!      and Tab skips it (the crate takes disabled buttons out of the tab order).
-//!   4. [D] enables / disables CONTINUE.
-//!   5. [T] swaps the global theme between this terminal theme and `Theme::default()`.
+//!   4. [Up] / [Down] move the focus too, and skip CONTINUE while it is disabled. Under the default theme
+//!      the focus ring shows after an arrow key.
+//!   5. [D] enables / disables CONTINUE.
+//!   6. [T] swaps the global theme between this terminal theme and `Theme::default()`.
 //!      Under the default theme the same buttons get solid backgrounds and the crate's focus ring.
 
 use bevy::{
     input::common_conditions::input_just_pressed,
     input_focus::{
         AutoFocus, FocusCause, InputFocus, InputFocusVisible,
+        directional_navigation::DirectionalNavigationPlugin,
         tab_navigation::{TabGroup, TabNavigationPlugin},
     },
+    math::CompassOctant,
     picking::{Pickable, hover::PickingInteraction},
     prelude::*,
-    ui::InteractionDisabled,
+    ui::{
+        InteractionDisabled,
+        auto_directional_navigation::{AutoDirectionalNavigation, AutoDirectionalNavigator},
+    },
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
@@ -60,10 +67,11 @@ struct TerminalLook(bool);
 fn main() {
     App::new()
         // `DefaultPlugins` already includes `UiWidgetsPlugins` and the input stack;
-        // only Tab navigation has to be added.
+        // Tab and directional (arrow key) navigation have to be added.
         .add_plugins((
             DefaultPlugins,
             TabNavigationPlugin,
+            DirectionalNavigationPlugin,
             UiComponentPrototypesPlugin,
         ))
         .insert_resource(ClearColor(SCREEN))
@@ -76,6 +84,7 @@ fn main() {
             (
                 toggle_continue.run_if(input_just_pressed(KeyCode::KeyD)),
                 swap_theme.run_if(input_just_pressed(KeyCode::KeyT)),
+                arrow_keys_move_focus,
                 // Console-style menu: hover moves focus, and the focus indicator stays visible
                 // (the crate's pointer focus would hide it on every click).
                 (hover_moves_focus, keep_focus_visible)
@@ -157,6 +166,8 @@ fn spawn_item(root: &mut ChildSpawnerCommands, label: &'static str, autofocus: b
         let mut button = row.spawn((
             icon_button(label).size(ButtonSize::medium()).build(),
             Label(label),
+            // Added at spawn: the crate can only take it away from a button that has it when it is disabled.
+            AutoDirectionalNavigation::default(),
         ));
         if autofocus {
             button.insert(AutoFocus);
@@ -188,7 +199,7 @@ fn spawn_item(root: &mut ChildSpawnerCommands, label: &'static str, autofocus: b
 
 fn spawn_help(root: &mut ChildSpawnerCommands) {
     root.spawn((
-        Text::new("[Tab] move   [Enter / Space] activate   [D] toggle CONTINUE   [T] swap theme"),
+        Text::new("[Tab] [Up] [Down] move   [Enter / Space] activate   [D] toggle CONTINUE   [T] swap theme"),
         TextColor(PHOSPHOR_OFF),
         Node {
             margin: UiRect::top(Val::Px(48.0)),
@@ -237,6 +248,25 @@ fn hover_moves_focus(mut focus: ResMut<InputFocus>, hovered: HoveredMenuButtons)
     for (entity, interaction, disabled) in &hovered {
         if *interaction != PickingInteraction::None && !disabled && focus.get() != Some(entity) {
             focus.set(entity, FocusCause::Navigated);
+        }
+    }
+}
+
+/// Up / Down move the focus to the nearest button in that direction and show the focus ring.
+fn arrow_keys_move_focus(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut navigator: AutoDirectionalNavigator,
+    mut focus_visible: ResMut<InputFocusVisible>,
+) {
+    for (key, direction) in [
+        (KeyCode::ArrowUp, CompassOctant::North),
+        (KeyCode::ArrowDown, CompassOctant::South),
+    ] {
+        if keys.just_pressed(key) {
+            // Directional navigation leaves `InputFocusVisible` alone, so the ring would stay hidden.
+            focus_visible.0 = true;
+            // No neighbor (first or last item) just leaves the focus where it is.
+            let _ = navigator.navigate(direction);
         }
     }
 }
