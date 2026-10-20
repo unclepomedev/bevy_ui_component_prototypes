@@ -8,15 +8,14 @@
 //! What to verify:
 //!   1. Clicking "Sound" or "Music" flips it: the track changes color and the thumb slides to the other
 //!      end. "Music" starts on (it was spawned with `Checked`).
-//!   2. Hover brightens the track and press darkens it, in both the on and the off state.
-//!   3. "Locked" asks for a change on click but the observer refuses it: the status line shows the
+//!   2. Hover brightens the track, and press darkens it, in both the on and the off state.
+//!   3. "Locked" asks for a change on click, but the observer refuses it: the status line shows the
 //!      request, and the switch stays where it is. This is the controlled model at work.
 //!   4. Tab / Shift+Tab move keyboard focus between the switches, and a focus ring appears around the
 //!      focused one; Enter / Space asks for a change. Clicking hides the ring again.
 //!   5. The two "Disabled" switches (spawned with `InteractionDisabled`, off and on) are gray, show no
 //!      hover / press / focus ring, make no request when clicked, and Tab skips them. Unlike "Locked", the
-//!      widget itself refuses here. Switching a switch between enabled and disabled at runtime is
-//!      covered by `tests/switch_theme.rs` (and `button_check`'s [D]), not repeated here.
+//!      widget itself refuses here.
 //!   6. [T] swaps the global theme (the on color turns orange). The framed panel, which has its own
 //!      `Theme`, does not change.
 //!   7. [S] swaps the framed panel's own `Theme`. Only the panel changes.
