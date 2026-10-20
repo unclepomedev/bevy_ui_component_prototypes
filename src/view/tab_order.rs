@@ -5,9 +5,6 @@ use bevy::{
 };
 
 /// Marks a widget that must leave keyboard navigation while it is disabled.
-///
-/// Widgets of this crate require it (`#[require(KeyboardNavigable)]`), so [`TabOrderPlugin`]
-/// serves them all. It is crate-internal: apps never add it themselves.
 #[derive(Component, Clone, Copy, Default)]
 pub(crate) struct KeyboardNavigable;
 
