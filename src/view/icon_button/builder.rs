@@ -1,8 +1,10 @@
 use super::{ButtonSize, IconButton, icon_button_node};
-use crate::view::button::{ButtonIcon, ButtonLabel, ButtonVariant};
+use crate::view::{
+    button::{ButtonIcon, ButtonLabel, ButtonVariant},
+    picking::pass_through,
+};
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
-    picking::Pickable,
     prelude::*,
 };
 
@@ -74,13 +76,5 @@ impl IconButtonBuilder {
                 ));
             })),
         )
-    }
-}
-
-/// Lets pointer events fall through to the button itself instead of being absorbed by the label / icon child.
-fn pass_through() -> Pickable {
-    Pickable {
-        should_block_lower: false,
-        is_hoverable: false,
     }
 }

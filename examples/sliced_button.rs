@@ -193,6 +193,7 @@ fn sliced_theme(assets: &Assets) -> Theme {
         },
         font: assets.font.clone().into(),
         font_smoothing: FontSmoothing::None,
+        ..default() // unrelated theme
     }
 }
 

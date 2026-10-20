@@ -56,6 +56,30 @@ impl StateColors {
     }
 }
 
+/// Colors of a two-state widget (a switch): one [`StateColors`] per checked state.
+#[derive(Clone, Copy, Debug)]
+pub struct CheckedColors {
+    pub unchecked: StateColors,
+    pub checked: StateColors,
+}
+
+impl CheckedColors {
+    pub fn uniform(c: Color) -> Self {
+        Self {
+            unchecked: StateColors::uniform(c),
+            checked: StateColors::uniform(c),
+        }
+    }
+
+    pub(crate) fn pick(&self, checked: bool, state: VisualState) -> Color {
+        if checked {
+            self.checked.pick(state)
+        } else {
+            self.unchecked.pick(state)
+        }
+    }
+}
+
 // ============================================================================================
 // UNIT TESTS
 // ============================================================================================
@@ -103,5 +127,21 @@ mod tests {
         assert_eq!(colors.pick(VisualState::Pressed), colors.pressed);
         assert_eq!(colors.pick(VisualState::Focused), colors.focused);
         assert_eq!(colors.pick(VisualState::Disabled), colors.disabled);
+    }
+
+    #[test]
+    fn checked_colors_pick_by_checked_state_then_visual_state() {
+        let colors = CheckedColors {
+            unchecked: StateColors::uniform(Color::srgb(0.1, 0.0, 0.0)),
+            checked: StateColors::uniform(Color::srgb(0.9, 0.0, 0.0)),
+        };
+        assert_eq!(
+            colors.pick(false, VisualState::Hovered),
+            colors.unchecked.hovered
+        );
+        assert_eq!(
+            colors.pick(true, VisualState::Hovered),
+            colors.checked.hovered
+        );
     }
 }

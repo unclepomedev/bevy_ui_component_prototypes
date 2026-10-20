@@ -4,34 +4,43 @@ mod view;
 
 pub use crate::style::{
     button::{ButtonStyle, ButtonStyles, FocusRing, SlicedImage},
-    state::StateColors,
+    state::{CheckedColors, StateColors},
+    switch::SwitchStyle,
     theme::{GlobalTheme, Theme},
 };
-pub use view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button};
+pub use view::{
+    ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, ToggleSwitch, ToggleSwitchBuilder,
+    icon_button, toggle_switch,
+};
 
-use crate::view::{ButtonStylePlugin, TabOrderPlugin};
+use crate::view::{ButtonStylePlugin, SwitchStylePlugin, TabOrderPlugin};
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
     prelude::*,
-    ui_widgets::ButtonPlugin,
+    ui_widgets::{ButtonPlugin, CheckboxPlugin},
 };
 
 /// Theming for the widgets in this crate.
 ///
 /// This plugin does not add `UiWidgetsPlugins`. Add the plugins for the behavior you use yourself:
 /// - [`ButtonPlugin`] (included in `DefaultPlugins`): button activation
+/// - [`CheckboxPlugin`] (included in `DefaultPlugins`): toggle switch changes
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<GlobalTheme>()
-            .add_plugins((ButtonStylePlugin, TabOrderPlugin));
+        app.init_resource::<GlobalTheme>().add_plugins((
+            ButtonStylePlugin,
+            SwitchStylePlugin,
+            TabOrderPlugin,
+        ));
     }
 
     fn finish(&self, app: &mut App) {
         let plugins = [
             ("ButtonPlugin", app.is_plugin_added::<ButtonPlugin>()),
+            ("CheckboxPlugin", app.is_plugin_added::<CheckboxPlugin>()),
             (
                 "InputDispatchPlugin",
                 app.is_plugin_added::<InputDispatchPlugin>(),
