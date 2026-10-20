@@ -3,7 +3,7 @@ use crate::style::{
     layout,
     spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
 };
-use crate::view::button::ButtonVariant;
+use crate::view::{KeyboardNavigable, button::ButtonVariant};
 use bevy::{
     input_focus::tab_navigation::TabIndex, picking::hover::PickingInteraction, prelude::*,
     ui_widgets::Button,
@@ -13,13 +13,15 @@ use bevy::{
 ///
 /// Behavior comes from [`Button`]: it emits [`bevy::ui_widgets::Activate`] on click and on Enter/Space while focused,
 /// uses [`bevy::ui::InteractionDisabled`], and exposes a button role to accessibility tools.
-/// `TabIndex(0)` makes it reachable with the Tab key when it is inside a `TabGroup`.
-/// A focus ring is drawn through `Outline` while the focus indicator is visible.
+/// Text placed next to the button is not associated with it: give the button a name for screen readers with `AccessibleLabel`.
+/// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
+/// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
 #[derive(Component)]
 #[require(
     Button,
     PickingInteraction,
     TabIndex(0),
+    KeyboardNavigable,
     ButtonVariant,
     Outline = hidden_outline(),
     Node = default_icon_button_node()

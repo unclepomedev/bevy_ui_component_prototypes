@@ -4,4 +4,5 @@ pub(crate) mod font_size;
 pub(crate) mod layout;
 pub(crate) mod spacing;
 pub(crate) mod state;
+pub(crate) mod switch;
 pub(crate) mod theme;

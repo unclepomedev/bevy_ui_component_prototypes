@@ -1,13 +1,12 @@
 mod content;
-mod focus;
 mod surface;
 mod variant;
 
 pub(crate) use self::content::{ButtonIcon, ButtonLabel};
 pub use self::variant::ButtonVariant;
 
-use self::{content::ButtonContent, focus::FocusRingTracker, surface::ButtonSurface};
-use super::theme_lookup::ThemeLookup;
+use self::{content::ButtonContent, surface::ButtonSurface};
+use super::{focus::FocusRingTracker, theme_lookup::ThemeLookup};
 use crate::style::{button::ButtonLook, state::VisualState};
 use bevy::{
     ecs::system::SystemParam,

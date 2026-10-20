@@ -1,9 +1,10 @@
-use super::button::ButtonStyles;
+use super::{button::ButtonStyles, switch::SwitchStyle};
 use bevy::prelude::*;
 
 #[derive(Component, Clone, Debug, Default)]
 pub struct Theme {
     pub buttons: ButtonStyles,
+    pub switch: SwitchStyle,
     pub font: FontSource,
     pub font_smoothing: FontSmoothing,
 }

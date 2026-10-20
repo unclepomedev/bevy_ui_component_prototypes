@@ -4,10 +4,10 @@ use bevy::{
     prelude::*,
 };
 
-/// Follows which button should show its focus ring.
+/// Follows which widget should show its focus ring.
 #[derive(SystemParam)]
-pub(super) struct FocusRingTracker<'w, 's> {
-    // Optional so that apps without `InputFocusPlugin` simply have no focused button.
+pub(crate) struct FocusRingTracker<'w, 's> {
+    // Optional so that apps without `InputFocusPlugin` simply have no focused widget.
     focus: Option<Res<'w, InputFocus>>,
     visible: Option<Res<'w, InputFocusVisible>>,
     last: Local<'s, Option<Entity>>,
@@ -16,7 +16,7 @@ pub(super) struct FocusRingTracker<'w, 's> {
 impl FocusRingTracker<'_, '_> {
     /// Returns the entity whose focus indicator is visible right now, and the entities
     /// whose ring state has changed since the previous call (the old and the new owner).
-    pub(super) fn update(&mut self) -> (Option<Entity>, Vec<Entity>) {
+    pub(crate) fn update(&mut self) -> (Option<Entity>, Vec<Entity>) {
         let focused = self
             .focus
             .as_deref()

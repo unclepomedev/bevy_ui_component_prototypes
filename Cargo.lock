@@ -1868,6 +1868,7 @@ dependencies = [
 name = "bevy_ui_component_prototypes"
 version = "0.0.2"
 dependencies = [
+ "accesskit",
  "bevy",
  "bevy_asset_loader",
 ]
