@@ -14,20 +14,18 @@ const THUMB_SIZE: f32 = 22.0;
 
 /// A themed toggle switch: a track with a sliding thumb.
 ///
-/// Behavior comes from [`Checkbox`]: a click or Enter/Space on the focused switch emits
-/// [`bevy::ui_widgets::ValueChange<bool>`] carrying the requested value, and the on/off state is the
-/// presence of [`bevy::ui::Checked`]. The switch never changes its own state: the app applies the
-/// change by inserting or removing `Checked` (or adds
-/// [`bevy::ui_widgets::checkbox_self_update`] to let Bevy do exactly that). The initial state is
-/// the same: spawn `(toggle_switch().build(), Checked)` for a switch that starts on.
+/// Behavior comes from [`Checkbox`]: a click or Enter/Space on the focused switch emits [`bevy::ui_widgets::ValueChange<bool>`]
+/// carrying the requested value, and the on/off state is the presence of [`bevy::ui::Checked`].
+/// The switch never changes its own state: the app applies the change by inserting or removing `Checked`
+/// (or adds [`bevy::ui_widgets::checkbox_self_update`] to let Bevy do exactly that).
+/// The initial state is the same: spawn `(toggle_switch().build(), Checked)` for a switch that starts on.
 ///
-/// Accessibility tools see a switch: `Role::Switch` replaces the checkbox role that [`Checkbox`] comes with.
-///
-/// `TabIndex(0)` makes it reachable with the Tab key when it is inside a `TabGroup`.
-/// A focus ring is drawn through `Outline` while the focus indicator is visible.
+/// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
+/// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
 #[derive(Component)]
 #[require(
     Checkbox,
+    // Bevy's `Checkbox` asks for the checkbox role; a switch overrides it.
     AccessibilityNode(AccessKitNode::new(Role::Switch)),
     PickingInteraction,
     TabIndex(0),
