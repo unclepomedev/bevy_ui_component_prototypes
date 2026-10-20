@@ -107,6 +107,7 @@ type ChangedSwitches<'w, 's> = Query<
     (
         With<ToggleSwitch>,
         Or<(
+            Added<ToggleSwitch>,
             Changed<PickingInteraction>,
             Changed<Checked>,
             Added<InteractionDisabled>,
