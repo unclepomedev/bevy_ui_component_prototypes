@@ -11,7 +11,7 @@ use bevy::{
     ui_widgets::{Checkbox, CheckboxPlugin, SetChecked, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, StateColors, Theme, UiComponentPrototypesPlugin, toggle_switch,
+    GlobalTheme, StateColors, Theme, ToggleSwitch, UiComponentPrototypesPlugin, toggle_switch,
 };
 
 // ---------------------------------------------------------------------------
@@ -47,6 +47,19 @@ fn unchecked_switch_is_styled_after_one_update() {
     let style = Theme::default().switch;
     assert_eq!(track(&app, switch), style.track.unchecked.normal);
     assert_eq!(thumb(&app, switch), style.thumb.unchecked.normal);
+    assert_eq!(thumb_side(&app, switch), JustifyContent::Start);
+}
+
+// `ToggleSwitch` is public, so it can be spawned without the builder and its thumb.
+#[test]
+fn a_switch_without_a_thumb_is_still_styled() {
+    let mut app = test_app();
+    let switch = app.world_mut().spawn(ToggleSwitch).id();
+
+    app.update();
+
+    let style = Theme::default().switch;
+    assert_eq!(track(&app, switch), style.track.unchecked.normal);
     assert_eq!(thumb_side(&app, switch), JustifyContent::Start);
 }
 

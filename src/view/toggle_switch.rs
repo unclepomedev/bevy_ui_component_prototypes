@@ -63,7 +63,7 @@ fn sync_switch_style(
         if node.justify_content != side {
             node.justify_content = side;
         }
-        for child in children.iter() {
+        for child in children.into_iter().flat_map(|children| children.iter()) {
             if let Ok(mut thumb) = thumbs.get_mut(child) {
                 thumb.set_if_neq(BackgroundColor(look.thumb));
             }
@@ -125,7 +125,7 @@ type SwitchQuery<'w, 's> = Query<
         &'static mut BorderColor,
         &'static mut Outline,
         &'static mut Node,
-        &'static Children,
+        Option<&'static Children>,
     ),
     With<ToggleSwitch>,
 >;
