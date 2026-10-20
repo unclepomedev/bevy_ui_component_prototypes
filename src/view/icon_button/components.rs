@@ -3,7 +3,7 @@ use crate::style::{
     layout,
     spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
 };
-use crate::view::button::ButtonVariant;
+use crate::view::{KeyboardNavigable, button::ButtonVariant};
 use bevy::{
     input_focus::tab_navigation::TabIndex, picking::hover::PickingInteraction, prelude::*,
     ui_widgets::Button,
@@ -20,6 +20,7 @@ use bevy::{
     Button,
     PickingInteraction,
     TabIndex(0),
+    KeyboardNavigable,
     ButtonVariant,
     Outline = hidden_outline(),
     Node = default_icon_button_node()
