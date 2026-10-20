@@ -3,7 +3,9 @@
 //!
 //! Real pointer picking, layout and the sliding look are covered by `examples/toggle_check.rs`.
 
+use accesskit::Role;
 use bevy::{
+    a11y::AccessibilityNode,
     input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex},
     picking::hover::PickingInteraction,
     prelude::*,
@@ -61,6 +63,19 @@ fn a_switch_without_a_thumb_is_still_styled() {
     let style = Theme::default().switch;
     assert_eq!(track(&app, switch), style.track.unchecked.normal);
     assert_eq!(thumb_side(&app, switch), JustifyContent::Start);
+}
+
+#[test]
+fn attaching_the_component_to_an_existing_entity_styles_it() {
+    let mut app = test_app();
+    let entity = app.world_mut().spawn(PickingInteraction::None).id();
+    app.update();
+
+    app.world_mut().entity_mut(entity).insert(ToggleSwitch);
+    app.update();
+
+    let style = Theme::default().switch;
+    assert_eq!(track(&app, entity), style.track.unchecked.normal);
 }
 
 #[test]
@@ -290,6 +305,20 @@ fn disabled_switch_leaves_the_tab_order_and_returns_when_enabled() {
         .remove::<InteractionDisabled>();
     app.update();
     assert_eq!(tab_index(&app, switch), 0);
+}
+
+#[test]
+fn an_accessible_label_given_by_the_app_coexists_with_the_switch_role() {
+    let mut app = test_app();
+    let switch = app
+        .world_mut()
+        .spawn((toggle_switch().build(), AccessibleLabel::new("Sound")))
+        .id();
+    app.update();
+
+    let node = app.world().get::<AccessibilityNode>(switch).unwrap();
+    assert_eq!(node.role(), Role::Switch);
+    assert_eq!(node.label(), Some("Sound"));
 }
 
 // ---------------------------------------------------------------------------
