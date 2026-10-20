@@ -13,8 +13,8 @@ use bevy::{
 ///
 /// Behavior comes from [`Button`]: it emits [`bevy::ui_widgets::Activate`] on click and on Enter/Space while focused,
 /// uses [`bevy::ui::InteractionDisabled`], and exposes a button role to accessibility tools.
-/// `TabIndex(0)` makes it reachable with the Tab key when it is inside a `TabGroup`.
-/// A focus ring is drawn through `Outline` while the focus indicator is visible.
+/// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
+/// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
 #[derive(Component)]
 #[require(
     Button,
