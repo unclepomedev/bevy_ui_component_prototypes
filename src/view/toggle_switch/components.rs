@@ -1,7 +1,8 @@
 use crate::view::KeyboardNavigable;
+use accesskit::{Node as AccessKitNode, Role};
 use bevy::{
-    input_focus::tab_navigation::TabIndex, picking::hover::PickingInteraction, prelude::*,
-    ui_widgets::Checkbox,
+    a11y::AccessibilityNode, input_focus::tab_navigation::TabIndex,
+    picking::hover::PickingInteraction, prelude::*, ui_widgets::Checkbox,
 };
 
 // Track: 52 x 30 with a 2px border and 2px padding leaves a 22px square for the thumb.
@@ -20,14 +21,14 @@ const THUMB_SIZE: f32 = 22.0;
 /// [`bevy::ui_widgets::checkbox_self_update`] to let Bevy do exactly that). The initial state is
 /// the same: spawn `(toggle_switch().build(), Checked)` for a switch that starts on.
 ///
-/// Accessibility tools see a checkbox (Bevy's role for [`Checkbox`]); a switch role needs a direct
-/// `accesskit` dependency, which this crate does not take yet.
+/// Accessibility tools see a switch: `Role::Switch` replaces the checkbox role that [`Checkbox`] comes with.
 ///
 /// `TabIndex(0)` makes it reachable with the Tab key when it is inside a `TabGroup`.
 /// A focus ring is drawn through `Outline` while the focus indicator is visible.
 #[derive(Component)]
 #[require(
     Checkbox,
+    AccessibilityNode(AccessKitNode::new(Role::Switch)),
     PickingInteraction,
     TabIndex(0),
     KeyboardNavigable,
