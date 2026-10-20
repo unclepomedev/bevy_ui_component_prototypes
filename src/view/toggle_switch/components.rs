@@ -19,6 +19,7 @@ const THUMB_SIZE: f32 = 22.0;
 /// The switch never changes its own state: the app applies the change by inserting or removing `Checked`
 /// (or adds [`bevy::ui_widgets::checkbox_self_update`] to let Bevy do exactly that).
 /// The initial state is the same: spawn `(toggle_switch().build(), Checked)` for a switch that starts on.
+/// Text placed next to the switch is not associated with it: give the switch a name for screen readers with `AccessibleLabel`.
 ///
 /// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
 /// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
