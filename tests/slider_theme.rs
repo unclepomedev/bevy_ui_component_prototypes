@@ -289,6 +289,25 @@ fn slider_spawned_later_inside_a_scope_uses_the_scope_theme_immediately() {
     assert_eq!(fill(&app, late), red());
 }
 
+#[test]
+fn editing_follows_a_custom_theme() {
+    let mut app = test_app();
+    let mut theme = Theme::default();
+    theme.slider.editing_thumb = red();
+    theme.slider.editing_ring = red();
+    app.insert_resource(GlobalTheme(theme));
+    let slider = app
+        .world_mut()
+        .spawn((slider().build(), SliderEditing))
+        .id();
+    app.update();
+    focus(&mut app, slider, true);
+    app.update();
+
+    assert_eq!(thumb(&app, slider), red());
+    assert_eq!(outline(&app, slider).color, red());
+}
+
 // ---------------------------------------------------------------------------
 // Focus
 // ---------------------------------------------------------------------------
@@ -362,39 +381,44 @@ fn disabled_slider_shows_neither_ring_nor_focused_colors() {
 // ---------------------------------------------------------------------------
 
 #[test]
-fn editing_tint_shows_on_thumb_and_focused_ring_and_clears_on_removal() {
+fn editing_changes_the_thumb_and_the_ring_and_removal_restores_them() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
     let style = Theme::default().slider;
     app.update();
-
     focus(&mut app, slider, true);
     app.update();
-    assert_eq!(thumb(&app, slider), style.thumb.normal);
-    assert_eq!(outline(&app, slider).color, style.focus_ring.color);
+    let idle_ring = outline(&app, slider);
+    assert_eq!(idle_ring.color, style.focus_ring.color);
 
     app.world_mut().entity_mut(slider).insert(SliderEditing);
     app.update();
     assert_eq!(thumb(&app, slider), style.editing_thumb);
-    assert_eq!(outline(&app, slider).color, style.editing_ring);
+    let ring = outline(&app, slider);
+    assert_eq!(ring.color, style.editing_ring);
+    assert_eq!(ring.width, idle_ring.width);
+    // The rail and the fill are not part of it.
+    assert_eq!(rail(&app, slider), style.rail.focused);
+    assert_eq!(fill(&app, slider), style.fill.focused);
 
+    // Removal is not a `Changed`; it has to be picked up through `RemovedComponents`.
     app.world_mut().entity_mut(slider).remove::<SliderEditing>();
     app.update();
-    assert_eq!(thumb(&app, slider), style.thumb.normal);
+    assert_eq!(thumb(&app, slider), style.thumb.focused);
     assert_eq!(outline(&app, slider).color, style.focus_ring.color);
 }
 
 #[test]
-fn editing_without_focus_tints_thumb_only() {
+fn editing_shows_no_ring_while_the_focus_indicator_is_hidden() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
-    let style = Theme::default().slider;
     app.update();
-
+    focus(&mut app, slider, false);
     app.world_mut().entity_mut(slider).insert(SliderEditing);
     app.update();
-    assert_eq!(thumb(&app, slider), style.editing_thumb);
+
     assert_eq!(outline(&app, slider).color, Color::NONE);
+    assert_eq!(thumb(&app, slider), Theme::default().slider.editing_thumb);
 }
 
 #[test]

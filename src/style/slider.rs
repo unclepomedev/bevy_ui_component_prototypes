@@ -127,4 +127,38 @@ mod tests {
             FocusRing::NONE
         );
     }
+
+    #[test]
+    fn editing_changes_the_thumb_and_the_ring_color_only() {
+        let style = SliderStyle::default();
+        let idle = style.look(VisualState::Focused, true, false);
+        let editing = style.look(VisualState::Focused, true, true);
+        assert_eq!(editing.thumb, style.editing_thumb);
+        assert_eq!(editing.ring.color, style.editing_ring);
+        assert_eq!(editing.ring.width, idle.ring.width);
+        assert_eq!(editing.ring.offset, idle.ring.offset);
+        assert_eq!(editing.rail, idle.rail);
+        assert_eq!(editing.fill, idle.fill);
+        assert_ne!(
+            idle.thumb, editing.thumb,
+            "the default palette must show editing"
+        );
+        assert_ne!(idle.ring.color, editing.ring.color);
+    }
+
+    #[test]
+    fn editing_shows_no_ring_without_the_focus_indicator() {
+        let style = SliderStyle::default();
+        let look = style.look(VisualState::Normal, false, true);
+        assert_eq!(look.ring, FocusRing::NONE);
+        assert_eq!(look.thumb, style.editing_thumb);
+    }
+
+    #[test]
+    fn a_disabled_slider_ignores_editing() {
+        let style = SliderStyle::default();
+        let look = style.look(VisualState::Disabled, true, true);
+        assert_eq!(look.thumb, style.thumb.disabled);
+        assert_eq!(look.ring, FocusRing::NONE);
+    }
 }
