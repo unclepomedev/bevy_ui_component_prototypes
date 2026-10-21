@@ -13,14 +13,26 @@ pub(crate) enum VisualState {
 impl VisualState {
     /// Precedence: disabled > pressed > hovered > focused > normal.
     pub(crate) fn resolve(interaction: &PickingInteraction, focused: bool, disabled: bool) -> Self {
+        Self::from_flags(
+            *interaction == PickingInteraction::Pressed,
+            *interaction == PickingInteraction::Hovered,
+            focused,
+            disabled,
+        )
+    }
+
+    /// The same precedence for widgets that do not read `PickingInteraction` (a slider).
+    pub(crate) fn from_flags(pressed: bool, hovered: bool, focused: bool, disabled: bool) -> Self {
         if disabled {
-            return Self::Disabled;
-        }
-        match interaction {
-            PickingInteraction::Pressed => Self::Pressed,
-            PickingInteraction::Hovered => Self::Hovered,
-            PickingInteraction::None if focused => Self::Focused,
-            PickingInteraction::None => Self::Normal,
+            Self::Disabled
+        } else if pressed {
+            Self::Pressed
+        } else if hovered {
+            Self::Hovered
+        } else if focused {
+            Self::Focused
+        } else {
+            Self::Normal
         }
     }
 }
@@ -105,6 +117,16 @@ mod tests {
     #[test]
     fn hovered_beats_focused() {
         assert_eq!(resolve(Hovered, true, false), VisualState::Hovered);
+    }
+
+    #[test]
+    fn flags_follow_the_same_precedence() {
+        let flags = VisualState::from_flags;
+        assert_eq!(flags(true, true, true, true), VisualState::Disabled);
+        assert_eq!(flags(true, true, true, false), VisualState::Pressed);
+        assert_eq!(flags(false, true, true, false), VisualState::Hovered);
+        assert_eq!(flags(false, false, true, false), VisualState::Focused);
+        assert_eq!(flags(false, false, false, false), VisualState::Normal);
     }
 
     #[test]

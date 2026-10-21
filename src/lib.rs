@@ -4,20 +4,21 @@ mod view;
 
 pub use crate::style::{
     button::{ButtonStyle, ButtonStyles, FocusRing, SlicedImage},
+    slider::SliderStyle,
     state::{CheckedColors, StateColors},
     switch::SwitchStyle,
     theme::{GlobalTheme, Theme},
 };
 pub use view::{
-    ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, ToggleSwitch, ToggleSwitchBuilder,
-    icon_button, toggle_switch,
+    ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, SliderBuilder, ToggleSwitch,
+    ToggleSwitchBuilder, ValueSlider, icon_button, slider, toggle_switch,
 };
 
-use crate::view::{ButtonStylePlugin, SwitchStylePlugin, TabOrderPlugin};
+use crate::view::{ButtonStylePlugin, SliderStylePlugin, SwitchStylePlugin, TabOrderPlugin};
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
     prelude::*,
-    ui_widgets::{ButtonPlugin, CheckboxPlugin},
+    ui_widgets::{ButtonPlugin, CheckboxPlugin, SliderPlugin},
 };
 
 /// Theming for the widgets in this crate.
@@ -25,6 +26,7 @@ use bevy::{
 /// This plugin does not add `UiWidgetsPlugins`. Add the plugins for the behavior you use yourself:
 /// - [`ButtonPlugin`] (included in `DefaultPlugins`): button activation
 /// - [`CheckboxPlugin`] (included in `DefaultPlugins`): toggle switch changes
+/// - [`SliderPlugin`] (included in `DefaultPlugins`): slider changes
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
 pub struct UiComponentPrototypesPlugin;
@@ -33,6 +35,7 @@ impl Plugin for UiComponentPrototypesPlugin {
         app.init_resource::<GlobalTheme>().add_plugins((
             ButtonStylePlugin,
             SwitchStylePlugin,
+            SliderStylePlugin,
             TabOrderPlugin,
         ));
     }
@@ -41,6 +44,7 @@ impl Plugin for UiComponentPrototypesPlugin {
         let plugins = [
             ("ButtonPlugin", app.is_plugin_added::<ButtonPlugin>()),
             ("CheckboxPlugin", app.is_plugin_added::<CheckboxPlugin>()),
+            ("SliderPlugin", app.is_plugin_added::<SliderPlugin>()),
             (
                 "InputDispatchPlugin",
                 app.is_plugin_added::<InputDispatchPlugin>(),
