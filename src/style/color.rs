@@ -35,3 +35,4 @@ pub(crate) const BORDER: Color = Color::srgb(0.35, 0.35, 0.42);
 
 // Focus ring ===========
 pub(crate) const FOCUS_RING: Color = Color::srgb(0.85, 0.88, 1.0);
+pub(crate) const EDITING: Color = Color::srgb(1.0, 0.75, 0.25);

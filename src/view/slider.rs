@@ -3,7 +3,7 @@ mod components;
 
 pub use self::{
     builder::{SliderBuilder, slider},
-    components::ValueSlider,
+    components::{SliderEditing, ValueSlider},
 };
 
 use self::components::SliderPart;
@@ -38,7 +38,7 @@ fn sync_slider_style(
     let targets = targets.collect(lookup.needs_resync(), focus_moved);
 
     for entity in targets {
-        let Ok((value, range, drag, pressed, hovered, disabled, mut outline)) =
+        let Ok((value, range, drag, pressed, hovered, disabled, editing, mut outline)) =
             sliders.get_mut(entity)
         else {
             continue;
@@ -53,7 +53,7 @@ fn sync_slider_style(
             is_focused,
             disabled,
         );
-        let look = style.look(state, is_focused);
+        let look = style.look(state, is_focused, editing);
 
         outline.set_if_neq(Outline::new(
             look.ring.width,
@@ -94,6 +94,7 @@ struct SliderTargets<'w, 's> {
     all: Query<'w, 's, Entity, With<ValueSlider>>,
     released: RemovedComponents<'w, 's, Pressed>,
     enabled: RemovedComponents<'w, 's, InteractionDisabled>,
+    stopped_editing: RemovedComponents<'w, 's, SliderEditing>,
 }
 
 impl SliderTargets<'_, '_> {
@@ -103,6 +104,7 @@ impl SliderTargets<'_, '_> {
         // Read every time, so that a removal is never seen twice.
         let released: Vec<Entity> = self.released.read().collect();
         let enabled: Vec<Entity> = self.enabled.read().collect();
+        let stopped_editing: Vec<Entity> = self.stopped_editing.read().collect();
         if resync {
             self.all.iter().collect()
         } else {
@@ -110,6 +112,7 @@ impl SliderTargets<'_, '_> {
                 .iter()
                 .chain(released)
                 .chain(enabled)
+                .chain(stopped_editing)
                 .chain(focus_moved)
                 .collect()
         }
@@ -130,6 +133,7 @@ type ChangedSliders<'w, 's> = Query<
             Changed<Hovered>,
             Added<Pressed>,
             Added<InteractionDisabled>,
+            Added<SliderEditing>,
         )>,
     ),
 >;
@@ -144,6 +148,7 @@ type SliderQuery<'w, 's> = Query<
         Has<Pressed>,
         &'static Hovered,
         Has<InteractionDisabled>,
+        Has<SliderEditing>,
         &'static mut Outline,
     ),
     With<ValueSlider>,
