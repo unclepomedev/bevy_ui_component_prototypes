@@ -12,9 +12,9 @@ use super::{
     style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
 };
-use crate::style::state::VisualState;
+use crate::style::{slider::SliderLook, state::VisualState};
 use bevy::{
-    ecs::system::SystemParam,
+    ecs::{query::QueryData, system::SystemParam},
     picking::hover::Hovered,
     prelude::*,
     ui::{InteractionDisabled, Pressed, UiSystems},
@@ -28,13 +28,13 @@ impl Plugin for SliderStylePlugin {
     }
 }
 
-/// Resolves each slider's look from its theme and state and writes it, together with the position of
-/// the fill and the thumb, to the parts.
+/// Rewrites the look of each slider that needs it: which state it is in, what that looks like in its
+/// theme, and where that goes (the focus ring on the slider, the colors, and positions on the parts).
 fn sync_slider_style(
     mut lookup: ThemeLookup,
     mut ring: FocusRingTracker,
     mut targets: SliderTargets,
-    mut sliders: SliderQuery,
+    mut sliders: Query<SliderRow, With<ValueSlider>>,
     mut parts: Query<(&SliderPart, &mut BackgroundColor, &mut Node), Without<ValueSlider>>,
     children: Query<&Children>,
 ) {
@@ -42,49 +42,81 @@ fn sync_slider_style(
     let targets = targets.collect(lookup.needs_resync(), focus_moved);
 
     for entity in targets {
-        let Ok((value, range, drag, pressed, hovered, disabled, editing, mut outline)) =
-            sliders.get_mut(entity)
-        else {
+        let Ok(mut slider) = sliders.get_mut(entity) else {
             continue;
         };
 
-        let style = lookup.for_entity(entity).slider;
         let is_focused = focused == Some(entity);
-        // Pressing the thumb does not insert `Pressed`; only the drag state tells.
-        let state = VisualState::from_flags(
-            pressed || drag.dragging,
-            hovered.get(),
-            is_focused,
-            disabled,
-        );
-        let look = style.look(state, is_focused, editing);
+        let state = visual_state(&slider, is_focused);
+        let look = lookup
+            .for_entity(entity)
+            .slider
+            .look(state, is_focused, slider.editing);
 
-        outline.set_if_neq(Outline::new(
-            look.ring.width,
-            look.ring.offset,
-            look.ring.color,
-        ));
+        write_ring(&mut slider.outline, &look);
+        let position = thumb_position(&slider);
+        write_parts(&mut parts, &children, entity, &look, position);
+    }
+}
 
-        let position = Val::Percent(range.thumb_position(value.0).clamp(0.0, 1.0) * 100.0);
-        for part in children.iter_descendants(entity) {
-            let Ok((kind, mut bg, mut node)) = parts.get_mut(part) else {
-                continue;
-            };
-            match kind {
-                SliderPart::Rail => {
-                    bg.set_if_neq(BackgroundColor(look.rail));
+/// What the sync reads from a slider.
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct SliderRow {
+    value: &'static SliderValue,
+    range: &'static SliderRange,
+    drag: &'static SliderDragState,
+    pressed: Has<Pressed>,
+    hovered: &'static Hovered,
+    disabled: Has<InteractionDisabled>,
+    editing: Has<SliderEditing>,
+    outline: &'static mut Outline,
+}
+
+fn visual_state(slider: &SliderRowItem, is_focused: bool) -> VisualState {
+    // Pressing the thumb does not insert `Pressed`; only the drag state tells.
+    let pressed = slider.pressed || slider.drag.dragging;
+    VisualState::from_flags(pressed, slider.hovered.get(), is_focused, slider.disabled)
+}
+
+fn thumb_position(slider: &SliderRowItem) -> Val {
+    let share = slider.range.thumb_position(slider.value.0).clamp(0.0, 1.0);
+    Val::Percent(share * 100.0)
+}
+
+fn write_ring(outline: &mut Mut<Outline>, look: &SliderLook) {
+    outline.set_if_neq(Outline::new(
+        look.ring.width,
+        look.ring.offset,
+        look.ring.color,
+    ));
+}
+
+fn write_parts(
+    parts: &mut Query<(&SliderPart, &mut BackgroundColor, &mut Node), Without<ValueSlider>>,
+    children: &Query<&Children>,
+    slider: Entity,
+    look: &SliderLook,
+    position: Val,
+) {
+    for part in children.iter_descendants(slider) {
+        let Ok((kind, mut bg, mut node)) = parts.get_mut(part) else {
+            continue;
+        };
+        match kind {
+            SliderPart::Rail => {
+                bg.set_if_neq(BackgroundColor(look.rail));
+            }
+            SliderPart::Fill => {
+                bg.set_if_neq(BackgroundColor(look.fill));
+                if node.width != position {
+                    node.width = position;
                 }
-                SliderPart::Fill => {
-                    bg.set_if_neq(BackgroundColor(look.fill));
-                    if node.width != position {
-                        node.width = position;
-                    }
-                }
-                SliderPart::Thumb => {
-                    bg.set_if_neq(BackgroundColor(look.thumb));
-                    if node.left != position {
-                        node.left = position;
-                    }
+            }
+            SliderPart::Thumb => {
+                bg.set_if_neq(BackgroundColor(look.thumb));
+                if node.left != position {
+                    node.left = position;
                 }
             }
         }
@@ -135,20 +167,4 @@ type ChangedSliders<'w, 's> = Query<
             Added<SliderEditing>,
         )>,
     ),
->;
-
-type SliderQuery<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static SliderValue,
-        &'static SliderRange,
-        &'static SliderDragState,
-        Has<Pressed>,
-        &'static Hovered,
-        Has<InteractionDisabled>,
-        Has<SliderEditing>,
-        &'static mut Outline,
-    ),
-    With<ValueSlider>,
 >;
