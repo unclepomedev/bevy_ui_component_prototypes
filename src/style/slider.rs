@@ -1,7 +1,7 @@
 use super::{
     button::FocusRing,
     color::{
-        AFFIRM_HOVERED, AFFIRM_NORMAL, AFFIRM_PRESSED, BG_HOVERED, BG_PRESSED, DISABLED,
+        AFFIRM_HOVERED, AFFIRM_NORMAL, AFFIRM_PRESSED, BG_HOVERED, BG_PRESSED, DISABLED, EDITING,
         FOCUS_RING, TEXT_MAIN, TEXT_MUTED,
     },
     state::{StateColors, VisualState},
@@ -15,6 +15,8 @@ pub struct SliderStyle {
     pub fill: StateColors,
     pub thumb: StateColors,
     pub focus_ring: FocusRing,
+    pub editing_ring: Color,
+    pub editing_thumb: Color,
 }
 
 impl Default for SliderStyle {
@@ -46,6 +48,8 @@ impl Default for SliderStyle {
                 width: Val::Px(2.0),
                 offset: Val::Px(2.0),
             },
+            editing_ring: EDITING,
+            editing_thumb: EDITING,
         }
     }
 }
@@ -60,16 +64,26 @@ pub(crate) struct SliderLook {
 }
 
 impl SliderStyle {
-    /// `focused` is whether this slider owns the visible focus indicator.
-    pub(crate) fn look(&self, state: VisualState, focused: bool) -> SliderLook {
+    /// `focused` is whether this slider owns the visible focus indicator. A disabled slider ignores `editing`.
+    pub(crate) fn look(&self, state: VisualState, focused: bool, editing: bool) -> SliderLook {
+        let editing = editing && state != VisualState::Disabled;
         SliderLook {
             rail: self.rail.pick(state),
             fill: self.fill.pick(state),
-            thumb: self.thumb.pick(state),
-            ring: if focused && state != VisualState::Disabled {
-                self.focus_ring
+            thumb: if editing {
+                self.editing_thumb
             } else {
+                self.thumb.pick(state)
+            },
+            ring: if !focused || state == VisualState::Disabled {
                 FocusRing::NONE
+            } else if editing {
+                FocusRing {
+                    color: self.editing_ring,
+                    ..self.focus_ring
+                }
+            } else {
+                self.focus_ring
             },
         }
     }
@@ -85,7 +99,7 @@ mod tests {
     #[test]
     fn each_part_follows_the_visual_state() {
         let style = SliderStyle::default();
-        let look = style.look(VisualState::Pressed, false);
+        let look = style.look(VisualState::Pressed, false, false);
         assert_eq!(look.rail, style.rail.pressed);
         assert_eq!(look.fill, style.fill.pressed);
         assert_eq!(look.thumb, style.thumb.pressed);
@@ -100,10 +114,16 @@ mod tests {
     #[test]
     fn ring_follows_focus_but_never_shows_on_a_disabled_slider() {
         let style = SliderStyle::default();
-        assert_eq!(style.look(VisualState::Normal, true).ring, style.focus_ring);
-        assert_eq!(style.look(VisualState::Normal, false).ring, FocusRing::NONE);
         assert_eq!(
-            style.look(VisualState::Disabled, true).ring,
+            style.look(VisualState::Normal, true, false).ring,
+            style.focus_ring
+        );
+        assert_eq!(
+            style.look(VisualState::Normal, false, false).ring,
+            FocusRing::NONE
+        );
+        assert_eq!(
+            style.look(VisualState::Disabled, true, false).ring,
             FocusRing::NONE
         );
     }
