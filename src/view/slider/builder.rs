@@ -1,0 +1,65 @@
+use super::{
+    ValueSlider,
+    components::{SliderPart, fill_node, rail_node, slider_node, thumb_node, travel_node},
+};
+use crate::view::pass_through;
+use bevy::{
+    ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
+    prelude::*,
+    ui_widgets::{SliderRange, SliderStep, SliderThumb, SliderValue},
+};
+
+/// Starts a [`ValueSlider`] over `0.0..=1.0`, at 0.
+pub fn slider() -> SliderBuilder {
+    SliderBuilder {
+        range: (0.0, 1.0),
+        value: None,
+        step: None,
+    }
+}
+
+pub struct SliderBuilder {
+    range: (f32, f32),
+    value: Option<f32>,
+    step: Option<f32>,
+}
+
+impl SliderBuilder {
+    pub fn range(mut self, start: f32, end: f32) -> Self {
+        self.range = (start, end);
+        self
+    }
+
+    /// The initial value; the range start when not given. Later changes are the app's to apply.
+    pub fn value(mut self, value: f32) -> Self {
+        self.value = Some(value);
+        self
+    }
+
+    /// What one key press moves by; 1% of the range when not given.
+    pub fn step(mut self, step: f32) -> Self {
+        self.step = Some(step);
+        self
+    }
+
+    pub fn build(self) -> impl Bundle {
+        let (start, end) = self.range;
+        (
+            ValueSlider,
+            SliderRange::new(start, end),
+            SliderValue(self.value.unwrap_or(start)),
+            SliderStep(self.step.unwrap_or((end - start) / 100.0)),
+            slider_node(),
+            Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
+                // Only the thumb is pickable: Bevy treats a press on it as a drag and not as a click on the rail.
+                parent.spawn((SliderPart::Rail, rail_node(), pass_through()));
+                parent
+                    .spawn((travel_node(), pass_through()))
+                    .with_children(|travel| {
+                        travel.spawn((SliderPart::Fill, fill_node(), pass_through()));
+                        travel.spawn((SliderPart::Thumb, SliderThumb, thumb_node()));
+                    });
+            })),
+        )
+    }
+}
