@@ -16,7 +16,7 @@ use bevy::{
     },
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, StateColors, Theme, UiComponentPrototypesPlugin, slider,
+    GlobalTheme, SliderEditing, StateColors, Theme, UiComponentPrototypesPlugin, slider,
 };
 
 // ---------------------------------------------------------------------------
@@ -354,6 +354,63 @@ fn disabled_slider_shows_neither_ring_nor_focused_colors() {
     app.update();
 
     assert_eq!(fill(&app, slider), focus_theme().slider.fill.disabled);
+    assert_eq!(outline(&app, slider).color, Color::NONE);
+}
+
+// ---------------------------------------------------------------------------
+// Editing mode
+// ---------------------------------------------------------------------------
+
+#[test]
+fn editing_tint_shows_on_thumb_and_focused_ring_and_clears_on_removal() {
+    let mut app = test_app();
+    let slider = spawn_slider(&mut app);
+    let style = Theme::default().slider;
+    app.update();
+
+    focus(&mut app, slider, true);
+    app.update();
+    assert_eq!(thumb(&app, slider), style.thumb.normal);
+    assert_eq!(outline(&app, slider).color, style.focus_ring.color);
+
+    app.world_mut().entity_mut(slider).insert(SliderEditing);
+    app.update();
+    assert_eq!(thumb(&app, slider), style.editing_thumb);
+    assert_eq!(outline(&app, slider).color, style.editing_ring);
+
+    app.world_mut().entity_mut(slider).remove::<SliderEditing>();
+    app.update();
+    assert_eq!(thumb(&app, slider), style.thumb.normal);
+    assert_eq!(outline(&app, slider).color, style.focus_ring.color);
+}
+
+#[test]
+fn editing_without_focus_tints_thumb_only() {
+    let mut app = test_app();
+    let slider = spawn_slider(&mut app);
+    let style = Theme::default().slider;
+    app.update();
+
+    app.world_mut().entity_mut(slider).insert(SliderEditing);
+    app.update();
+    assert_eq!(thumb(&app, slider), style.editing_thumb);
+    assert_eq!(outline(&app, slider).color, Color::NONE);
+}
+
+#[test]
+fn disabled_slider_ignores_editing() {
+    let mut app = test_app();
+    let slider = spawn_slider(&mut app);
+    let style = Theme::default().slider;
+    app.update();
+
+    focus(&mut app, slider, true);
+    app.world_mut()
+        .entity_mut(slider)
+        .insert((SliderEditing, InteractionDisabled));
+    app.update();
+
+    assert_eq!(thumb(&app, slider), style.thumb.disabled);
     assert_eq!(outline(&app, slider).color, Color::NONE);
 }
 
