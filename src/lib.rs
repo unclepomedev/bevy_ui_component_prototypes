@@ -10,8 +10,8 @@ pub use crate::style::{
     theme::{GlobalTheme, Theme},
 };
 pub use view::{
-    ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, SliderBuilder, ToggleSwitch,
-    ToggleSwitchBuilder, ValueSlider, icon_button, slider, toggle_switch,
+    ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, SliderBuilder, SliderEditing,
+    ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button, slider, toggle_switch,
 };
 
 use crate::view::{ButtonStylePlugin, SliderStylePlugin, SwitchStylePlugin, TabOrderPlugin};

@@ -37,6 +37,11 @@ const RAIL_HEIGHT: f32 = 6.0;
 )]
 pub struct ValueSlider;
 
+/// Insert this on a [`ValueSlider`] while the app lets the keys change its value (an "editing"
+/// mode, entered with Enter, for instance), and remove it afterward. It changes nothing but the look.
+#[derive(Component, Clone, Copy, Default)]
+pub struct SliderEditing;
+
 /// The part of a [`ValueSlider`] a style system writes to.
 #[derive(Component, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum SliderPart {

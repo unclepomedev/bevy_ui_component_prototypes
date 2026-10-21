@@ -3,7 +3,7 @@ mod components;
 
 pub use self::{
     builder::{SliderBuilder, slider},
-    components::ValueSlider,
+    components::{SliderEditing, ValueSlider},
 };
 
 use self::components::SliderPart;
