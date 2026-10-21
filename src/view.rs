@@ -6,6 +6,7 @@ mod slider;
 mod tab_order;
 mod theme_lookup;
 mod toggle_switch;
+mod style_targets;
 
 pub(crate) use button::ButtonStylePlugin;
 pub use button::ButtonVariant;
