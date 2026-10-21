@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 /// The widgets whose look has to be rewritten the current frame.
+/// `removed`, read with [`drain_removed`].
 pub(crate) fn pick_targets(
     resync: bool,
     all: impl IntoIterator<Item = Entity>,

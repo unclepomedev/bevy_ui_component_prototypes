@@ -7,7 +7,11 @@ pub use self::{
 };
 
 use self::components::SliderPart;
-use super::{focus::FocusRingTracker, theme_lookup::ThemeLookup};
+use super::{
+    focus::FocusRingTracker,
+    style_targets::{drain_removed, pick_targets},
+    theme_lookup::ThemeLookup,
+};
 use crate::style::state::VisualState;
 use bevy::{
     ecs::system::SystemParam,
@@ -101,21 +105,16 @@ impl SliderTargets<'_, '_> {
     /// Every slider after a theme change, otherwise only the ones that changed
     /// (including both ends of a focus move).
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
-        // Read every time, so that a removal is never seen twice.
-        let released: Vec<Entity> = self.released.read().collect();
-        let enabled: Vec<Entity> = self.enabled.read().collect();
-        let stopped_editing: Vec<Entity> = self.stopped_editing.read().collect();
-        if resync {
-            self.all.iter().collect()
-        } else {
-            self.changed
-                .iter()
-                .chain(released)
-                .chain(enabled)
-                .chain(stopped_editing)
-                .chain(focus_moved)
-                .collect()
-        }
+        let mut removed = drain_removed(&mut self.released);
+        removed.extend(drain_removed(&mut self.stopped_editing));
+        removed.extend(drain_removed(&mut self.enabled));
+        pick_targets(
+            resync,
+            self.all.iter(),
+            self.changed.iter(),
+            removed,
+            focus_moved,
+        )
     }
 }
 
