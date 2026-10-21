@@ -105,6 +105,7 @@ type ChangedButtons<'w, 's> = Query<
     (
         With<Button>,
         Or<(
+            Added<Button>,
             Changed<PickingInteraction>,
             Changed<ButtonVariant>,
             Added<InteractionDisabled>,

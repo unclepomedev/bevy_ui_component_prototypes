@@ -9,23 +9,25 @@
 //! What to verify:
 //!   1. "Volume" (0..=1, continuous): dragging the thumb moves it with the pointer, without lag or
 //!      drift, and the filled part of the rail always ends under the thumb. Clicking the rail moves
-//!      the thumb there and a drag can continue from it. Pressing the thumb itself does not make it
+//!      the thumb there, and a drag can continue from it. Pressing the thumb itself does not make it
 //!      jump.
 //!   2. At both ends the thumb stays inside the rail (it does not overhang).
 //!   3. "Brightness" (0..=100, step 10): the app rounds the requested value to the step, so the thumb
 //!      moves in notches. The arrow keys move by one step; Home / End go to the ends.
 //!   4. The two "Narrow" sliders share a width and sit in a 160px / 480px parent: the slider follows the
 //!      width of its parent.
-//!   5. "Locked" asks for a change but the observer refuses it: the status line shows the request and
-//!      the thumb stays where it is.
+//!   5. "Locked" asks for a change, but the observer refuses it: the status line shows the request and
+//!      the value it keeps (it stays at 0.20). Thumb dragging and keyboard input request values
+//!      around the current value; clicking the rail requests the clicked position.
 //!   6. Hover and drag change the color of the filled part. Tab / Shift+Tab move keyboard focus between
-//!      the sliders and a focus ring appears around the focused one. Clicking hides the ring again.
+//!      the sliders, and a focus ring appears around the focused one. Clicking hides the ring again.
 //!   7. "Disabled" is gray, ignores the pointer and the keys, and Tab skips it.
 //!   8. [T] swaps the global theme (the fill turns orange). The framed panel, which has its own
 //!      `Theme`, does not change.
 //!   9. [S] swaps the framed panel's own `Theme`. Only the panel changes.
 
 use bevy::{
+    ecs::query::QueryData,
     input::common_conditions::input_just_pressed,
     input_focus::tab_navigation::{TabGroup, TabNavigationPlugin},
     prelude::*,
@@ -224,28 +226,34 @@ fn on_value_change(
     change: On<ValueChange<f32>>,
     mut commands: Commands,
     tags: Query<&Tag>,
-    sliders: Query<(&SliderRange, &SliderStep, Has<Discrete>, Has<Locked>)>,
+    sliders: Query<SliderPolicy>,
     mut status: Query<&mut Text, With<StatusText>>,
 ) {
     let name = tags.get(change.source).map_or("?", |tag| tag.0);
-    let Ok((range, step, discrete, refused)) = sliders.get(change.source) else {
+    let Ok(slider) = sliders.get(change.source) else {
         return;
     };
 
-    let value = if discrete {
-        let notches = ((change.value - range.start()) / step.0).round();
-        range.clamp(range.start() + notches * step.0)
+    let value = if slider.discrete {
+        let notches = ((change.value - slider.range.start()) / slider.step.0).round();
+        slider
+            .range
+            .clamp(slider.range.start() + notches * slider.step.0)
     } else {
         change.value
     };
-    if !refused {
+    if !slider.locked {
         commands.entity(change.source).insert(SliderValue(value));
     }
     for mut text in &mut status {
-        text.0 = format!(
-            "Request: {name} -> {value:.2}{}",
-            if refused { " (refused)" } else { "" }
-        );
+        text.0 = if slider.locked {
+            format!(
+                "Request: {name} -> {value:.2} (locked, stays {:.2})",
+                slider.current.0
+            )
+        } else {
+            format!("Request: {name} -> {value:.2}")
+        };
     }
 }
 
@@ -275,4 +283,13 @@ fn theme_for(swapped: bool) -> Theme {
         };
     }
     theme
+}
+
+#[derive(QueryData)]
+struct SliderPolicy {
+    range: &'static SliderRange,
+    step: &'static SliderStep,
+    current: &'static SliderValue,
+    discrete: Has<Discrete>,
+    locked: Has<Locked>,
 }
