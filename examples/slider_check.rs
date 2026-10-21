@@ -17,8 +17,8 @@
 //!   4. The two "Narrow" sliders share a width and sit in a 160px / 480px parent: the slider follows the
 //!      width of its parent.
 //!   5. "Locked" asks for a change, but the observer refuses it: the status line shows the request and
-//!      the value it keeps (it stays at 0.20). The request moves around that value because Bevy
-//!      computes it from the current value.
+//!      the value it keeps (it stays at 0.20). Thumb dragging and keyboard input request values
+//!      around the current value; clicking the rail requests the clicked position.
 //!   6. Hover and drag change the color of the filled part. Tab / Shift+Tab move keyboard focus between
 //!      the sliders, and a focus ring appears around the focused one. Clicking hides the ring again.
 //!   7. "Disabled" is gray, ignores the pointer and the keys, and Tab skips it.
