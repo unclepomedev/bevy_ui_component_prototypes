@@ -5,7 +5,11 @@ pub use self::builder::{ToggleSwitchBuilder, toggle_switch};
 pub use self::components::ToggleSwitch;
 
 use self::components::{SwitchThumb, thumb_side};
-use super::{focus::FocusRingTracker, theme_lookup::ThemeLookup};
+use super::{
+    focus::FocusRingTracker,
+    style_targets::{drain_removed, pick_targets},
+    theme_lookup::ThemeLookup,
+};
 use crate::style::state::VisualState;
 use bevy::{
     ecs::system::SystemParam,
@@ -84,19 +88,15 @@ impl SwitchTargets<'_, '_> {
     /// Every switch after a theme change, otherwise only the ones that changed
     /// (including both ends of a focus move).
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
-        // Read every time, so that a removal is never seen twice.
-        let unchecked: Vec<Entity> = self.unchecked.read().collect();
-        let enabled: Vec<Entity> = self.enabled.read().collect();
-        if resync {
-            self.all.iter().collect()
-        } else {
-            self.changed
-                .iter()
-                .chain(unchecked)
-                .chain(enabled)
-                .chain(focus_moved)
-                .collect()
-        }
+        let mut removed = drain_removed(&mut self.unchecked);
+        removed.extend(drain_removed(&mut self.enabled));
+        pick_targets(
+            resync,
+            self.all.iter(),
+            self.changed.iter(),
+            removed,
+            focus_moved,
+        )
     }
 }
 

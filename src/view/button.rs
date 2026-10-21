@@ -6,7 +6,11 @@ pub(crate) use self::content::{ButtonIcon, ButtonLabel};
 pub use self::variant::ButtonVariant;
 
 use self::{content::ButtonContent, surface::ButtonSurface};
-use super::{focus::FocusRingTracker, theme_lookup::ThemeLookup};
+use super::{
+    focus::FocusRingTracker,
+    style_targets::{drain_removed, pick_targets},
+    theme_lookup::ThemeLookup,
+};
 use crate::style::{button::ButtonLook, state::VisualState};
 use bevy::{
     ecs::system::SystemParam,
@@ -83,16 +87,14 @@ impl StyleTargets<'_, '_> {
     /// Every button after a theme change, otherwise only the ones that changed
     /// (including both ends of a focus move).
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
-        let removed = self.removed_disabled.read();
-        if resync {
-            self.all.iter().collect()
-        } else {
-            self.changed
-                .iter()
-                .chain(removed)
-                .chain(focus_moved)
-                .collect()
-        }
+        let removed = drain_removed(&mut self.removed_disabled);
+        pick_targets(
+            resync,
+            self.all.iter(),
+            self.changed.iter(),
+            removed,
+            focus_moved,
+        )
     }
 }
 

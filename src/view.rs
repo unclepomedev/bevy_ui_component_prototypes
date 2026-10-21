@@ -3,6 +3,7 @@ mod focus;
 mod icon_button;
 mod picking;
 mod slider;
+mod style_targets;
 mod tab_order;
 mod theme_lookup;
 mod toggle_switch;
