@@ -9,8 +9,8 @@
 //!   - The crate's slider, shaped by `SliderShape` into a thin square bar without a thumb. The app rounds the
 //!     requested value to a notch of 10 and writes the `NN%` text itself.
 //!   - `[ON]` is a ghost button whose label the app rewrites.
-//!   - Focus is shown by a `>` marker, not by a ring. Up / Down move the focus (the app's key policy);
-//!     Left / Right change the focused value.
+//!   - Focus is shown by a `>` marker, not by a ring: the marker follows the crate's `ShowsFocus`. Up / Down
+//!     move the focus (the app's key policy); Left / Right change the focused value.
 //!
 //! What to verify:
 //!   1. The first Up / Down press focuses a row; after that Up / Down walk through VOLUME, FULLSCREEN and
