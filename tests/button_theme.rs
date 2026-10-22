@@ -19,8 +19,8 @@ use bevy::{
     ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, SlicedImage, Theme,
-    UiComponentPrototypesPlugin, icon_button,
+    ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant, GlobalTheme, SlicedImage, StateColors,
+    Theme, UiComponentPrototypesPlugin, icon_button,
 };
 
 // ---------------------------------------------------------------------------
@@ -82,6 +82,21 @@ fn a_button_attached_to_an_existing_entity_is_styled_after_one_update() {
     assert_eq!(bg(&app, entity), Theme::default().buttons.primary.bg.normal);
 }
 
+#[test]
+fn a_ghost_style_leaves_the_button_without_a_background_and_colors_only_the_label() {
+    let mut app = test_app();
+    let fg = StateColors::uniform(Color::srgb(0.2, 0.9, 0.3));
+    let mut theme = Theme::default();
+    theme.buttons.primary = ButtonStyle::ghost(fg);
+    app.insert_resource(GlobalTheme(theme));
+    let button = spawn_primary(&mut app);
+
+    app.update();
+
+    assert_eq!(bg(&app, button), Color::NONE);
+    assert_eq!(label_color(&app, button), fg.normal);
+}
+
 // ---------------------------------------------------------------------------
 // Interaction states
 // ---------------------------------------------------------------------------
@@ -104,7 +119,6 @@ fn hover_and_press_change_colors_and_release_restores_them() {
     }
 }
 
-// [D] toggle disabled
 #[test]
 fn interaction_disabled_grays_the_button_and_removal_restores_it() {
     let mut app = test_app();
@@ -222,7 +236,6 @@ fn default_theme_never_adds_an_image_node() {
     assert!(image_node(&app, button).is_none());
 }
 
-// [S] swap the panel's own theme
 #[test]
 fn scoped_theme_change_updates_only_buttons_inside_the_scope() {
     let mut app = test_app();
@@ -241,7 +254,6 @@ fn scoped_theme_change_updates_only_buttons_inside_the_scope() {
     );
 }
 
-// [N] spawn at runtime
 #[test]
 fn button_spawned_later_inside_a_scope_uses_the_scope_theme_immediately() {
     let mut app = test_app();
@@ -303,7 +315,6 @@ fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {
     assert_eq!(ring.width, style.focus_ring.width);
 }
 
-// Pointer clicks hide the indicator while the entity keeps focus.
 #[test]
 fn focus_is_not_shown_while_the_indicator_is_hidden() {
     let mut app = test_app_with_focus_theme();
@@ -351,7 +362,6 @@ fn moving_focus_moves_the_ring() {
     assert_eq!(bg(&app, second), style.bg.focused);
 }
 
-// Hover and press take the colors; the ring keeps marking keyboard focus.
 #[test]
 fn hover_wins_over_focus_for_colors_but_the_ring_stays() {
     let mut app = test_app_with_focus_theme();

@@ -41,6 +41,19 @@ pub struct ButtonStyle {
     pub surface: Option<SlicedImage>,
 }
 
+impl ButtonStyle {
+    /// A button drawn as its label alone.
+    pub fn ghost(fg: StateColors) -> Self {
+        Self {
+            bg: StateColors::uniform(Color::NONE),
+            fg,
+            border: StateColors::uniform(Color::NONE),
+            focus_ring: FocusRing::NONE,
+            surface: None,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ButtonStyles {
     pub neutral: ButtonStyle,
@@ -174,5 +187,31 @@ mod tests {
             style.look(VisualState::Disabled, true).ring.color,
             FocusRing::NONE.color
         );
+    }
+
+    #[test]
+    fn a_ghost_style_draws_only_the_label() {
+        let fg = StateColors {
+            normal: Color::srgb(0.1, 0.2, 0.3),
+            hovered: Color::srgb(0.2, 0.3, 0.4),
+            pressed: Color::srgb(0.3, 0.4, 0.5),
+            disabled: Color::srgb(0.4, 0.5, 0.6),
+            focused: Color::srgb(0.5, 0.6, 0.7),
+        };
+        let style = ButtonStyle::ghost(fg);
+
+        for state in [
+            VisualState::Normal,
+            VisualState::Hovered,
+            VisualState::Pressed,
+            VisualState::Focused,
+            VisualState::Disabled,
+        ] {
+            let look = style.look(state, true);
+            assert_eq!(look.background, Color::NONE);
+            assert_eq!(look.border, Color::NONE);
+            assert_eq!(look.ring, FocusRing::NONE);
+            assert_eq!(look.fg, fg.pick(state));
+        }
     }
 }

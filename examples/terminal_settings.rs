@@ -80,23 +80,17 @@ fn main() {
 
 /// Ghost buttons: only the text color tells the state.
 fn terminal_theme() -> Theme {
-    let ghost = |normal: Color, lit: Color| ButtonStyle {
-        bg: StateColors::uniform(Color::NONE),
-        fg: StateColors {
-            normal,
-            hovered: lit,
-            pressed: lit,
-            disabled: DIM,
-            focused: lit,
-        },
-        border: StateColors::uniform(Color::NONE),
-        focus_ring: FocusRing::NONE,
-        surface: None,
+    let fg = |normal: Color, lit: Color| StateColors {
+        normal,
+        hovered: lit,
+        pressed: lit,
+        disabled: DIM,
+        focused: lit,
     };
     Theme {
         buttons: ButtonStyles {
-            neutral: ghost(DIM, BRIGHT),
-            primary: ghost(BRIGHT, Color::WHITE),
+            neutral: ButtonStyle::ghost(fg(DIM, BRIGHT)),
+            primary: ButtonStyle::ghost(fg(BRIGHT, Color::WHITE)),
             ..default()
         },
         slider: SliderStyle {
