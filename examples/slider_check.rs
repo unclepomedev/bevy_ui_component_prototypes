@@ -25,6 +25,9 @@
 //!   8. [T] swaps the global theme (the fill turns orange). The framed panel, which has its own
 //!      `Theme`, does not change.
 //!   9. [S] swaps the framed panel's own `Theme`. Only the panel changes.
+//!  10. "Square, no thumb" has its own shape from its panel's `Theme`: a thick square bar, no thumb, the fill
+//!      ending exactly at the value. Clicking the bar moves the value to the pointer, and a drag continues
+//!      from there. Keys work as on the others. [T] and [S] do not change its shape.
 
 use bevy::{
     ecs::query::QueryData,
@@ -35,7 +38,7 @@ use bevy::{
     ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, StateColors, Theme, UiComponentPrototypesPlugin, slider,
+    GlobalTheme, SliderShape, StateColors, Theme, UiComponentPrototypesPlugin, slider,
 };
 
 /// Name of the slider, shown in the status line.
@@ -122,6 +125,7 @@ fn setup(mut commands: Commands) {
                 InteractionDisabled,
             );
             spawn_scoped_panel(root);
+            spawn_shaped_panel(root);
             spawn_help(root);
         });
 }
@@ -196,6 +200,47 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
                     slider().value(0.5).build(),
                     AccessibleLabel::new("Scoped (own Theme)"),
                     Tag("Scoped"),
+                ));
+            });
+    });
+}
+
+/// Panel whose own `Theme` gives its slider another shape: a thick square bar without a thumb.
+/// It has no `ScopedPanel`, so [S] leaves it alone.
+fn spawn_shaped_panel(root: &mut ChildSpawnerCommands) {
+    let mut theme = Theme::default();
+    theme.slider.shape = SliderShape {
+        rail_height: 12.0,
+        thumb_size: 0.0,
+        rounded: false,
+    };
+    root.spawn((
+        Node {
+            column_gap: px(16),
+            padding: UiRect::all(px(12)),
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        theme,
+    ))
+    .with_children(|panel| {
+        panel.spawn((
+            Text::new("Square, no thumb (own shape)"),
+            Node {
+                width: px(260),
+                ..default()
+            },
+        ));
+        panel
+            .spawn(Node {
+                width: px(320),
+                ..default()
+            })
+            .with_children(|slot| {
+                slot.spawn((
+                    slider().value(0.5).build(),
+                    AccessibleLabel::new("Square, no thumb"),
+                    Tag("Square"),
                 ));
             });
     });

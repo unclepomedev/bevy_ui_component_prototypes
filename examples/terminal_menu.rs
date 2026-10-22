@@ -5,8 +5,8 @@
 //! What to verify:
 //!   1. The menu is text only. Hover brightens a label, press dims it, and CONTINUE is grayed out.
 //!   2. Hovering an item moves keyboard focus to it, so the pointer and Tab / Shift+Tab share one selection, and
-//!      there is a single ">" marker. The marker is drawn by this example, not by the crate: the theme only
-//!      supplies colors, so the focus ring is turned off (`FocusRing::NONE`).
+//!      there is a single ">" marker. The marker is drawn by this example, from the crate's `ShowsFocus`;
+//!      the theme only supplies colors, so the focus ring is turned off (`FocusRing::NONE`).
 //!   3. Enter / Space on the focused item updates the "Activate:" line. While disabled, CONTINUE never activates,
 //!      and Tab skips it (the crate takes disabled buttons out of the tab order).
 //!   4. [Up] / [Down] move the focus too, and skip CONTINUE while it is disabled. Under the default theme
@@ -32,13 +32,12 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyle, ButtonStyles, FocusRing, GlobalTheme, StateColors, Theme,
+    ButtonSize, ButtonStyle, ButtonStyles, GlobalTheme, ShowsFocus, StateColors, Theme,
     UiComponentPrototypesPlugin, icon_button,
 };
 
 // Sampled from the reference mock-up: a pale phosphor green on a near-black desk.
 const SCREEN: Color = Color::srgb(0.03, 0.04, 0.045);
-const PHOSPHOR: Color = Color::srgb(0.72, 0.80, 0.70);
 const PHOSPHOR_BRIGHT: Color = Color::srgb(0.86, 0.96, 0.85);
 const PHOSPHOR_PRESSED: Color = Color::srgb(0.45, 0.52, 0.44);
 const PHOSPHOR_OFF: Color = Color::srgb(0.28, 0.32, 0.28);
@@ -90,7 +89,7 @@ fn main() {
                 (hover_moves_focus, keep_focus_visible)
                     .chain()
                     .run_if(terminal_look),
-                update_markers.after(hover_moves_focus),
+                update_markers,
             ),
         )
         .add_observer(on_activate)
@@ -99,25 +98,18 @@ fn main() {
 
 /// Ghost buttons: no background, no border, no ring. Only the text color carries the state.
 fn terminal_theme() -> Theme {
-    let ghost = ButtonStyle {
-        bg: StateColors::uniform(Color::NONE),
-        fg: StateColors {
-            normal: PHOSPHOR,
-            hovered: PHOSPHOR_BRIGHT,
-            pressed: PHOSPHOR_PRESSED,
-            focused: PHOSPHOR_BRIGHT,
-            disabled: PHOSPHOR_OFF,
-        },
-        border: StateColors::uniform(Color::NONE),
-        focus_ring: FocusRing::NONE,
-        surface: None,
+    let fg = |normal: Color, lit: Color| StateColors {
+        normal,
+        hovered: lit,
+        pressed: lit,
+        disabled: PHOSPHOR_OFF,
+        focused: lit,
     };
     Theme {
         buttons: ButtonStyles {
-            neutral: ghost.clone(),
-            primary: ghost.clone(),
-            affirmative: ghost.clone(),
-            danger: ghost,
+            neutral: ButtonStyle::ghost(fg(PHOSPHOR_PRESSED, PHOSPHOR_BRIGHT)),
+            primary: ButtonStyle::ghost(fg(PHOSPHOR_BRIGHT, Color::WHITE)),
+            ..default()
         },
         font: FontSource::serif(),
         ..default()
@@ -276,18 +268,14 @@ fn keep_focus_visible(mut focus_visible: ResMut<InputFocusVisible>) {
     }
 }
 
-/// Shows the marker next to the focused item (never a disabled one), under the terminal look only.
+/// Shows the marker next to the item that holds the visible focus, under the terminal look only.
 fn update_markers(
     look: Res<TerminalLook>,
-    focus: Res<InputFocus>,
-    buttons: Query<Has<InteractionDisabled>>,
+    shown: Query<(), With<ShowsFocus>>,
     mut markers: Query<(&Marker, &mut Visibility)>,
 ) {
     for (marker, mut visibility) in &mut markers {
-        let Ok(disabled) = buttons.get(marker.button) else {
-            continue;
-        };
-        let active = look.0 && !disabled && focus.get() == Some(marker.button);
+        let active = look.0 && shown.contains(marker.button);
         visibility.set_if_neq(if active {
             Visibility::Inherited
         } else {

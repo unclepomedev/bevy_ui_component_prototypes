@@ -16,7 +16,8 @@ use bevy::{
     },
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SliderEditing, StateColors, Theme, UiComponentPrototypesPlugin, slider,
+    GlobalTheme, SliderEditing, SliderShape, StateColors, Theme, UiComponentPrototypesPlugin,
+    slider,
 };
 
 // ---------------------------------------------------------------------------
@@ -157,6 +158,80 @@ fn the_position_never_leaves_the_rail() {
     app.world_mut().entity_mut(slider).insert(SliderValue(-3.0));
     app.update();
     assert_eq!(thumb_left(&app, slider), Val::Percent(0.0));
+}
+
+// ---------------------------------------------------------------------------
+// Shape
+// ---------------------------------------------------------------------------
+
+#[test]
+fn the_default_shape_is_a_thin_rail_and_a_round_thumb() {
+    let mut app = test_app();
+    let slider = spawn_slider(&mut app);
+
+    app.update();
+
+    assert_eq!(node(&app, slider).height, Val::Px(20.0));
+    assert_eq!(node(&app, rail_part(&app, slider)).height, Val::Px(6.0));
+    assert_eq!(node(&app, rail_part(&app, slider)).top, Val::Px(7.0));
+    assert_eq!(node(&app, thumb_part(&app, slider)).width, Val::Px(20.0));
+    assert_eq!(node(&app, thumb_part(&app, slider)).height, Val::Px(20.0));
+    assert_eq!(
+        node(&app, thumb_part(&app, slider)).border_radius,
+        BorderRadius::all(Val::Px(10.0))
+    );
+    assert_eq!(node(&app, travel_part(&app, slider)).right, Val::Px(20.0));
+}
+
+#[test]
+fn a_custom_shape_reaches_every_part_after_one_update() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(squared_theme()));
+    let slider = spawn_slider(&mut app);
+
+    app.update();
+
+    let square = BorderRadius::all(Val::Px(0.0));
+    // The slider is as tall as its tallest part: here the rail.
+    assert_eq!(node(&app, slider).height, Val::Px(10.0));
+    assert_eq!(node(&app, rail_part(&app, slider)).height, Val::Px(10.0));
+    assert_eq!(node(&app, rail_part(&app, slider)).border_radius, square);
+    assert_eq!(node(&app, fill_part(&app, slider)).height, Val::Px(10.0));
+    assert_eq!(node(&app, fill_part(&app, slider)).border_radius, square);
+    // No thumb: it takes no room, and the fill may use the whole width.
+    assert_eq!(node(&app, thumb_part(&app, slider)).width, Val::Px(0.0));
+    assert_eq!(node(&app, thumb_part(&app, slider)).height, Val::Px(0.0));
+    assert_eq!(node(&app, travel_part(&app, slider)).right, Val::Px(0.0));
+}
+
+#[test]
+fn a_global_theme_change_reshapes_unscoped_sliders_but_not_scoped_ones() {
+    let mut app = test_app();
+    let unscoped = spawn_slider(&mut app);
+    let panel = app.world_mut().spawn(Theme::default()).id();
+    let scoped = spawn_slider_under(&mut app, panel);
+    app.update();
+
+    app.insert_resource(GlobalTheme(squared_theme()));
+    app.update();
+
+    assert_eq!(node(&app, unscoped).height, Val::Px(10.0));
+    assert_eq!(node(&app, scoped).height, Val::Px(20.0));
+}
+
+#[test]
+fn a_scoped_theme_change_reshapes_only_the_sliders_inside_the_scope() {
+    let mut app = test_app();
+    let outside = spawn_slider(&mut app);
+    let panel = app.world_mut().spawn(Theme::default()).id();
+    let inside = spawn_slider_under(&mut app, panel);
+    app.update();
+
+    *app.world_mut().get_mut::<Theme>(panel).unwrap() = squared_theme();
+    app.update();
+
+    assert_eq!(node(&app, inside).height, Val::Px(10.0));
+    assert_eq!(node(&app, outside).height, Val::Px(20.0));
 }
 
 // ---------------------------------------------------------------------------
@@ -550,6 +625,17 @@ fn red_fill_theme() -> Theme {
     theme
 }
 
+/// Default theme with a thick, square rail and no thumb.
+fn squared_theme() -> Theme {
+    let mut theme = Theme::default();
+    theme.slider.shape = SliderShape {
+        rail_height: 10.0,
+        thumb_size: 0.0,
+        rounded: false,
+    };
+    theme
+}
+
 /// Default theme whose `focused` fill color differs from every other state.
 fn focus_theme() -> Theme {
     let mut theme = Theme::default();
@@ -607,4 +693,24 @@ fn fill_width(app: &App, slider: Entity) -> Val {
 
 fn thumb_left(app: &App, slider: Entity) -> Val {
     app.world().get::<Node>(parts(app, slider).2).unwrap().left
+}
+
+fn node(app: &App, entity: Entity) -> Node {
+    app.world().get::<Node>(entity).unwrap().clone()
+}
+
+fn rail_part(app: &App, slider: Entity) -> Entity {
+    parts(app, slider).0
+}
+
+fn fill_part(app: &App, slider: Entity) -> Entity {
+    parts(app, slider).1
+}
+
+fn thumb_part(app: &App, slider: Entity) -> Entity {
+    parts(app, slider).2
+}
+
+fn travel_part(app: &App, slider: Entity) -> Entity {
+    app.world().get::<Children>(slider).unwrap()[1]
 }
