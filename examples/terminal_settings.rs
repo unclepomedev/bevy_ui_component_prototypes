@@ -6,8 +6,8 @@
 //!   - A green-on-black theme: ghost buttons (no background, no border, no ring) made only from `Theme`
 //!     colors and the system monospace font. The selected language is a `Primary` button and the others
 //!     are `Neutral`, so the app changes the variant to move the selection.
-//!   - The crate's slider, shaped by `SliderShape` into a thin square bar without a thumb. The app rounds the
-//!     requested value to a notch of 10 and writes the `NN%` text itself.
+//!   - The crate's slider, shaped by `SliderShape` into ten square blocks (`SliderSegments`). The brackets
+//!     are plain text next to it. The app rounds the requested value to a notch of 10 and writes the `NN%` text itself.
 //!   - `[ON]` is a ghost button whose label the app rewrites.
 //!   - Focus is shown by a `>` marker, not by a ring: the marker follows the crate's `ShowsFocus`. Up / Down
 //!     move the focus (the app's key policy); Left / Right change the focused value.
@@ -15,8 +15,8 @@
 //! What to verify:
 //!   1. The first Up / Down press focuses a row; after that Up / Down walk through VOLUME, FULLSCREEN and
 //!      the languages in order, and do not wrap.
-//!   2. On VOLUME, Left / Right move the bar by 10% and the `NN%` text follows. A click or a drag on the
-//!      bar moves it in the same notches.
+//!   2. On VOLUME, Left / Right move the bar by one block (10%) and the `NN%` text follows. A click or a
+//!      drag on the bar moves it in the same notches.
 //!   3. On FULLSCREEN, Enter / Space / Left / Right switch `[ON]` and `[OFF]`.
 //!   4. On a language, Enter / Space makes it the bright one; the previous one turns dim.
 
@@ -34,7 +34,8 @@ use bevy::{
 };
 use bevy_ui_component_prototypes::{
     ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing, GlobalTheme, ShowsFocus,
-    SliderShape, SliderStyle, StateColors, Theme, UiComponentPrototypesPlugin, icon_button, slider,
+    SliderSegments, SliderShape, SliderStyle, StateColors, Theme, UiComponentPrototypesPlugin,
+    icon_button, slider,
 };
 
 const VOLUME_STEP: f32 = 10.0;
@@ -94,11 +95,15 @@ fn terminal_theme() -> Theme {
             ..default()
         },
         slider: SliderStyle {
-            // A thin square bar without a thumb; only the filled part is bright.
+            // Ten square blocks without a thumb; the lit ones are bright.
             shape: SliderShape {
-                rail_height: 14.0,
-                thumb_size: 0.0,
+                rail_height: 18.0,
                 rounded: false,
+                segments: Some(SliderSegments {
+                    count: 10,
+                    gap: 0.2,
+                }),
+                ..default()
             },
             rail: StateColors::uniform(RAIL),
             fill: StateColors::uniform(BRIGHT),
@@ -209,6 +214,7 @@ fn spawn_row(commands: &mut Commands, panel: Entity, name: &str) -> (Entity, Ent
 
 fn spawn_volume_row(commands: &mut Commands, panel: Entity) {
     let (row, control) = spawn_row(commands, panel, "VOLUME");
+    commands.spawn((text("[", 20.0, DIM), ChildOf(row)));
     // The slider takes the width of the box it is put in.
     let slot = commands
         .spawn((
@@ -230,7 +236,18 @@ fn spawn_volume_row(commands: &mut Commands, panel: Entity) {
         AutoDirectionalNavigation::default(),
         ChildOf(slot),
     ));
-    commands.spawn((text("80%", 20.0, BRIGHT), VolumeText, ChildOf(row)));
+    commands.spawn((text("]", 20.0, DIM), ChildOf(row)));
+    // A fixed width, so that "0%", "80%" and "100%" do not change the size of the row and of the frame.
+    commands.spawn((
+        text("80%", 20.0, BRIGHT),
+        TextLayout::justify(Justify::Right),
+        Node {
+            width: px(60),
+            ..default()
+        },
+        VolumeText,
+        ChildOf(row),
+    ));
 }
 
 fn spawn_fullscreen_row(commands: &mut Commands, panel: Entity) {

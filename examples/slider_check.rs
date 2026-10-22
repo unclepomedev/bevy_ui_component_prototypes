@@ -213,6 +213,7 @@ fn spawn_shaped_panel(root: &mut ChildSpawnerCommands) {
         rail_height: 12.0,
         thumb_size: 0.0,
         rounded: false,
+        ..default()
     };
     root.spawn((
         Node {

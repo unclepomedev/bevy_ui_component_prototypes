@@ -6,7 +6,25 @@ use super::{
     },
     state::{StateColors, VisualState},
 };
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::ColorStop};
+
+/// A slider drawn as separate blocks instead of one continuous bar.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SliderSegments {
+    /// How many blocks the bar is made of.
+    pub count: u32,
+    /// The empty space between two blocks, as a share of one block's pitches (`0.2` a fifth of each pitch is a gap).
+    pub gap: f32,
+}
+
+impl Default for SliderSegments {
+    fn default() -> Self {
+        Self {
+            count: 10,
+            gap: 0.2,
+        }
+    }
+}
 
 /// The size and the corners of a slider, in logical pixels.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -14,9 +32,12 @@ pub struct SliderShape {
     /// Thickness of the rail and of the fill.
     pub rail_height: f32,
     /// Width and height of the thumb. `0.0` draws no thumb: the fill then ends exactly at the value.
+    /// Ignored when `segments` is set: a segmented slider has no thumb.
     pub thumb_size: f32,
     /// Fully rounded ends (a pill and a circle) when `true`, square corners when `false`.
     pub rounded: bool,
+    /// Draws the rail and the fill as blocks. A block is lit once the value has reached its end.
+    pub segments: Option<SliderSegments>,
 }
 
 impl Default for SliderShape {
@@ -25,6 +46,7 @@ impl Default for SliderShape {
             rail_height: 6.0,
             thumb_size: 20.0,
             rounded: true,
+            segments: None,
         }
     }
 }
@@ -41,22 +63,58 @@ pub(crate) struct SliderGeometry {
     pub(crate) thumb_radius: f32,
     /// How much shorter than the slider the travel area of the thumb is.
     pub(crate) travel_inset: f32,
+    pub(crate) segments: Option<SliderSegments>,
 }
 
 impl SliderShape {
     pub(crate) fn geometry(&self) -> SliderGeometry {
-        let height = self.rail_height.max(self.thumb_size);
+        let thumb_size = if self.segments.is_some() {
+            0.0
+        } else {
+            self.thumb_size
+        };
+        let height = self.rail_height.max(thumb_size);
         let radius = |size: f32| if self.rounded { size / 2.0 } else { 0.0 };
         SliderGeometry {
             height,
             rail_height: self.rail_height,
             rail_top: (height - self.rail_height) / 2.0,
             rail_radius: radius(self.rail_height),
-            thumb_size: self.thumb_size,
-            thumb_top: (height - self.thumb_size) / 2.0,
-            thumb_radius: radius(self.thumb_size),
-            travel_inset: self.thumb_size,
+            thumb_size,
+            thumb_top: (height - thumb_size) / 2.0,
+            thumb_radius: radius(thumb_size),
+            travel_inset: thumb_size,
+            segments: self.segments,
         }
+    }
+}
+
+impl SliderSegments {
+    /// How many blocks are lit at `share` (0 to 1) of the travel. A block is lit once the value has reached its end.
+    /// A share worked out from a value and a range is not exact, so the small margin keeps such a block lit.
+    pub(crate) fn lit(&self, share: f32) -> u32 {
+        let lit = (share.clamp(0.0, 1.0) * self.count as f32 + 1e-4).floor();
+        (lit as u32).min(self.count)
+    }
+
+    /// Color stops of a left-to-right gradient that paints the first `lit` blocks with `color` and
+    /// leaves the other blocks and every gap transparent.
+    pub(crate) fn stops(&self, lit: u32, color: Color) -> Vec<ColorStop> {
+        let pitch = 100.0 / self.count as f32;
+        let block = pitch * (1.0 - self.gap.clamp(0.0, 1.0));
+        let mut stops = Vec::new();
+        for index in 0..self.count {
+            let start = pitch * index as f32;
+            let end = start + block;
+            let paint = if index < lit { color } else { Color::NONE };
+            stops.push(ColorStop::percent(paint, start));
+            stops.push(ColorStop::percent(paint, end));
+            if self.gap > 0.0 {
+                stops.push(ColorStop::percent(Color::NONE, end));
+                stops.push(ColorStop::percent(Color::NONE, start + pitch));
+            }
+        }
+        stops
     }
 }
 
@@ -150,6 +208,85 @@ impl SliderStyle {
 mod tests {
     use super::*;
 
+    fn percent(stop: &ColorStop) -> f32 {
+        match stop.point {
+            Val::Percent(value) => value,
+            other => panic!("not a percent: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_block_is_lit_once_the_value_reaches_its_end() {
+        let segments = SliderSegments {
+            count: 10,
+            gap: 0.2,
+        };
+        assert_eq!(segments.lit(0.0), 0);
+        assert_eq!(segments.lit(0.05), 0);
+        assert_eq!(segments.lit(0.79), 7);
+        assert_eq!(segments.lit(1.0), 10);
+        assert_eq!(segments.lit(2.0), 10);
+        assert_eq!(segments.lit(-1.0), 0);
+    }
+
+    // f32 rounding must not drop a block whose end the value has reached.
+    #[test]
+    fn rounding_error_does_not_drop_a_lit_block() {
+        for count in 1..=40u32 {
+            let segments = SliderSegments { count, gap: 0.0 };
+            for lit in 0..=count {
+                let value = lit as f32 * 100.0 / count as f32;
+                assert_eq!(segments.lit(value / 100.0), lit, "{lit} of {count}");
+            }
+        }
+    }
+
+    #[test]
+    fn the_stops_paint_lit_blocks_and_leave_the_gaps_clear() {
+        let color = Color::srgb(0.2, 0.9, 0.3);
+        let stops = SliderSegments { count: 2, gap: 0.2 }.stops(1, color);
+
+        let seen: Vec<(Color, f32)> = stops.iter().map(|s| (s.color, percent(s))).collect();
+        assert_eq!(
+            seen,
+            vec![
+                (color, 0.0),
+                (color, 40.0),
+                (Color::NONE, 40.0),
+                (Color::NONE, 50.0),
+                (Color::NONE, 50.0),
+                (Color::NONE, 90.0),
+                (Color::NONE, 90.0),
+                (Color::NONE, 100.0),
+            ]
+        );
+    }
+
+    #[test]
+    fn without_a_gap_the_blocks_touch() {
+        let color = Color::srgb(0.2, 0.9, 0.3);
+        let stops = SliderSegments { count: 2, gap: 0.0 }.stops(2, color);
+
+        let seen: Vec<(Color, f32)> = stops.iter().map(|s| (s.color, percent(s))).collect();
+        assert_eq!(
+            seen,
+            vec![(color, 0.0), (color, 50.0), (color, 50.0), (color, 100.0)]
+        );
+    }
+
+    // A thumb would shorten the travel and push the lit blocks out of line with the rail's.
+    #[test]
+    fn a_segmented_slider_has_no_thumb() {
+        let geometry = SliderShape {
+            segments: Some(SliderSegments::default()),
+            ..default()
+        }
+        .geometry();
+        assert_eq!(geometry.thumb_size, 0.0);
+        assert_eq!(geometry.travel_inset, 0.0);
+        assert_eq!(geometry.height, 6.0);
+    }
+
     #[test]
     fn the_default_shape_is_a_thin_rail_under_a_round_thumb() {
         let geometry = SliderShape::default().geometry();
@@ -168,6 +305,7 @@ mod tests {
             rail_height: 16.0,
             thumb_size: 8.0,
             rounded: true,
+            ..default()
         }
         .geometry();
         assert_eq!(thick_rail.height, 16.0);
