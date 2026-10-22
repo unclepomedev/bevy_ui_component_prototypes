@@ -20,6 +20,5 @@ t: test
 check:
     cargo fmt --all -- --check
     cargo clippy --workspace --all-targets --all-features -- -D warnings
-    cargo test --no-run --timings
     cargo test --workspace --all-features --lib --tests
 c: check
