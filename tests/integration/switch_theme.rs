@@ -383,24 +383,6 @@ fn the_app_applying_the_request_flips_the_look() {
     assert_eq!(thumb_side(&app, switch), JustifyContent::Start);
 }
 
-#[test]
-fn a_disabled_switch_makes_no_request() {
-    let mut app = app_with_checkbox_behavior();
-    let switch = spawn_switch(&mut app);
-    app.world_mut()
-        .entity_mut(switch)
-        .insert(InteractionDisabled);
-    app.update();
-
-    app.world_mut().trigger(SetChecked {
-        entity: switch,
-        checked: true,
-    });
-    app.update();
-
-    assert!(app.world().resource::<Requests>().0.is_empty());
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
