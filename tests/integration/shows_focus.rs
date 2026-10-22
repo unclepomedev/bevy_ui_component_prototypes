@@ -6,7 +6,7 @@ use bevy::{
     ui::InteractionDisabled,
 };
 use bevy_ui_component_prototypes::{
-    ShowsFocus, UiComponentPrototypesPlugin, icon_button, slider, toggle_switch,
+    FocusIndicator, ShowsFocus, UiComponentPrototypesPlugin, icon_button, slider, toggle_switch,
 };
 
 #[test]
@@ -139,6 +139,49 @@ fn without_the_input_focus_plugins_nothing_is_marked() {
     app.update();
 
     assert!(!marked(&app, widget));
+}
+
+#[test]
+fn an_always_visible_indicator_marks_the_focus_even_after_a_click_hides_it() {
+    let mut app = test_app();
+    app.insert_resource(FocusIndicator::Always);
+    let widget = spawn_button(&mut app);
+
+    focus(&mut app, widget, false);
+    app.update();
+
+    assert!(marked(&app, widget));
+}
+
+#[test]
+fn going_back_to_auto_hides_the_marker_again() {
+    let mut app = test_app();
+    app.insert_resource(FocusIndicator::Always);
+    let widget = spawn_button(&mut app);
+    focus(&mut app, widget, false);
+    app.update();
+
+    app.insert_resource(FocusIndicator::Auto);
+    app.update();
+
+    assert!(!marked(&app, widget));
+}
+
+#[test]
+fn an_always_visible_indicator_still_skips_disabled_and_unfocused_widgets() {
+    let mut app = test_app();
+    app.insert_resource(FocusIndicator::Always);
+    let disabled = app
+        .world_mut()
+        .spawn((icon_button("b").build(), InteractionDisabled))
+        .id();
+    let other = spawn_button(&mut app);
+
+    focus(&mut app, disabled, false);
+    app.update();
+
+    assert!(!marked(&app, disabled));
+    assert!(!marked(&app, other));
 }
 
 fn test_app() -> App {

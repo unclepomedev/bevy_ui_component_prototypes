@@ -6,6 +6,22 @@ use bevy::{
     ui::{InteractionDisabled, UiSystems},
 };
 
+/// When the focus indicator is drawn on the focused widget.
+#[derive(Resource, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum FocusIndicator {
+    /// Follows Bevy's [`InputFocusVisible`]: a pointer click hides it, the keyboard shows it again.
+    #[default]
+    Auto,
+    /// Always drawn on the focused widget, whatever `InputFocusVisible` says.
+    Always,
+}
+
+impl FocusIndicator {
+    fn is_visible(self, visible: Option<&InputFocusVisible>) -> bool {
+        self == FocusIndicator::Always || visible.is_some_and(|visible| visible.0)
+    }
+}
+
 /// Present on the widget of this crate that holds the visible focus indicator.
 ///
 /// - The state behind the focus ring, for a look the ring cannot give.
@@ -18,7 +34,8 @@ pub struct ShowsFocus;
 pub(crate) struct ShowsFocusPlugin;
 impl Plugin for ShowsFocusPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PostUpdate, mark_visible_focus.before(UiSystems::Prepare));
+        app.init_resource::<FocusIndicator>()
+            .add_systems(PostUpdate, mark_visible_focus.before(UiSystems::Prepare));
     }
 }
 
@@ -28,6 +45,7 @@ pub(crate) struct FocusRingTracker<'w, 's> {
     // Optional so that apps without `InputFocusPlugin` simply have no focused widget.
     focus: Option<Res<'w, InputFocus>>,
     visible: Option<Res<'w, InputFocusVisible>>,
+    indicator: Res<'w, FocusIndicator>,
     last: Local<'s, Option<Entity>>,
 }
 
@@ -39,7 +57,7 @@ impl FocusRingTracker<'_, '_> {
             .focus
             .as_deref()
             .and_then(InputFocus::get)
-            .filter(|_| self.visible.as_deref().is_some_and(|visible| visible.0));
+            .filter(|_| self.indicator.is_visible(self.visible.as_deref()));
         let previous = std::mem::replace(&mut *self.last, focused);
         let moved = if previous == focused {
             Vec::new()
@@ -53,6 +71,7 @@ impl FocusRingTracker<'_, '_> {
 fn mark_visible_focus(
     focus: Option<Res<InputFocus>>,
     visible: Option<Res<InputFocusVisible>>,
+    indicator: Res<FocusIndicator>,
     widgets: Query<Has<InteractionDisabled>, With<KeyboardNavigable>>,
     mut last: Local<Option<Entity>>,
     mut commands: Commands,
@@ -60,7 +79,7 @@ fn mark_visible_focus(
     let marked = focus
         .as_deref()
         .and_then(InputFocus::get)
-        .filter(|_| visible.as_deref().is_some_and(|visible| visible.0))
+        .filter(|_| indicator.is_visible(visible.as_deref()))
         .filter(|entity| widgets.get(*entity) == Ok(false));
     if marked == *last {
         return;
