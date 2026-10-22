@@ -324,7 +324,7 @@ fn swapping_between_segmented_and_plain_themes_switches_the_look_back_and_forth(
 // ---------------------------------------------------------------------------
 
 #[test]
-fn hovering_the_slider_or_its_thumb_changes_the_colors() {
+fn hovering_the_slider_changes_the_colors() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
     let style = Theme::default().slider;
