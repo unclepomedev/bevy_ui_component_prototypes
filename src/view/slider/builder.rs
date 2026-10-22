@@ -52,12 +52,21 @@ impl SliderBuilder {
             SliderStep(self.step.unwrap_or((end - start) / 100.0)),
             slider_node(&geometry),
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
-                // Only the thumb is pickable: Bevy treats a press on it as a drag and not as a click on the rail.
-                parent.spawn((SliderPart::Rail, rail_node(&geometry), pass_through()));
+                parent.spawn((
+                    SliderPart::Rail,
+                    rail_node(&geometry),
+                    BackgroundGradient::default(),
+                    pass_through(),
+                ));
                 parent
                     .spawn((SliderPart::Travel, travel_node(&geometry), pass_through()))
                     .with_children(|travel| {
-                        travel.spawn((SliderPart::Fill, fill_node(&geometry), pass_through()));
+                        travel.spawn((
+                            SliderPart::Fill,
+                            fill_node(&geometry),
+                            BackgroundGradient::default(),
+                            pass_through(),
+                        ));
                         travel.spawn((SliderPart::Thumb, SliderThumb, thumb_node(&geometry)));
                     });
             })),

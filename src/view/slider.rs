@@ -20,7 +20,7 @@ use bevy::{
     ecs::{query::QueryData, system::SystemParam},
     picking::hover::Hovered,
     prelude::*,
-    ui::{InteractionDisabled, Pressed, UiSystems},
+    ui::{ColorStop, Gradient, InteractionDisabled, LinearGradient, Pressed, UiSystems},
     ui_widgets::{SliderDragState, SliderRange, SliderValue},
 };
 
@@ -38,7 +38,7 @@ fn sync_slider_style(
     mut ring: FocusRingTracker,
     mut targets: SliderTargets,
     mut sliders: Query<SliderRow, With<ValueSlider>>,
-    mut parts: Query<(&SliderPart, &mut BackgroundColor, &mut Node), Without<ValueSlider>>,
+    mut parts: Query<PartRow, Without<ValueSlider>>,
     children: Query<&Children>,
 ) {
     let (focused, focus_moved) = ring.update();
@@ -57,8 +57,8 @@ fn sync_slider_style(
 
         write_ring(&mut slider.outline, &look);
         write_height(&mut slider.node, &geometry);
-        let position = thumb_position(&slider);
-        write_parts(&mut parts, &children, entity, &look, &geometry, position);
+        let share = thumb_share(&slider);
+        write_parts(&mut parts, &children, entity, &look, &geometry, share);
     }
 }
 
@@ -83,9 +83,9 @@ fn visual_state(slider: &SliderRowItem, is_focused: bool) -> VisualState {
     VisualState::from_flags(pressed, slider.hovered.get(), is_focused, slider.disabled)
 }
 
-fn thumb_position(slider: &SliderRowItem) -> Val {
-    let share = slider.range.thumb_position(slider.value.0).clamp(0.0, 1.0);
-    Val::Percent(share * 100.0)
+/// Where the thumb and the end of the fill are, as a share (0 to 1) of the travel.
+fn thumb_share(slider: &SliderRowItem) -> f32 {
+    slider.range.thumb_position(slider.value.0).clamp(0.0, 1.0)
 }
 
 fn write_ring(outline: &mut Mut<Outline>, look: &SliderLook) {
@@ -103,48 +103,119 @@ fn write_height(node: &mut Mut<Node>, geometry: &SliderGeometry) {
     }
 }
 
+/// Colors every part and moves the fill and the thumb.
 fn write_parts(
-    parts: &mut Query<(&SliderPart, &mut BackgroundColor, &mut Node), Without<ValueSlider>>,
+    parts: &mut Query<PartRow, Without<ValueSlider>>,
     children: &Query<&Children>,
     slider: Entity,
     look: &SliderLook,
     geometry: &SliderGeometry,
-    position: Val,
+    share: f32,
 ) {
+    let position = Val::Percent(share * 100.0);
     for part in children.iter_descendants(slider) {
-        let Ok((kind, mut bg, mut node)) = parts.get_mut(part) else {
+        let Ok(mut part) = parts.get_mut(part) else {
             continue;
         };
-        match kind {
-            SliderPart::Rail => {
-                bg.set_if_neq(BackgroundColor(look.rail));
-                write_bar(&mut node, &rail_node(geometry));
-            }
-            SliderPart::Travel => {
-                let want = travel_node(geometry);
-                if node.right != want.right {
-                    node.right = want.right;
-                }
-            }
-            SliderPart::Fill => {
-                bg.set_if_neq(BackgroundColor(look.fill));
-                write_bar(&mut node, &fill_node(geometry));
-                if node.width != position {
-                    node.width = position;
-                }
-            }
-            SliderPart::Thumb => {
-                bg.set_if_neq(BackgroundColor(look.thumb));
-                let want = thumb_node(geometry);
-                write_bar(&mut node, &want);
-                if node.width != want.width {
-                    node.width = want.width;
-                }
-                if node.left != position {
-                    node.left = position;
-                }
-            }
+        match part.kind {
+            SliderPart::Rail => write_rail(&mut part, look, geometry),
+            SliderPart::Travel => write_travel(&mut part, geometry),
+            SliderPart::Fill => write_fill(&mut part, look, geometry, share, position),
+            SliderPart::Thumb => write_thumb(&mut part, look, geometry, position),
         }
+    }
+}
+
+fn write_rail(part: &mut PartRowItem, look: &SliderLook, geometry: &SliderGeometry) {
+    write_bar(&mut part.node, &rail_node(geometry));
+    match geometry.segments {
+        Some(segments) => {
+            let stops = segments.stops(segments.count, look.rail);
+            paint_blocks(part, stops);
+        }
+        None => paint_solid(part, look.rail),
+    }
+}
+
+fn write_travel(part: &mut PartRowItem, geometry: &SliderGeometry) {
+    let want = travel_node(geometry);
+    if part.node.right != want.right {
+        part.node.right = want.right;
+    }
+}
+
+fn write_fill(
+    part: &mut PartRowItem,
+    look: &SliderLook,
+    geometry: &SliderGeometry,
+    share: f32,
+    position: Val,
+) {
+    write_bar(&mut part.node, &fill_node(geometry));
+    // A segmented fill spans the whole bar and lights its blocks; a solid one grows.
+    let width = match geometry.segments {
+        Some(segments) => {
+            paint_blocks(part, segments.stops(segments.lit(share), look.fill));
+            Val::Percent(100.0)
+        }
+        None => {
+            paint_solid(part, look.fill);
+            position
+        }
+    };
+    if part.node.width != width {
+        part.node.width = width;
+    }
+}
+
+fn write_thumb(
+    part: &mut PartRowItem,
+    look: &SliderLook,
+    geometry: &SliderGeometry,
+    position: Val,
+) {
+    part.bg.set_if_neq(BackgroundColor(look.thumb));
+    let want = thumb_node(geometry);
+    write_bar(&mut part.node, &want);
+    if part.node.width != want.width {
+        part.node.width = want.width;
+    }
+    if part.node.left != position {
+        part.node.left = position;
+    }
+}
+
+/// What the sync reads from a part of a slider.
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct PartRow {
+    kind: &'static SliderPart,
+    bg: &'static mut BackgroundColor,
+    node: &'static mut Node,
+    // Only the rail and the fill carry one.
+    gradient: Option<&'static mut BackgroundGradient>,
+}
+
+/// One color over the whole part.
+fn paint_solid(part: &mut PartRowItem, color: Color) {
+    part.bg.set_if_neq(BackgroundColor(color));
+    set_gradient(&mut part.gradient, Vec::new());
+}
+
+/// Blocks given as gradient stops; the plain background stays out of the way.
+fn paint_blocks(part: &mut PartRowItem, stops: Vec<ColorStop>) {
+    part.bg.set_if_neq(BackgroundColor(Color::NONE));
+    set_gradient(
+        &mut part.gradient,
+        vec![LinearGradient::to_right(stops).into()],
+    );
+}
+
+fn set_gradient(gradient: &mut Option<Mut<BackgroundGradient>>, want: Vec<Gradient>) {
+    if let Some(gradient) = gradient
+        && gradient.0 != want
+    {
+        gradient.0 = want;
     }
 }
 

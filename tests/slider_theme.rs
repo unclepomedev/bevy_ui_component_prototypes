@@ -16,8 +16,8 @@ use bevy::{
     },
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SliderEditing, SliderShape, StateColors, Theme, UiComponentPrototypesPlugin,
-    slider,
+    GlobalTheme, SliderEditing, SliderSegments, SliderShape, StateColors, Theme,
+    UiComponentPrototypesPlugin, slider,
 };
 
 // ---------------------------------------------------------------------------
@@ -232,6 +232,122 @@ fn a_scoped_theme_change_reshapes_only_the_sliders_inside_the_scope() {
 
     assert_eq!(node(&app, inside).height, Val::Px(10.0));
     assert_eq!(node(&app, outside).height, Val::Px(20.0));
+}
+
+// ---------------------------------------------------------------------------
+// Segments
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_segmented_rail_and_fill_are_blocks_drawn_by_gradients() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(blocks_theme()));
+    let slider = app.world_mut().spawn(slider().value(0.8).build()).id();
+
+    app.update();
+
+    let style = blocks_theme().slider;
+    // The plain backgrounds are out of the way, so that the gaps show through.
+    assert_eq!(rail(&app, slider), Color::NONE);
+    assert_eq!(fill(&app, slider), Color::NONE);
+    let rail_stops = stops(&app, rail_part(&app, slider));
+    assert_eq!(rail_stops.len(), 38);
+    assert_eq!(painted_blocks(&rail_stops, style.rail.normal), 10);
+    assert_eq!(
+        painted_blocks(&stops(&app, fill_part(&app, slider)), style.fill.normal),
+        8
+    );
+}
+
+#[test]
+fn the_lit_blocks_follow_the_value() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(blocks_theme()));
+    let slider = app.world_mut().spawn(slider().value(0.8).build()).id();
+    app.update();
+
+    app.world_mut().entity_mut(slider).insert(SliderValue(0.3));
+    app.update();
+
+    let fill_color = blocks_theme().slider.fill.normal;
+    assert_eq!(
+        painted_blocks(&stops(&app, fill_part(&app, slider)), fill_color),
+        3
+    );
+}
+
+// The fill spans the whole bar and lights blocks; it does not grow, and nothing is left of the thumb.
+#[test]
+fn a_segmented_fill_spans_the_bar_and_there_is_no_thumb() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(blocks_theme()));
+    let slider = app.world_mut().spawn(slider().value(0.4).build()).id();
+
+    app.update();
+
+    assert_eq!(
+        node(&app, fill_part(&app, slider)).width,
+        Val::Percent(100.0)
+    );
+    assert_eq!(node(&app, thumb_part(&app, slider)).width, Val::Px(0.0));
+    assert_eq!(node(&app, travel_part(&app, slider)).right, Val::Px(0.0));
+}
+
+#[test]
+fn colors_of_the_blocks_follow_the_state() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(blocks_theme()));
+    let slider = app.world_mut().spawn(slider().value(0.5).build()).id();
+    app.update();
+
+    app.world_mut().entity_mut(slider).insert(Hovered(true));
+    app.update();
+
+    let style = blocks_theme().slider;
+    assert_eq!(
+        painted_blocks(&stops(&app, fill_part(&app, slider)), style.fill.hovered),
+        5
+    );
+}
+
+#[test]
+fn a_plain_slider_has_no_gradients_and_keeps_its_colors() {
+    let mut app = test_app();
+    let slider = app.world_mut().spawn(slider().value(0.5).build()).id();
+
+    app.update();
+
+    let style = Theme::default().slider;
+    assert!(stops(&app, rail_part(&app, slider)).is_empty());
+    assert!(stops(&app, fill_part(&app, slider)).is_empty());
+    assert_eq!(rail(&app, slider), style.rail.normal);
+    assert_eq!(fill(&app, slider), style.fill.normal);
+    assert_eq!(
+        node(&app, fill_part(&app, slider)).width,
+        Val::Percent(50.0)
+    );
+}
+
+#[test]
+fn swapping_between_segmented_and_plain_themes_switches_the_look_back_and_forth() {
+    let mut app = test_app();
+    let slider = app.world_mut().spawn(slider().value(0.5).build()).id();
+    app.update();
+
+    app.insert_resource(GlobalTheme(blocks_theme()));
+    app.update();
+    assert_eq!(stops(&app, rail_part(&app, slider)).len(), 38);
+    assert_eq!(fill(&app, slider), Color::NONE);
+
+    app.insert_resource(GlobalTheme(Theme::default()));
+    app.update();
+    assert!(stops(&app, rail_part(&app, slider)).is_empty());
+    assert!(stops(&app, fill_part(&app, slider)).is_empty());
+    assert_eq!(fill(&app, slider), Theme::default().slider.fill.normal);
+    assert_eq!(
+        node(&app, fill_part(&app, slider)).width,
+        Val::Percent(50.0)
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -632,6 +748,21 @@ fn squared_theme() -> Theme {
         rail_height: 10.0,
         thumb_size: 0.0,
         rounded: false,
+        ..default()
+    };
+    theme
+}
+
+/// Default theme with a ten-block bar.
+fn blocks_theme() -> Theme {
+    let mut theme = Theme::default();
+    theme.slider.shape = SliderShape {
+        rounded: false,
+        segments: Some(SliderSegments {
+            count: 10,
+            gap: 0.2,
+        }),
+        ..default()
     };
     theme
 }
@@ -713,4 +844,19 @@ fn thumb_part(app: &App, slider: Entity) -> Entity {
 
 fn travel_part(app: &App, slider: Entity) -> Entity {
     app.world().get::<Children>(slider).unwrap()[1]
+}
+
+/// The stops of the part's only gradient; empty when it has none.
+fn stops(app: &App, part: Entity) -> Vec<ColorStop> {
+    let gradient = app.world().get::<BackgroundGradient>(part).unwrap();
+    match gradient.0.first() {
+        Some(Gradient::Linear(linear)) => linear.stops.clone(),
+        Some(other) => panic!("not a linear gradient: {other:?}"),
+        None => Vec::new(),
+    }
+}
+
+/// How many blocks `stops` paints with `color` (each block is a pair of stops of that color).
+fn painted_blocks(stops: &[ColorStop], color: Color) -> usize {
+    stops.iter().filter(|stop| stop.color == color).count() / 2
 }
