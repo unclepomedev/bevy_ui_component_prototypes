@@ -6,7 +6,7 @@
 //!   1. The menu is text only. Hover brightens a label, press dims it, and CONTINUE is grayed out.
 //!   2. Hovering an item moves keyboard focus to it, so the pointer and Tab / Shift+Tab share one selection, and
 //!      there is a single ">" marker. The marker is drawn by this example, from the crate's `ShowsFocus`;
-//! 　　　the theme only supplies colors, so the focus ring is turned off (`FocusRing::NONE`).
+//!      the theme only supplies colors, so the focus ring is turned off (`FocusRing::NONE`).
 //!   3. Enter / Space on the focused item updates the "Activate:" line. While disabled, CONTINUE never activates,
 //!      and Tab skips it (the crate takes disabled buttons out of the tab order).
 //!   4. [Up] / [Down] move the focus too, and skip CONTINUE while it is disabled. Under the default theme

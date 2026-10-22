@@ -37,7 +37,9 @@ use bevy::{
     ui::InteractionDisabled,
     ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange},
 };
-use bevy_ui_component_prototypes::{slider, GlobalTheme, SliderShape, StateColors, Theme, UiComponentPrototypesPlugin};
+use bevy_ui_component_prototypes::{
+    GlobalTheme, SliderShape, StateColors, Theme, UiComponentPrototypesPlugin, slider,
+};
 
 /// Name of the slider, shown in the status line.
 #[derive(Component)]
@@ -221,27 +223,27 @@ fn spawn_shaped_panel(root: &mut ChildSpawnerCommands) {
         },
         theme,
     ))
-        .with_children(|panel| {
-            panel.spawn((
-                Text::new("Square, no thumb (own shape)"),
-                Node {
-                    width: px(260),
-                    ..default()
-                },
-            ));
-            panel
-                .spawn(Node {
-                    width: px(320),
-                    ..default()
-                })
-                .with_children(|slot| {
-                    slot.spawn((
-                        slider().value(0.5).build(),
-                        AccessibleLabel::new("Square, no thumb"),
-                        Tag("Square"),
-                    ));
-                });
-        });
+    .with_children(|panel| {
+        panel.spawn((
+            Text::new("Square, no thumb (own shape)"),
+            Node {
+                width: px(260),
+                ..default()
+            },
+        ));
+        panel
+            .spawn(Node {
+                width: px(320),
+                ..default()
+            })
+            .with_children(|slot| {
+                slot.spawn((
+                    slider().value(0.5).build(),
+                    AccessibleLabel::new("Square, no thumb"),
+                    Tag("Square"),
+                ));
+            });
+    });
 }
 
 fn spawn_help(root: &mut ChildSpawnerCommands) {
