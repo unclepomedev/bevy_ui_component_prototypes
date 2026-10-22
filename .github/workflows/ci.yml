@@ -68,5 +68,6 @@ jobs:
 
       - name: Run local CI check
         env:
-          CARGO_PROFILE_DEV_DEBUG: line-tables-only
+          CARGO_PROFILE_DEV_DEBUG: 0
+          CARGO_INCREMENTAL: 0
         run: just check
