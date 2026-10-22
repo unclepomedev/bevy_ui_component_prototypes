@@ -10,9 +10,9 @@ pub use crate::style::{
     theme::{GlobalTheme, Theme},
 };
 pub use view::{
-    ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, ShowsFocus, SliderBuilder,
-    SliderEditing, ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button, slider,
-    toggle_switch,
+    ButtonSize, ButtonVariant, FocusIndicator, IconButton, IconButtonBuilder, ShowsFocus,
+    SliderBuilder, SliderEditing, ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button,
+    slider, toggle_switch,
 };
 
 use crate::view::{

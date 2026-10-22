@@ -19,8 +19,8 @@ use bevy::{
     ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant, GlobalTheme, SlicedImage, StateColors,
-    Theme, UiComponentPrototypesPlugin, icon_button,
+    ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant, FocusIndicator, GlobalTheme, SlicedImage,
+    StateColors, Theme, UiComponentPrototypesPlugin, icon_button,
 };
 
 // ---------------------------------------------------------------------------
@@ -360,6 +360,25 @@ fn moving_focus_moves_the_ring() {
     assert_eq!(bg(&app, first), style.bg.normal);
     assert_eq!(outline(&app, second).color, style.focus_ring.color);
     assert_eq!(bg(&app, second), style.bg.focused);
+}
+
+#[test]
+fn an_always_visible_indicator_draws_the_ring_while_bevy_hides_it() {
+    let mut app = test_app_with_focus_theme();
+    app.insert_resource(FocusIndicator::Always);
+    let button = spawn_primary(&mut app);
+    app.update();
+
+    focus(&mut app, button, false);
+    app.update();
+
+    let style = focus_theme().buttons.primary;
+    assert_eq!(outline(&app, button).color, style.focus_ring.color);
+    assert_eq!(bg(&app, button), style.bg.focused);
+
+    app.insert_resource(FocusIndicator::Auto);
+    app.update();
+    assert_eq!(outline(&app, button).color, Color::NONE);
 }
 
 #[test]

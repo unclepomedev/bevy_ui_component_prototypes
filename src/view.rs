@@ -9,7 +9,7 @@ mod theme_lookup;
 mod toggle_switch;
 
 pub use button::ButtonVariant;
-pub use focus::ShowsFocus;
+pub use focus::{FocusIndicator, ShowsFocus};
 pub use icon_button::{ButtonSize, IconButton, IconButtonBuilder, icon_button};
 pub use slider::{SliderBuilder, SliderEditing, ValueSlider, slider};
 pub use toggle_switch::{ToggleSwitch, ToggleSwitchBuilder, toggle_switch};

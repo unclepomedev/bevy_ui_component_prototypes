@@ -32,8 +32,8 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyle, ButtonStyles, GlobalTheme, ShowsFocus, StateColors, Theme,
-    UiComponentPrototypesPlugin, icon_button,
+    ButtonSize, ButtonStyle, ButtonStyles, FocusIndicator, GlobalTheme, ShowsFocus, StateColors,
+    Theme, UiComponentPrototypesPlugin, icon_button,
 };
 
 // Sampled from the reference mock-up: a pale phosphor green on a near-black desk.
@@ -77,6 +77,8 @@ fn main() {
         .insert_resource(GlobalTheme(terminal_theme()))
         .insert_resource(TerminalLook(true))
         .insert_resource(InputFocusVisible(true))
+        // A console-style menu keeps its marker after a click; `swap_theme` follows the look.
+        .insert_resource(FocusIndicator::Always)
         .add_systems(Startup, setup)
         .add_systems(
             Update,
@@ -84,11 +86,8 @@ fn main() {
                 toggle_continue.run_if(input_just_pressed(KeyCode::KeyD)),
                 swap_theme.run_if(input_just_pressed(KeyCode::KeyT)),
                 arrow_keys_move_focus,
-                // Console-style menu: hover moves focus, and the focus indicator stays visible
-                // (the crate's pointer focus would hide it on every click).
-                (hover_moves_focus, keep_focus_visible)
-                    .chain()
-                    .run_if(terminal_look),
+                // Console-style menu: hover moves focus.
+                hover_moves_focus.run_if(terminal_look),
                 update_markers,
             ),
         )
@@ -262,12 +261,6 @@ fn arrow_keys_move_focus(
     }
 }
 
-fn keep_focus_visible(mut focus_visible: ResMut<InputFocusVisible>) {
-    if !focus_visible.0 {
-        focus_visible.0 = true;
-    }
-}
-
 /// Shows the marker next to the item that holds the visible focus, under the terminal look only.
 fn update_markers(
     look: Res<TerminalLook>,
@@ -304,8 +297,17 @@ fn toggle_continue(
     }
 }
 
-fn swap_theme(mut global: ResMut<GlobalTheme>, mut look: ResMut<TerminalLook>) {
+fn swap_theme(
+    mut global: ResMut<GlobalTheme>,
+    mut look: ResMut<TerminalLook>,
+    mut indicator: ResMut<FocusIndicator>,
+) {
     look.0 = !look.0;
+    *indicator = if look.0 {
+        FocusIndicator::Always
+    } else {
+        FocusIndicator::Auto
+    };
     *global = GlobalTheme(if look.0 {
         terminal_theme()
     } else {
