@@ -204,36 +204,6 @@ fn a_custom_shape_reaches_every_part_after_one_update() {
     assert_eq!(node(&app, travel_part(&app, slider)).right, Val::Px(0.0));
 }
 
-#[test]
-fn a_global_theme_change_reshapes_unscoped_sliders_but_not_scoped_ones() {
-    let mut app = test_app();
-    let unscoped = spawn_slider(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
-    let scoped = spawn_slider_under(&mut app, panel);
-    app.update();
-
-    app.insert_resource(GlobalTheme(squared_theme()));
-    app.update();
-
-    assert_eq!(node(&app, unscoped).height, Val::Px(10.0));
-    assert_eq!(node(&app, scoped).height, Val::Px(20.0));
-}
-
-#[test]
-fn a_scoped_theme_change_reshapes_only_the_sliders_inside_the_scope() {
-    let mut app = test_app();
-    let outside = spawn_slider(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
-    let inside = spawn_slider_under(&mut app, panel);
-    app.update();
-
-    *app.world_mut().get_mut::<Theme>(panel).unwrap() = squared_theme();
-    app.update();
-
-    assert_eq!(node(&app, inside).height, Val::Px(10.0));
-    assert_eq!(node(&app, outside).height, Val::Px(20.0));
-}
-
 // ---------------------------------------------------------------------------
 // Segments
 // ---------------------------------------------------------------------------
@@ -448,7 +418,9 @@ fn global_theme_change_updates_unscoped_sliders_but_not_scoped_ones() {
     app.insert_resource(GlobalTheme(red_fill_theme()));
     app.update();
 
+    assert_eq!(node(&app, unscoped).height, Val::Px(10.0));
     assert_eq!(fill(&app, unscoped), red());
+    assert_eq!(node(&app, scoped).height, Val::Px(20.0));
     assert_eq!(fill(&app, scoped), Theme::default().slider.fill.normal);
 }
 
@@ -463,7 +435,9 @@ fn scoped_theme_change_updates_only_sliders_inside_the_scope() {
     *app.world_mut().get_mut::<Theme>(panel).unwrap() = red_fill_theme();
     app.update();
 
+    assert_eq!(node(&app, inside).height, Val::Px(10.0));
     assert_eq!(fill(&app, inside), red());
+    assert_eq!(node(&app, outside).height, Val::Px(20.0));
     assert_eq!(fill(&app, outside), Theme::default().slider.fill.normal);
 }
 
@@ -733,9 +707,15 @@ fn red() -> Color {
     Color::srgb(0.9, 0.1, 0.1)
 }
 
-/// Default theme whose fill is red, so that it is distinguishable from the default.
+/// Default theme whose fill is red and rail is thick/square, distinguishable in color and shape.
 fn red_fill_theme() -> Theme {
     let mut theme = Theme::default();
+    theme.slider.shape = SliderShape {
+        rail_height: 10.0,
+        thumb_size: 0.0,
+        rounded: false,
+        ..default()
+    };
     theme.slider.fill = StateColors::uniform(red());
     theme
 }
