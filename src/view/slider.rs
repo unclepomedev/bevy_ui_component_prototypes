@@ -6,13 +6,16 @@ pub use self::{
     components::{SliderEditing, ValueSlider},
 };
 
-use self::components::SliderPart;
+use self::components::{SliderPart, fill_node, rail_node, slider_node, thumb_node, travel_node};
 use super::{
     focus::FocusRingTracker,
     style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
 };
-use crate::style::{slider::SliderLook, state::VisualState};
+use crate::style::{
+    slider::{SliderGeometry, SliderLook},
+    state::VisualState,
+};
 use bevy::{
     ecs::{query::QueryData, system::SystemParam},
     picking::hover::Hovered,
@@ -48,14 +51,14 @@ fn sync_slider_style(
 
         let is_focused = focused == Some(entity);
         let state = visual_state(&slider, is_focused);
-        let look = lookup
-            .for_entity(entity)
-            .slider
-            .look(state, is_focused, slider.editing);
+        let style = &lookup.for_entity(entity).slider;
+        let look = style.look(state, is_focused, slider.editing);
+        let geometry = style.shape.geometry();
 
         write_ring(&mut slider.outline, &look);
+        write_height(&mut slider.node, &geometry);
         let position = thumb_position(&slider);
-        write_parts(&mut parts, &children, entity, &look, position);
+        write_parts(&mut parts, &children, entity, &look, &geometry, position);
     }
 }
 
@@ -71,6 +74,7 @@ struct SliderRow {
     disabled: Has<InteractionDisabled>,
     editing: Has<SliderEditing>,
     outline: &'static mut Outline,
+    node: &'static mut Node,
 }
 
 fn visual_state(slider: &SliderRowItem, is_focused: bool) -> VisualState {
@@ -92,11 +96,19 @@ fn write_ring(outline: &mut Mut<Outline>, look: &SliderLook) {
     ));
 }
 
+fn write_height(node: &mut Mut<Node>, geometry: &SliderGeometry) {
+    let want = slider_node(geometry);
+    if node.height != want.height {
+        node.height = want.height;
+    }
+}
+
 fn write_parts(
     parts: &mut Query<(&SliderPart, &mut BackgroundColor, &mut Node), Without<ValueSlider>>,
     children: &Query<&Children>,
     slider: Entity,
     look: &SliderLook,
+    geometry: &SliderGeometry,
     position: Val,
 ) {
     for part in children.iter_descendants(slider) {
@@ -106,20 +118,45 @@ fn write_parts(
         match kind {
             SliderPart::Rail => {
                 bg.set_if_neq(BackgroundColor(look.rail));
+                write_bar(&mut node, &rail_node(geometry));
+            }
+            SliderPart::Travel => {
+                let want = travel_node(geometry);
+                if node.right != want.right {
+                    node.right = want.right;
+                }
             }
             SliderPart::Fill => {
                 bg.set_if_neq(BackgroundColor(look.fill));
+                write_bar(&mut node, &fill_node(geometry));
                 if node.width != position {
                     node.width = position;
                 }
             }
             SliderPart::Thumb => {
                 bg.set_if_neq(BackgroundColor(look.thumb));
+                let want = thumb_node(geometry);
+                write_bar(&mut node, &want);
+                if node.width != want.width {
+                    node.width = want.width;
+                }
                 if node.left != position {
                     node.left = position;
                 }
             }
         }
+    }
+}
+
+fn write_bar(node: &mut Mut<Node>, want: &Node) {
+    if node.top != want.top {
+        node.top = want.top;
+    }
+    if node.height != want.height {
+        node.height = want.height;
+    }
+    if node.border_radius != want.border_radius {
+        node.border_radius = want.border_radius;
     }
 }
 

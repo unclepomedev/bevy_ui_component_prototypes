@@ -2,7 +2,7 @@ use super::{
     ValueSlider,
     components::{SliderPart, fill_node, rail_node, slider_node, thumb_node, travel_node},
 };
-use crate::view::pass_through;
+use crate::{SliderShape, view::pass_through};
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     prelude::*,
@@ -44,20 +44,21 @@ impl SliderBuilder {
 
     pub fn build(self) -> impl Bundle {
         let (start, end) = self.range;
+        let geometry = SliderShape::default().geometry();
         (
             ValueSlider,
             SliderRange::new(start, end),
             SliderValue(self.value.unwrap_or(start)),
             SliderStep(self.step.unwrap_or((end - start) / 100.0)),
-            slider_node(),
+            slider_node(&geometry),
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 // Only the thumb is pickable: Bevy treats a press on it as a drag and not as a click on the rail.
-                parent.spawn((SliderPart::Rail, rail_node(), pass_through()));
+                parent.spawn((SliderPart::Rail, rail_node(&geometry), pass_through()));
                 parent
-                    .spawn((travel_node(), pass_through()))
+                    .spawn((SliderPart::Travel, travel_node(&geometry), pass_through()))
                     .with_children(|travel| {
-                        travel.spawn((SliderPart::Fill, fill_node(), pass_through()));
-                        travel.spawn((SliderPart::Thumb, SliderThumb, thumb_node()));
+                        travel.spawn((SliderPart::Fill, fill_node(&geometry), pass_through()));
+                        travel.spawn((SliderPart::Thumb, SliderThumb, thumb_node(&geometry)));
                     });
             })),
         )

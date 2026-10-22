@@ -8,9 +8,62 @@ use super::{
 };
 use bevy::prelude::*;
 
-/// Colors and focus ring of a slider: the rail, the filled part of it and the thumb.
+/// The size and the corners of a slider, in logical pixels.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SliderShape {
+    /// Thickness of the rail and of the fill.
+    pub rail_height: f32,
+    /// Width and height of the thumb. `0.0` draws no thumb: the fill then ends exactly at the value.
+    pub thumb_size: f32,
+    /// Fully rounded ends (a pill and a circle) when `true`, square corners when `false`.
+    pub rounded: bool,
+}
+
+impl Default for SliderShape {
+    fn default() -> Self {
+        Self {
+            rail_height: 6.0,
+            thumb_size: 20.0,
+            rounded: true,
+        }
+    }
+}
+
+/// Where the parts of a slider go, resolved from a [`SliderShape`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct SliderGeometry {
+    pub(crate) height: f32,
+    pub(crate) rail_height: f32,
+    pub(crate) rail_top: f32,
+    pub(crate) rail_radius: f32,
+    pub(crate) thumb_size: f32,
+    pub(crate) thumb_top: f32,
+    pub(crate) thumb_radius: f32,
+    /// How much shorter than the slider the travel area of the thumb is.
+    pub(crate) travel_inset: f32,
+}
+
+impl SliderShape {
+    pub(crate) fn geometry(&self) -> SliderGeometry {
+        let height = self.rail_height.max(self.thumb_size);
+        let radius = |size: f32| if self.rounded { size / 2.0 } else { 0.0 };
+        SliderGeometry {
+            height,
+            rail_height: self.rail_height,
+            rail_top: (height - self.rail_height) / 2.0,
+            rail_radius: radius(self.rail_height),
+            thumb_size: self.thumb_size,
+            thumb_top: (height - self.thumb_size) / 2.0,
+            thumb_radius: radius(self.thumb_size),
+            travel_inset: self.thumb_size,
+        }
+    }
+}
+
+/// Colors, focus ring and shape of a slider: the rail, the filled part of it, and the thumb.
 #[derive(Clone, Copy, Debug)]
 pub struct SliderStyle {
+    pub shape: SliderShape,
     pub rail: StateColors,
     pub fill: StateColors,
     pub thumb: StateColors,
@@ -22,6 +75,7 @@ pub struct SliderStyle {
 impl Default for SliderStyle {
     fn default() -> Self {
         Self {
+            shape: SliderShape::default(),
             rail: StateColors {
                 normal: BG_HOVERED,
                 hovered: BG_HOVERED,
@@ -95,6 +149,53 @@ impl SliderStyle {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_default_shape_is_a_thin_rail_under_a_round_thumb() {
+        let geometry = SliderShape::default().geometry();
+        assert_eq!(geometry.height, 20.0);
+        assert_eq!(geometry.rail_top, 7.0);
+        assert_eq!(geometry.rail_radius, 3.0);
+        assert_eq!(geometry.thumb_top, 0.0);
+        assert_eq!(geometry.thumb_radius, 10.0);
+        assert_eq!(geometry.travel_inset, 20.0);
+    }
+
+    // The slider is as tall as its tallest part, and the smaller part is centered in it.
+    #[test]
+    fn the_slider_is_as_tall_as_its_tallest_part_and_the_other_is_centered() {
+        let thick_rail = SliderShape {
+            rail_height: 16.0,
+            thumb_size: 8.0,
+            rounded: true,
+        }
+        .geometry();
+        assert_eq!(thick_rail.height, 16.0);
+        assert_eq!(thick_rail.rail_top, 0.0);
+        assert_eq!(thick_rail.thumb_top, 4.0);
+    }
+
+    #[test]
+    fn square_corners_have_no_radius() {
+        let geometry = SliderShape {
+            rounded: false,
+            ..default()
+        }
+        .geometry();
+        assert_eq!(geometry.rail_radius, 0.0);
+        assert_eq!(geometry.thumb_radius, 0.0);
+    }
+
+    #[test]
+    fn a_zero_thumb_leaves_the_whole_width_to_travel() {
+        let geometry = SliderShape {
+            thumb_size: 0.0,
+            ..default()
+        }
+        .geometry();
+        assert_eq!(geometry.travel_inset, 0.0);
+        assert_eq!(geometry.height, 6.0);
+    }
 
     #[test]
     fn each_part_follows_the_visual_state() {
