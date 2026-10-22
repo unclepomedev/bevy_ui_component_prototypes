@@ -10,11 +10,14 @@ pub use crate::style::{
     theme::{GlobalTheme, Theme},
 };
 pub use view::{
-    ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, SliderBuilder, SliderEditing,
-    ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button, slider, toggle_switch,
+    ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, ShowsFocus, SliderBuilder,
+    SliderEditing, ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button, slider,
+    toggle_switch,
 };
 
-use crate::view::{ButtonStylePlugin, SliderStylePlugin, SwitchStylePlugin, TabOrderPlugin};
+use crate::view::{
+    ButtonStylePlugin, ShowsFocusPlugin, SliderStylePlugin, SwitchStylePlugin, TabOrderPlugin,
+};
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
     prelude::*,
@@ -37,6 +40,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             SwitchStylePlugin,
             SliderStylePlugin,
             TabOrderPlugin,
+            ShowsFocusPlugin,
         ));
     }
 
