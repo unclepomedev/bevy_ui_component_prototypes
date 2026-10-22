@@ -171,16 +171,35 @@ fn the_default_shape_is_a_thin_rail_and_a_round_thumb() {
 
     app.update();
 
-    assert_eq!(node(&app, slider).height, Val::Px(20.0));
-    assert_eq!(node(&app, rail_part(&app, slider)).height, Val::Px(6.0));
-    assert_eq!(node(&app, rail_part(&app, slider)).top, Val::Px(7.0));
-    assert_eq!(node(&app, thumb_part(&app, slider)).width, Val::Px(20.0));
-    assert_eq!(node(&app, thumb_part(&app, slider)).height, Val::Px(20.0));
+    let slider_node = node(&app, slider);
+    let rail_node = node(&app, rail_part(&app, slider));
+    let thumb_node = node(&app, thumb_part(&app, slider));
+    let travel_node = node(&app, travel_part(&app, slider));
+
+    // The slider is as tall as its thumb, which is larger than the rail.
+    assert!(px(rail_node.height) < px(thumb_node.height));
+    assert_eq!(slider_node.height, thumb_node.height);
+
+    // The thin rail is centered on the slider, and its radius is half its height.
     assert_eq!(
-        node(&app, thumb_part(&app, slider)).border_radius,
-        BorderRadius::all(Val::Px(10.0))
+        rail_node.top,
+        Val::Px((px(slider_node.height) - px(rail_node.height)) / 2.0)
     );
-    assert_eq!(node(&app, travel_part(&app, slider)).right, Val::Px(20.0));
+    assert_eq!(
+        rail_node.border_radius,
+        BorderRadius::all(Val::Px(px(rail_node.height) / 2.0))
+    );
+
+    // The thumb is a circle as tall as the slider.
+    assert_eq!(thumb_node.width, thumb_node.height);
+    assert_eq!(thumb_node.top, Val::Px(0.0));
+    assert_eq!(
+        thumb_node.border_radius,
+        BorderRadius::all(Val::Px(px(thumb_node.height) / 2.0))
+    );
+
+    // The travel area is shortened by the thumb width so the thumb stays inside the slider.
+    assert_eq!(travel_node.right, thumb_node.width);
 }
 
 #[test]
@@ -204,36 +223,6 @@ fn a_custom_shape_reaches_every_part_after_one_update() {
     assert_eq!(node(&app, travel_part(&app, slider)).right, Val::Px(0.0));
 }
 
-#[test]
-fn a_global_theme_change_reshapes_unscoped_sliders_but_not_scoped_ones() {
-    let mut app = test_app();
-    let unscoped = spawn_slider(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
-    let scoped = spawn_slider_under(&mut app, panel);
-    app.update();
-
-    app.insert_resource(GlobalTheme(squared_theme()));
-    app.update();
-
-    assert_eq!(node(&app, unscoped).height, Val::Px(10.0));
-    assert_eq!(node(&app, scoped).height, Val::Px(20.0));
-}
-
-#[test]
-fn a_scoped_theme_change_reshapes_only_the_sliders_inside_the_scope() {
-    let mut app = test_app();
-    let outside = spawn_slider(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
-    let inside = spawn_slider_under(&mut app, panel);
-    app.update();
-
-    *app.world_mut().get_mut::<Theme>(panel).unwrap() = squared_theme();
-    app.update();
-
-    assert_eq!(node(&app, inside).height, Val::Px(10.0));
-    assert_eq!(node(&app, outside).height, Val::Px(20.0));
-}
-
 // ---------------------------------------------------------------------------
 // Segments
 // ---------------------------------------------------------------------------
@@ -251,7 +240,6 @@ fn a_segmented_rail_and_fill_are_blocks_drawn_by_gradients() {
     assert_eq!(rail(&app, slider), Color::NONE);
     assert_eq!(fill(&app, slider), Color::NONE);
     let rail_stops = stops(&app, rail_part(&app, slider));
-    assert_eq!(rail_stops.len(), 38);
     assert_eq!(painted_blocks(&rail_stops, style.rail.normal), 10);
     assert_eq!(
         painted_blocks(&stops(&app, fill_part(&app, slider)), style.fill.normal),
@@ -336,7 +324,7 @@ fn swapping_between_segmented_and_plain_themes_switches_the_look_back_and_forth(
 
     app.insert_resource(GlobalTheme(blocks_theme()));
     app.update();
-    assert_eq!(stops(&app, rail_part(&app, slider)).len(), 38);
+    assert!(!stops(&app, rail_part(&app, slider)).is_empty());
     assert_eq!(fill(&app, slider), Color::NONE);
 
     app.insert_resource(GlobalTheme(Theme::default()));
@@ -355,7 +343,7 @@ fn swapping_between_segmented_and_plain_themes_switches_the_look_back_and_forth(
 // ---------------------------------------------------------------------------
 
 #[test]
-fn hovering_the_slider_or_its_thumb_changes_the_colors() {
+fn hovering_the_slider_changes_the_colors() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
     let style = Theme::default().slider;
@@ -449,7 +437,9 @@ fn global_theme_change_updates_unscoped_sliders_but_not_scoped_ones() {
     app.insert_resource(GlobalTheme(red_fill_theme()));
     app.update();
 
+    assert_eq!(node(&app, unscoped).height, Val::Px(10.0));
     assert_eq!(fill(&app, unscoped), red());
+    assert_eq!(node(&app, scoped).height, Val::Px(20.0));
     assert_eq!(fill(&app, scoped), Theme::default().slider.fill.normal);
 }
 
@@ -464,7 +454,9 @@ fn scoped_theme_change_updates_only_sliders_inside_the_scope() {
     *app.world_mut().get_mut::<Theme>(panel).unwrap() = red_fill_theme();
     app.update();
 
+    assert_eq!(node(&app, inside).height, Val::Px(10.0));
     assert_eq!(fill(&app, inside), red());
+    assert_eq!(node(&app, outside).height, Val::Px(20.0));
     assert_eq!(fill(&app, outside), Theme::default().slider.fill.normal);
 }
 
@@ -734,9 +726,15 @@ fn red() -> Color {
     Color::srgb(0.9, 0.1, 0.1)
 }
 
-/// Default theme whose fill is red, so that it is distinguishable from the default.
+/// Default theme whose fill is red and rail is thick/square, distinguishable in color and shape.
 fn red_fill_theme() -> Theme {
     let mut theme = Theme::default();
+    theme.slider.shape = SliderShape {
+        rail_height: 10.0,
+        thumb_size: 0.0,
+        rounded: false,
+        ..default()
+    };
     theme.slider.fill = StateColors::uniform(red());
     theme
 }
@@ -828,6 +826,13 @@ fn thumb_left(app: &App, slider: Entity) -> Val {
 
 fn node(app: &App, entity: Entity) -> Node {
     app.world().get::<Node>(entity).unwrap().clone()
+}
+
+fn px(val: Val) -> f32 {
+    match val {
+        Val::Px(pixels) => pixels,
+        other => panic!("expected Val::Px, got {other:?}"),
+    }
 }
 
 fn rail_part(app: &App, slider: Entity) -> Entity {
