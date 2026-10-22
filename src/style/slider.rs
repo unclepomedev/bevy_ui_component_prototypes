@@ -11,7 +11,7 @@ use bevy::{prelude::*, ui::ColorStop};
 /// A slider drawn as separate blocks instead of one continuous bar.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct SliderSegments {
-    /// How many blocks the bar is made of.
+    /// How many blocks the bar is made of. Fewer than two draw a plain bar.
     pub count: u32,
     /// The empty space between two blocks, as a share of one block's pitches (`0.2` a fifth of each pitch is a gap).
     pub gap: f32,
@@ -68,7 +68,9 @@ pub(crate) struct SliderGeometry {
 
 impl SliderShape {
     pub(crate) fn geometry(&self) -> SliderGeometry {
-        let thumb_size = if self.segments.is_some() {
+        // Fewer than two blocks is just a plain bar.
+        let segments = self.segments.filter(|segments| segments.count >= 2);
+        let thumb_size = if segments.is_some() {
             0.0
         } else {
             self.thumb_size
@@ -84,7 +86,7 @@ impl SliderShape {
             thumb_top: (height - thumb_size) / 2.0,
             thumb_radius: radius(thumb_size),
             travel_inset: thumb_size,
-            segments: self.segments,
+            segments,
         }
     }
 }
@@ -100,18 +102,22 @@ impl SliderSegments {
     /// Color stops of a left-to-right gradient that paints the first `lit` blocks with `color` and
     /// leaves the other blocks and every gap transparent.
     pub(crate) fn stops(&self, lit: u32, color: Color) -> Vec<ColorStop> {
-        let pitch = 100.0 / self.count as f32;
-        let block = pitch * (1.0 - self.gap.clamp(0.0, 1.0));
+        // `count` blocks and `count - 1` gaps fill the bar from 0% to 100%.
+        let gap = self.gap.clamp(0.0, 1.0);
+        let pitch = 100.0 / (self.count as f32 - gap);
+        let block = pitch * (1.0 - gap);
+        // Each boundary is computed once, so a block's end never passes the next block's start.
+        let at = |index: u32| pitch * index as f32;
         let mut stops = Vec::new();
         for index in 0..self.count {
-            let start = pitch * index as f32;
-            let end = start + block;
+            let start = at(index);
+            let end = (start + block).min(at(index + 1));
             let paint = if index < lit { color } else { Color::NONE };
             stops.push(ColorStop::percent(paint, start));
             stops.push(ColorStop::percent(paint, end));
-            if self.gap > 0.0 {
+            if gap > 0.0 && index + 1 < self.count {
                 stops.push(ColorStop::percent(Color::NONE, end));
-                stops.push(ColorStop::percent(Color::NONE, start + pitch));
+                stops.push(ColorStop::percent(Color::NONE, at(index + 1)));
             }
         }
         stops
@@ -244,22 +250,83 @@ mod tests {
     #[test]
     fn the_stops_paint_lit_blocks_and_leave_the_gaps_clear() {
         let color = Color::srgb(0.2, 0.9, 0.3);
-        let stops = SliderSegments { count: 2, gap: 0.2 }.stops(1, color);
+        // Three blocks of 20% and two gaps of 20%: 0-20, 40-60 and 80-100.
+        let stops = SliderSegments { count: 3, gap: 0.5 }.stops(2, color);
 
         let seen: Vec<(Color, f32)> = stops.iter().map(|s| (s.color, percent(s))).collect();
         assert_eq!(
             seen,
             vec![
                 (color, 0.0),
-                (color, 40.0),
+                (color, 20.0),
+                (Color::NONE, 20.0),
                 (Color::NONE, 40.0),
-                (Color::NONE, 50.0),
-                (Color::NONE, 50.0),
-                (Color::NONE, 90.0),
-                (Color::NONE, 90.0),
+                (color, 40.0),
+                (color, 60.0),
+                (Color::NONE, 60.0),
+                (Color::NONE, 80.0),
+                (Color::NONE, 80.0),
                 (Color::NONE, 100.0),
             ]
         );
+    }
+
+    // The bar has to end at the right edge, with no gap left over after the last block.
+    #[test]
+    fn the_last_block_ends_at_the_right_edge() {
+        for count in [2, 3, 10] {
+            for gap in [0.0, 0.2, 0.8] {
+                let stops = SliderSegments { count, gap }.stops(count, Color::WHITE);
+                let last = percent(stops.last().unwrap());
+                assert!(
+                    (last - 100.0).abs() < 1e-3,
+                    "{count} blocks, gap {gap}: {last}"
+                );
+                assert_eq!(percent(&stops[0]), 0.0);
+            }
+        }
+    }
+
+    #[test]
+    fn fewer_than_two_blocks_is_a_plain_bar() {
+        for count in [0, 1] {
+            let geometry = SliderShape {
+                segments: Some(SliderSegments { count, gap: 0.2 }),
+                ..default()
+            }
+            .geometry();
+            assert_eq!(geometry.segments, None);
+            // The thumb stays: this is the plain slider.
+            assert_eq!(geometry.thumb_size, 20.0);
+        }
+    }
+
+    // A gap of 1.0 or more must not divide by zero or produce a NaN.
+    #[test]
+    fn a_whole_gap_still_gives_finite_stops() {
+        for gap in [1.0, 2.0] {
+            let stops = SliderSegments { count: 2, gap }.stops(2, Color::WHITE);
+            assert!(stops.iter().all(|stop| percent(stop).is_finite()));
+        }
+    }
+
+    #[test]
+    fn stop_positions_never_go_backwards() {
+        // A backwards step is drawn as a blend across the block, not as a hard edge.
+        for count in 2..=40 {
+            for gap in [0.0, 0.1, 0.2, 0.5, 0.8, 1.0] {
+                let stops = SliderSegments { count, gap }.stops(count, Color::WHITE);
+                let mut previous = 0.0;
+                for stop in &stops {
+                    let at = percent(stop);
+                    assert!(
+                        at >= previous,
+                        "count {count} gap {gap}: {at} after {previous}"
+                    );
+                    previous = at;
+                }
+            }
+        }
     }
 
     #[test]

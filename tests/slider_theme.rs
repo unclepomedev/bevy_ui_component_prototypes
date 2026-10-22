@@ -251,7 +251,7 @@ fn a_segmented_rail_and_fill_are_blocks_drawn_by_gradients() {
     assert_eq!(rail(&app, slider), Color::NONE);
     assert_eq!(fill(&app, slider), Color::NONE);
     let rail_stops = stops(&app, rail_part(&app, slider));
-    assert_eq!(rail_stops.len(), 40);
+    assert_eq!(rail_stops.len(), 38);
     assert_eq!(painted_blocks(&rail_stops, style.rail.normal), 10);
     assert_eq!(
         painted_blocks(&stops(&app, fill_part(&app, slider)), style.fill.normal),
@@ -336,7 +336,7 @@ fn swapping_between_segmented_and_plain_themes_switches_the_look_back_and_forth(
 
     app.insert_resource(GlobalTheme(blocks_theme()));
     app.update();
-    assert_eq!(stops(&app, rail_part(&app, slider)).len(), 40);
+    assert_eq!(stops(&app, rail_part(&app, slider)).len(), 38);
     assert_eq!(fill(&app, slider), Color::NONE);
 
     app.insert_resource(GlobalTheme(Theme::default()));
