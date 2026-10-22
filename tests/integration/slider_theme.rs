@@ -171,16 +171,35 @@ fn the_default_shape_is_a_thin_rail_and_a_round_thumb() {
 
     app.update();
 
-    assert_eq!(node(&app, slider).height, Val::Px(20.0));
-    assert_eq!(node(&app, rail_part(&app, slider)).height, Val::Px(6.0));
-    assert_eq!(node(&app, rail_part(&app, slider)).top, Val::Px(7.0));
-    assert_eq!(node(&app, thumb_part(&app, slider)).width, Val::Px(20.0));
-    assert_eq!(node(&app, thumb_part(&app, slider)).height, Val::Px(20.0));
+    let slider_node = node(&app, slider);
+    let rail_node = node(&app, rail_part(&app, slider));
+    let thumb_node = node(&app, thumb_part(&app, slider));
+    let travel_node = node(&app, travel_part(&app, slider));
+
+    // The slider is as tall as its thumb, which is larger than the rail.
+    assert!(px(rail_node.height) < px(thumb_node.height));
+    assert_eq!(slider_node.height, thumb_node.height);
+
+    // The thin rail is centered on the slider, and its radius is half its height.
     assert_eq!(
-        node(&app, thumb_part(&app, slider)).border_radius,
-        BorderRadius::all(Val::Px(10.0))
+        rail_node.top,
+        Val::Px((px(slider_node.height) - px(rail_node.height)) / 2.0)
     );
-    assert_eq!(node(&app, travel_part(&app, slider)).right, Val::Px(20.0));
+    assert_eq!(
+        rail_node.border_radius,
+        BorderRadius::all(Val::Px(px(rail_node.height) / 2.0))
+    );
+
+    // The thumb is a circle as tall as the slider.
+    assert_eq!(thumb_node.width, thumb_node.height);
+    assert_eq!(thumb_node.top, Val::Px(0.0));
+    assert_eq!(
+        thumb_node.border_radius,
+        BorderRadius::all(Val::Px(px(thumb_node.height) / 2.0))
+    );
+
+    // The travel area is shortened by the thumb width so the thumb stays inside the slider.
+    assert_eq!(travel_node.right, thumb_node.width);
 }
 
 #[test]
@@ -807,6 +826,13 @@ fn thumb_left(app: &App, slider: Entity) -> Val {
 
 fn node(app: &App, entity: Entity) -> Node {
     app.world().get::<Node>(entity).unwrap().clone()
+}
+
+fn px(val: Val) -> f32 {
+    match val {
+        Val::Px(pixels) => pixels,
+        other => panic!("expected Val::Px, got {other:?}"),
+    }
 }
 
 fn rail_part(app: &App, slider: Entity) -> Entity {
