@@ -4,7 +4,8 @@ mod view;
 
 pub use crate::style::{
     button::{
-        ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, FocusRing, SlicedImage,
+        ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
+        FocusRing, SlicedImage,
     },
     slider::{SliderSegments, SliderShape, SliderStyle},
     state::{CheckedColors, StateColors},

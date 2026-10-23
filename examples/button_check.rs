@@ -19,7 +19,7 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    ButtonSizeId, ButtonStyles, ButtonVariant, GlobalTheme, Theme, UiComponentPrototypesPlugin,
     icon_button,
 };
 
@@ -125,7 +125,7 @@ fn spawn_variant_row(root: &mut ChildSpawnerCommands, custom: ButtonVariant) {
         for (label, variant) in variants {
             row.spawn((
                 icon_button(label)
-                    .size(ButtonSize::Medium)
+                    .size(ButtonSizeId::MEDIUM)
                     .variant(variant)
                     .build(),
                 Tag { name: label },
@@ -138,7 +138,7 @@ fn spawn_variant_row(root: &mut ChildSpawnerCommands, custom: ButtonVariant) {
 fn spawn_disable_target(root: &mut ChildSpawnerCommands) {
     root.spawn((
         icon_button("target (toggle disabled with D)")
-            .size(ButtonSize::Small)
+            .size(ButtonSizeId::SMALL)
             .variant(ButtonVariant::Primary)
             .build(),
         Tag { name: "target" },
@@ -166,7 +166,7 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
         ] {
             panel.spawn((
                 icon_button(label)
-                    .size(ButtonSize::Medium)
+                    .size(ButtonSizeId::MEDIUM)
                     .variant(variant)
                     .build(),
                 Tag { name: label },
@@ -233,7 +233,7 @@ fn spawn_panel_button(mut commands: Commands, panels: Query<Entity, With<ScopedP
     for panel in &panels {
         commands.spawn((
             icon_button("New")
-                .size(ButtonSize::Medium)
+                .size(ButtonSizeId::MEDIUM)
                 .variant(ButtonVariant::Danger)
                 .build(),
             Tag { name: "New" },

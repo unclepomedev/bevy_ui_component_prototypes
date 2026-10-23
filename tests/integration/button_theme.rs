@@ -19,7 +19,7 @@ use bevy::{
     ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonShape, ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant,
+    ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonStyle, ButtonStyles, ButtonVariant,
     FocusIndicator, GlobalTheme, SlicedImage, StateColors, Theme, UiComponentPrototypesPlugin,
     icon_button,
 };
@@ -299,15 +299,17 @@ fn detaching_a_button_from_a_scope_makes_it_follow_the_global_theme() {
 // Size and shape
 // ---------------------------------------------------------------------------
 
+const ROW: ButtonSizeId = ButtonSizeId::new("row");
+
 #[test]
 fn a_button_takes_its_size_and_shape_from_the_theme_after_one_update() {
     let mut app = test_app();
-    let button = spawn_sized(&mut app, ButtonSize::Medium);
+    let button = spawn_sized(&mut app, ButtonSizeId::MEDIUM);
 
     app.update();
 
     let theme = Theme::default();
-    let metrics = theme.button_sizes.medium;
+    let metrics = theme.button_sizes.named[&ButtonSizeId::MEDIUM];
     let shape = theme.buttons.primary.shape;
     let node = node(&app, button);
     assert_eq!(node.height, metrics.height);
@@ -319,10 +321,14 @@ fn a_button_takes_its_size_and_shape_from_the_theme_after_one_update() {
 }
 
 #[test]
-fn the_three_sizes_grow_in_height_and_text() {
+fn the_default_theme_defines_three_sizes_that_grow_in_height_and_text() {
     let mut app = test_app();
-    let buttons = [ButtonSize::Small, ButtonSize::Medium, ButtonSize::Large]
-        .map(|size| spawn_sized(&mut app, size));
+    let buttons = [
+        ButtonSizeId::SMALL,
+        ButtonSizeId::MEDIUM,
+        ButtonSizeId::LARGE,
+    ]
+    .map(|id| spawn_sized(&mut app, id));
 
     app.update();
 
@@ -333,6 +339,52 @@ fn the_three_sizes_grow_in_height_and_text() {
 }
 
 #[test]
+fn a_name_of_the_apps_own_is_defined_by_the_theme() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(roomy_theme()));
+    let button = spawn_sized(&mut app, ROW);
+
+    app.update();
+
+    assert_eq!(node(&app, button).height, roomy_row().height);
+    assert_eq!(node(&app, button).padding, roomy_row().padding);
+}
+
+#[test]
+fn the_default_size_is_the_base_size_of_the_theme() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(roomy_theme()));
+    let button = app
+        .world_mut()
+        .spawn(
+            icon_button("button")
+                .variant(ButtonVariant::Primary)
+                .build(),
+        )
+        .id();
+
+    app.update();
+
+    assert_eq!(
+        node(&app, button).height,
+        roomy_theme().button_sizes.base.height
+    );
+}
+
+#[test]
+fn a_name_the_theme_does_not_define_falls_back_to_the_base_size() {
+    let mut app = test_app();
+    let button = spawn_sized(&mut app, ROW);
+
+    app.update();
+
+    assert_eq!(
+        node(&app, button).height,
+        Theme::default().button_sizes.base.height
+    );
+}
+
+#[test]
 fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
     let mut app = test_app();
     let button = app
@@ -340,7 +392,7 @@ fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
         .spawn(
             icon_button("button")
                 .icon(Handle::default())
-                .size(ButtonSize::Small)
+                .size(ROW)
                 .variant(ButtonVariant::Primary)
                 .build(),
         )
@@ -350,21 +402,21 @@ fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
     app.insert_resource(GlobalTheme(roomy_theme()));
     app.update();
 
-    let theme = roomy_theme();
+    let row = roomy_row();
     let node = node(&app, button);
-    assert_eq!(node.height, theme.button_sizes.small.height);
+    assert_eq!(node.height, row.height);
     assert_eq!(node.border, UiRect::all(Val::Px(0.0)));
     assert_eq!(node.border_radius, BorderRadius::all(Val::Px(0.0)));
-    assert_eq!(label_size(&app, button), theme.button_sizes.small.font_size);
+    assert_eq!(label_size(&app, button), row.font_size);
     let icon = icon_size(&app, button);
     assert_eq!((icon.width, icon.height), (Val::Px(33.0), Val::Px(33.0)));
 
-    // And back: nothing of the other theme is left.
+    // And back: the name is no longer defined, and nothing of the other theme is left.
     app.insert_resource(GlobalTheme(Theme::default()));
     app.update();
     assert_eq!(
         self::node(&app, button).height,
-        Theme::default().button_sizes.small.height
+        Theme::default().button_sizes.base.height
     );
     assert_eq!(
         self::node(&app, button).border,
@@ -375,13 +427,13 @@ fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
 #[test]
 fn a_scoped_theme_resizes_only_the_buttons_inside_the_scope() {
     let mut app = test_app();
-    let outside = spawn_sized(&mut app, ButtonSize::Small);
+    let outside = spawn_sized(&mut app, ROW);
     let panel = app.world_mut().spawn(roomy_theme()).id();
     let inside = app
         .world_mut()
         .spawn((
             icon_button("button")
-                .size(ButtonSize::Small)
+                .size(ROW)
                 .variant(ButtonVariant::Primary)
                 .build(),
             ChildOf(panel),
@@ -390,43 +442,25 @@ fn a_scoped_theme_resizes_only_the_buttons_inside_the_scope() {
 
     app.update();
 
-    assert_eq!(
-        node(&app, inside).height,
-        roomy_theme().button_sizes.small.height
-    );
+    assert_eq!(node(&app, inside).height, roomy_row().height);
     assert_eq!(
         node(&app, outside).height,
-        Theme::default().button_sizes.small.height
+        Theme::default().button_sizes.base.height
     );
-}
-
-#[test]
-fn a_custom_size_ignores_the_theme() {
-    let mut app = test_app();
-    app.insert_resource(GlobalTheme(roomy_theme()));
-    let custom = ButtonMetrics {
-        height: Val::Px(28.0),
-        padding: UiRect::ZERO,
-        ..ButtonMetrics::default()
-    };
-    let button = spawn_sized(&mut app, ButtonSize::Custom(Box::new(custom)));
-
-    app.update();
-
-    assert_eq!(node(&app, button).height, Val::Px(28.0));
-    assert_eq!(node(&app, button).padding, UiRect::ZERO);
 }
 
 #[test]
 fn changing_the_size_of_a_button_resizes_it() {
     let mut app = test_app();
-    let button = spawn_sized(&mut app, ButtonSize::Small);
+    let button = spawn_sized(&mut app, ButtonSizeId::SMALL);
     app.update();
 
-    app.world_mut().entity_mut(button).insert(ButtonSize::Large);
+    app.world_mut()
+        .entity_mut(button)
+        .insert(ButtonSize::Named(ButtonSizeId::LARGE));
     app.update();
 
-    let large = Theme::default().button_sizes.large;
+    let large = Theme::default().button_sizes.named[&ButtonSizeId::LARGE];
     assert_eq!(node(&app, button).height, large.height);
     assert_eq!(label_size(&app, button), large.font_size);
 }
@@ -746,7 +780,7 @@ fn spawn_primary(app: &mut App) -> Entity {
     app.world_mut()
         .spawn(
             icon_button("button")
-                .size(ButtonSize::Small)
+                .size(ButtonSizeId::SMALL)
                 .variant(ButtonVariant::Primary)
                 .build(),
         )
@@ -757,7 +791,7 @@ fn spawn_primary_under(app: &mut App, parent: Entity) -> Entity {
     app.world_mut()
         .spawn((
             icon_button("button")
-                .size(ButtonSize::Small)
+                .size(ButtonSizeId::SMALL)
                 .variant(ButtonVariant::Primary)
                 .build(),
             ChildOf(parent),
@@ -790,7 +824,7 @@ fn outline(app: &App, button: Entity) -> Outline {
 
 fn spawn_bundle() -> impl Bundle {
     icon_button("button")
-        .size(ButtonSize::Small)
+        .size(ButtonSizeId::SMALL)
         .variant(ButtonVariant::Primary)
         .build()
 }
@@ -871,7 +905,7 @@ fn label_font(app: &App, button: Entity) -> FontSource {
         .expect("button has a label child")
 }
 
-fn spawn_sized(app: &mut App, size: ButtonSize) -> Entity {
+fn spawn_sized(app: &mut App, size: impl Into<ButtonSize>) -> Entity {
     app.world_mut()
         .spawn(
             icon_button("button")
@@ -886,15 +920,24 @@ fn node(app: &App, button: Entity) -> Node {
     app.world().get::<Node>(button).unwrap().clone()
 }
 
-/// A theme whose small size and primary shape differ from the default in every field.
-fn roomy_theme() -> Theme {
-    let mut theme = Theme::default();
-    theme.button_sizes.small = ButtonMetrics {
+/// The `ROW` size of `roomy_theme`: every field differs from the default.
+fn roomy_row() -> ButtonMetrics {
+    ButtonMetrics {
         height: Val::Px(33.0),
         padding: UiRect::all(Val::Px(3.0)),
         column_gap: Val::Px(3.0),
         font_size: FontSize::Px(33.0),
         icon_size: 33.0,
+    }
+}
+
+/// A theme that defines `ROW`, has its own base size, and gives the primary buttons another shape.
+fn roomy_theme() -> Theme {
+    let mut theme = Theme::default();
+    theme.button_sizes.named.insert(ROW, roomy_row());
+    theme.button_sizes.base = ButtonMetrics {
+        height: Val::Px(77.0),
+        ..roomy_row()
     };
     theme.buttons.primary.shape = ButtonShape {
         border_width: 0.0,

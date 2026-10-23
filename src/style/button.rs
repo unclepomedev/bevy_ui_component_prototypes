@@ -9,6 +9,7 @@ use crate::style::{
     spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
 };
 use bevy::{asset::Handle, color::Color, image::Image, prelude::*};
+use std::collections::HashMap;
 
 /// Outline drawn around a button while its focus indicator is visible.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -63,42 +64,74 @@ pub struct ButtonMetrics {
 
 impl Default for ButtonMetrics {
     fn default() -> Self {
-        ButtonSizes::default().large
+        Self::large()
     }
 }
 
-/// What `ButtonSize::Small`, `Medium` and `Large` mean in a theme.
-#[derive(Clone, Copy, Debug, PartialEq)]
+impl ButtonMetrics {
+    fn small() -> Self {
+        Self {
+            height: Val::Px(40.0),
+            padding: UiRect::all(SPACING_SM),
+            column_gap: SPACING_SM,
+            font_size: FONT_SIZE_SM,
+            icon_size: 20.0,
+        }
+    }
+
+    fn medium() -> Self {
+        Self {
+            height: Val::Px(56.0),
+            padding: UiRect::axes(SPACING_MD, SPACING_SM),
+            column_gap: SPACING_SM,
+            font_size: FONT_SIZE_MD,
+            icon_size: 28.0,
+        }
+    }
+
+    fn large() -> Self {
+        Self {
+            height: Val::Px(80.0),
+            padding: UiRect::axes(SPACING_LG, SPACING_SM),
+            column_gap: SPACING_SM,
+            font_size: FONT_SIZE_LG,
+            icon_size: 40.0,
+        }
+    }
+}
+
+/// The name of a button size. Define one as a constant and use it for both the theme and the buttons.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct ButtonSizeId(&'static str);
+
+impl ButtonSizeId {
+    pub const fn new(name: &'static str) -> Self {
+        Self(name)
+    }
+
+    // The names of `ButtonSizes::default()`.
+    pub const SMALL: Self = Self::new("small");
+    pub const MEDIUM: Self = Self::new("medium");
+    pub const LARGE: Self = Self::new("large");
+}
+
+/// The sizes a theme defines.
+#[derive(Clone, Debug, PartialEq)]
 pub struct ButtonSizes {
-    pub small: ButtonMetrics,
-    pub medium: ButtonMetrics,
-    pub large: ButtonMetrics,
+    /// Used by `ButtonSize::Default`, and by a name that has no entry in `named`.
+    pub base: ButtonMetrics,
+    pub named: HashMap<ButtonSizeId, ButtonMetrics>,
 }
 
 impl Default for ButtonSizes {
     fn default() -> Self {
         Self {
-            small: ButtonMetrics {
-                height: Val::Px(40.0),
-                padding: UiRect::all(SPACING_SM),
-                column_gap: SPACING_SM,
-                font_size: FONT_SIZE_SM,
-                icon_size: 20.0,
-            },
-            medium: ButtonMetrics {
-                height: Val::Px(56.0),
-                padding: UiRect::axes(SPACING_MD, SPACING_SM),
-                column_gap: SPACING_SM,
-                font_size: FONT_SIZE_MD,
-                icon_size: 28.0,
-            },
-            large: ButtonMetrics {
-                height: Val::Px(80.0),
-                padding: UiRect::axes(SPACING_LG, SPACING_SM),
-                column_gap: SPACING_SM,
-                font_size: FONT_SIZE_LG,
-                icon_size: 40.0,
-            },
+            base: ButtonMetrics::large(),
+            named: HashMap::from([
+                (ButtonSizeId::SMALL, ButtonMetrics::small()),
+                (ButtonSizeId::MEDIUM, ButtonMetrics::medium()),
+                (ButtonSizeId::LARGE, ButtonMetrics::large()),
+            ]),
         }
     }
 }

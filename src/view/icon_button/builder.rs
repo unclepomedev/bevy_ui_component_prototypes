@@ -33,8 +33,8 @@ impl IconButtonBuilder {
         self
     }
 
-    pub fn size(mut self, size: ButtonSize) -> Self {
-        self.size = size;
+    pub fn size(mut self, size: impl Into<ButtonSize>) -> Self {
+        self.size = size.into();
         self
     }
 

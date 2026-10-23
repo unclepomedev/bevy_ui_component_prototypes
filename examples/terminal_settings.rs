@@ -20,6 +20,8 @@
 //!   3. On FULLSCREEN, Enter / Space / Left / Right switch `[ON]` and `[OFF]`.
 //!   4. On a language, Enter / Space makes it the bright one; the previous one turns dim.
 
+use std::collections::HashMap;
+
 use bevy::{
     ecs::system::SystemParam,
     input::{ButtonState, keyboard::KeyboardInput},
@@ -33,10 +35,13 @@ use bevy::{
     ui_widgets::{Activate, SliderValue, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonSize, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing,
+    ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing,
     GlobalTheme, ShowsFocus, SliderSegments, SliderShape, SliderStyle, StateColors, Theme,
     UiComponentPrototypesPlugin, icon_button, slider,
 };
+
+/// The size of a row of the settings: a slim ghost button.
+const ROW: ButtonSizeId = ButtonSizeId::new("row");
 
 const VOLUME_STEP: f32 = 10.0;
 const BRIGHT: Color = Color::srgb(0.30, 1.0, 0.40);
@@ -108,6 +113,19 @@ fn terminal_theme() -> Theme {
             rail: StateColors::uniform(RAIL),
             fill: StateColors::uniform(BRIGHT),
             focus_ring: FocusRing::NONE,
+            ..default()
+        },
+        button_sizes: ButtonSizes {
+            named: HashMap::from([(
+                ROW,
+                ButtonMetrics {
+                    height: px(28),
+                    padding: UiRect::ZERO,
+                    column_gap: px(8),
+                    font_size: FontSize::Px(14.0),
+                    icon_size: 20.0,
+                },
+            )]),
             ..default()
         },
         font: FontSource::monospace(),
@@ -254,7 +272,7 @@ fn spawn_fullscreen_row(commands: &mut Commands, panel: Entity) {
     let (row, control) = spawn_row(commands, panel, "FULLSCREEN");
     commands.entity(control).insert((
         icon_button("[ON]")
-            .size(row_size())
+            .size(ROW)
             .variant(ButtonVariant::Primary)
             .build(),
         FullscreenButton,
@@ -272,19 +290,11 @@ fn spawn_language_row(commands: &mut Commands, panel: Entity, index: usize, name
         ButtonVariant::Neutral
     };
     commands.entity(control).insert((
-        icon_button(name).size(row_size()).variant(variant).build(),
+        icon_button(name).size(ROW).variant(variant).build(),
         Language(index),
         AutoDirectionalNavigation::default(),
         ChildOf(row),
     ));
-}
-
-fn row_size() -> ButtonSize {
-    ButtonSize::Custom(Box::new(ButtonMetrics {
-        height: px(28),
-        padding: UiRect::ZERO,
-        ..ButtonSizes::default().small
-    }))
 }
 
 // ---------------------------------------------------------------------------

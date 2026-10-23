@@ -32,7 +32,7 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyle, ButtonStyles, FocusIndicator, GlobalTheme, ShowsFocus, StateColors,
+    ButtonSizeId, ButtonStyle, ButtonStyles, FocusIndicator, GlobalTheme, ShowsFocus, StateColors,
     Theme, UiComponentPrototypesPlugin, icon_button,
 };
 
@@ -155,7 +155,7 @@ fn spawn_item(root: &mut ChildSpawnerCommands, label: &'static str, autofocus: b
     })
     .with_children(|row| {
         let mut button = row.spawn((
-            icon_button(label).size(ButtonSize::Medium).build(),
+            icon_button(label).size(ButtonSizeId::MEDIUM).build(),
             Label(label),
             AutoDirectionalNavigation::default(),
         ));

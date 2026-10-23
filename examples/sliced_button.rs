@@ -26,9 +26,8 @@ use bevy::{
 };
 use bevy_asset_loader::prelude::*;
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonShape, ButtonSize, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant,
-    FocusRing, GlobalTheme, SlicedImage, StateColors, Theme, UiComponentPrototypesPlugin,
-    icon_button,
+    ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing,
+    GlobalTheme, SlicedImage, StateColors, Theme, UiComponentPrototypesPlugin, icon_button,
 };
 
 #[derive(Component)]
@@ -100,7 +99,11 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
             TabGroup::default(),
         ))
         .with_children(|root| {
-            for size in [ButtonSize::Large, ButtonSize::Medium, ButtonSize::Small] {
+            for size in [
+                ButtonSizeId::LARGE,
+                ButtonSizeId::MEDIUM,
+                ButtonSizeId::SMALL,
+            ] {
                 root.spawn(Node {
                     column_gap: px(12),
                     ..default()
@@ -112,18 +115,13 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
                         ("OK", ButtonVariant::Affirmative),
                         ("DELETE", ButtonVariant::Danger),
                     ] {
-                        row.spawn(
-                            icon_button(label)
-                                .size(size.clone())
-                                .variant(variant)
-                                .build(),
-                        );
+                        row.spawn(icon_button(label).size(size).variant(variant).build());
                     }
                 });
             }
             root.spawn((
                 icon_button("CONTINUE")
-                    .size(ButtonSize::Medium)
+                    .size(ButtonSizeId::MEDIUM)
                     .variant(ButtonVariant::Primary)
                     .build(),
                 InteractionDisabled,
@@ -170,17 +168,18 @@ fn sliced_theme(assets: &Assets) -> Theme {
         }
     };
     // Pixel fonts stay crisp at integer multiples of their native size (12 px).
-    let defaults = ButtonSizes::default();
-    let pixel = |metrics: ButtonMetrics, size: f32| ButtonMetrics {
-        font_size: FontSize::Px(size),
-        ..metrics
-    };
+    let mut sizes = ButtonSizes::default();
+    for (id, size) in [
+        (ButtonSizeId::SMALL, 12.0),
+        (ButtonSizeId::MEDIUM, 24.0),
+        (ButtonSizeId::LARGE, 36.0),
+    ] {
+        if let Some(metrics) = sizes.named.get_mut(&id) {
+            metrics.font_size = FontSize::Px(size);
+        }
+    }
     Theme {
-        button_sizes: ButtonSizes {
-            small: pixel(defaults.small, 12.0),
-            medium: pixel(defaults.medium, 24.0),
-            large: pixel(defaults.large, 36.0),
-        },
+        button_sizes: sizes,
         buttons: ButtonStyles {
             neutral: style(Color::srgb(0.55, 0.65, 0.95)),
             primary: style(Color::srgb(0.95, 0.8, 0.45)),
