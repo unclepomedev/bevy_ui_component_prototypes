@@ -26,9 +26,10 @@ use bevy::{
 };
 use bevy_asset_loader::prelude::*;
 use bevy_ui_component_prototypes::{
-    ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing,
+    ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId, FocusRing,
     GlobalTheme, SlicedImage, StateColors, Theme, UiComponentPrototypesPlugin, icon_button,
 };
+use std::collections::HashMap;
 
 #[derive(Component)]
 struct ContinueItem;
@@ -110,10 +111,10 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
                 })
                 .with_children(|row| {
                     for (label, variant) in [
-                        ("NEW INVESTIGATION", ButtonVariant::Neutral),
-                        ("OPTIONS", ButtonVariant::Primary),
-                        ("OK", ButtonVariant::Affirmative),
-                        ("DELETE", ButtonVariant::Danger),
+                        ("NEW INVESTIGATION", ButtonVariantId::NEUTRAL),
+                        ("OPTIONS", ButtonVariantId::PRIMARY),
+                        ("OK", ButtonVariantId::AFFIRMATIVE),
+                        ("DELETE", ButtonVariantId::DANGER),
                     ] {
                         row.spawn(icon_button(label).size(size).variant(variant).build());
                     }
@@ -122,7 +123,7 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
             root.spawn((
                 icon_button("CONTINUE")
                     .size(ButtonSizeId::MEDIUM)
-                    .variant(ButtonVariant::Primary)
+                    .variant(ButtonVariantId::PRIMARY)
                     .build(),
                 InteractionDisabled,
                 ContinueItem,
@@ -181,10 +182,22 @@ fn sliced_theme(assets: &Assets) -> Theme {
     Theme {
         button_sizes: sizes,
         buttons: ButtonStyles {
-            neutral: style(Color::srgb(0.55, 0.65, 0.95)),
-            primary: style(Color::srgb(0.95, 0.8, 0.45)),
-            affirmative: style(Color::srgb(0.55, 0.9, 0.6)),
-            danger: style(Color::srgb(0.95, 0.5, 0.5)),
+            base: style(Color::srgb(0.55, 0.65, 0.95)),
+            named: HashMap::from([
+                (
+                    ButtonVariantId::NEUTRAL,
+                    style(Color::srgb(0.55, 0.65, 0.95)),
+                ),
+                (
+                    ButtonVariantId::PRIMARY,
+                    style(Color::srgb(0.95, 0.8, 0.45)),
+                ),
+                (
+                    ButtonVariantId::AFFIRMATIVE,
+                    style(Color::srgb(0.55, 0.9, 0.6)),
+                ),
+                (ButtonVariantId::DANGER, style(Color::srgb(0.95, 0.5, 0.5))),
+            ]),
         },
         font: assets.font.clone().into(),
         font_smoothing: FontSmoothing::None,

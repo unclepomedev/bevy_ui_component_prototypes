@@ -38,8 +38,8 @@ impl IconButtonBuilder {
         self
     }
 
-    pub fn variant(mut self, variant: ButtonVariant) -> Self {
-        self.variant = variant;
+    pub fn variant(mut self, variant: impl Into<ButtonVariant>) -> Self {
+        self.variant = variant.into();
         self
     }
 

@@ -162,12 +162,27 @@ impl ButtonStyle {
     }
 }
 
+/// The name of a button variant. Define one as a constant and use it for both the theme and the buttons.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct ButtonVariantId(&'static str);
+
+impl ButtonVariantId {
+    pub const fn new(name: &'static str) -> Self {
+        Self(name)
+    }
+
+    // The names of `ButtonStyles::default()`.
+    pub const NEUTRAL: Self = Self::new("neutral");
+    pub const PRIMARY: Self = Self::new("primary");
+    pub const AFFIRMATIVE: Self = Self::new("affirmative");
+    pub const DANGER: Self = Self::new("danger");
+}
+
 #[derive(Clone, Debug)]
 pub struct ButtonStyles {
-    pub neutral: ButtonStyle,
-    pub primary: ButtonStyle,
-    pub affirmative: ButtonStyle,
-    pub danger: ButtonStyle,
+    /// Used by `ButtonVariant::Default`, and by a name that has no entry in `named`.
+    pub base: ButtonStyle,
+    pub named: HashMap<ButtonVariantId, ButtonStyle>,
 }
 
 impl Default for ButtonStyles {
@@ -196,11 +211,24 @@ impl Default for ButtonStyles {
             shape: ButtonShape::default(),
             surface: None,
         };
+        let neutral = solid(BG_NORMAL, BG_HOVERED, BG_PRESSED);
         Self {
-            neutral: solid(BG_NORMAL, BG_HOVERED, BG_PRESSED),
-            primary: solid(PRIMARY_NORMAL, PRIMARY_HOVERED, PRIMARY_PRESSED),
-            affirmative: solid(AFFIRM_NORMAL, AFFIRM_HOVERED, AFFIRM_PRESSED),
-            danger: solid(DANGER_NORMAL, DANGER_HOVERED, DANGER_PRESSED),
+            base: neutral.clone(),
+            named: HashMap::from([
+                (ButtonVariantId::NEUTRAL, neutral),
+                (
+                    ButtonVariantId::PRIMARY,
+                    solid(PRIMARY_NORMAL, PRIMARY_HOVERED, PRIMARY_PRESSED),
+                ),
+                (
+                    ButtonVariantId::AFFIRMATIVE,
+                    solid(AFFIRM_NORMAL, AFFIRM_HOVERED, AFFIRM_PRESSED),
+                ),
+                (
+                    ButtonVariantId::DANGER,
+                    solid(DANGER_NORMAL, DANGER_HOVERED, DANGER_PRESSED),
+                ),
+            ]),
         }
     }
 }
@@ -248,7 +276,7 @@ mod tests {
     use crate::style::theme::Theme;
 
     fn style(surface: Option<SlicedImage>) -> ButtonStyle {
-        let mut style = Theme::default().buttons.primary;
+        let mut style = Theme::default().buttons.base;
         style.surface = surface;
         style
     }

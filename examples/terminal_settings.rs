@@ -20,8 +20,6 @@
 //!   3. On FULLSCREEN, Enter / Space / Left / Right switch `[ON]` and `[OFF]`.
 //!   4. On a language, Enter / Space makes it the bright one; the previous one turns dim.
 
-use std::collections::HashMap;
-
 use bevy::{
     ecs::system::SystemParam,
     input::{ButtonState, keyboard::KeyboardInput},
@@ -35,10 +33,11 @@ use bevy::{
     ui_widgets::{Activate, SliderValue, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing,
-    GlobalTheme, ShowsFocus, SliderSegments, SliderShape, SliderStyle, StateColors, Theme,
-    UiComponentPrototypesPlugin, icon_button, slider,
+    ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant,
+    ButtonVariantId, FocusRing, GlobalTheme, ShowsFocus, SliderSegments, SliderShape, SliderStyle,
+    StateColors, Theme, UiComponentPrototypesPlugin, icon_button, slider,
 };
+use std::collections::HashMap;
 
 /// The size of a row of the settings: a slim ghost button.
 const ROW: ButtonSizeId = ButtonSizeId::new("row");
@@ -95,9 +94,17 @@ fn terminal_theme() -> Theme {
     };
     Theme {
         buttons: ButtonStyles {
-            neutral: ButtonStyle::ghost(fg(DIM, BRIGHT)),
-            primary: ButtonStyle::ghost(fg(BRIGHT, Color::WHITE)),
-            ..default()
+            base: ButtonStyle::ghost(fg(DIM, BRIGHT)),
+            named: HashMap::from([
+                (
+                    ButtonVariantId::NEUTRAL,
+                    ButtonStyle::ghost(fg(DIM, BRIGHT)),
+                ),
+                (
+                    ButtonVariantId::PRIMARY,
+                    ButtonStyle::ghost(fg(BRIGHT, Color::WHITE)),
+                ),
+            ]),
         },
         slider: SliderStyle {
             // Ten square blocks without a thumb; the lit ones are bright.
@@ -273,7 +280,7 @@ fn spawn_fullscreen_row(commands: &mut Commands, panel: Entity) {
     commands.entity(control).insert((
         icon_button("[ON]")
             .size(ROW)
-            .variant(ButtonVariant::Primary)
+            .variant(ButtonVariantId::PRIMARY)
             .build(),
         FullscreenButton,
         AutoDirectionalNavigation::default(),
@@ -285,9 +292,9 @@ fn spawn_language_row(commands: &mut Commands, panel: Entity, index: usize, name
     let label = if index == 0 { "LANGUAGE" } else { "" };
     let (row, control) = spawn_row(commands, panel, label);
     let variant = if index == 0 {
-        ButtonVariant::Primary
+        ButtonVariantId::PRIMARY
     } else {
-        ButtonVariant::Neutral
+        ButtonVariantId::NEUTRAL
     };
     commands.entity(control).insert((
         icon_button(name).size(ROW).variant(variant).build(),
@@ -373,19 +380,21 @@ fn on_activate(
             }
         }
         let variant = if now {
-            ButtonVariant::Primary
+            ButtonVariantId::PRIMARY
         } else {
-            ButtonVariant::Neutral
+            ButtonVariantId::NEUTRAL
         };
-        commands.entity(activate.entity).insert(variant);
+        commands
+            .entity(activate.entity)
+            .insert(ButtonVariant::from(variant));
     } else if let Ok((_, chosen)) = languages.get(activate.entity) {
         for (entity, language) in &languages {
             let variant = if language.0 == chosen.0 {
-                ButtonVariant::Primary
+                ButtonVariantId::PRIMARY
             } else {
-                ButtonVariant::Neutral
+                ButtonVariantId::NEUTRAL
             };
-            commands.entity(entity).insert(variant);
+            commands.entity(entity).insert(ButtonVariant::from(variant));
         }
     }
 }

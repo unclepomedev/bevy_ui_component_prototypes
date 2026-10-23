@@ -32,9 +32,10 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSizeId, ButtonStyle, ButtonStyles, FocusIndicator, GlobalTheme, ShowsFocus, StateColors,
-    Theme, UiComponentPrototypesPlugin, icon_button,
+    ButtonSizeId, ButtonStyle, ButtonStyles, ButtonVariantId, FocusIndicator, GlobalTheme,
+    ShowsFocus, StateColors, Theme, UiComponentPrototypesPlugin, icon_button,
 };
+use std::collections::HashMap;
 
 // Sampled from the reference mock-up: a pale phosphor green on a near-black desk.
 const SCREEN: Color = Color::srgb(0.03, 0.04, 0.045);
@@ -106,9 +107,11 @@ fn terminal_theme() -> Theme {
     };
     Theme {
         buttons: ButtonStyles {
-            neutral: ButtonStyle::ghost(fg(PHOSPHOR_PRESSED, PHOSPHOR_BRIGHT)),
-            primary: ButtonStyle::ghost(fg(PHOSPHOR_BRIGHT, Color::WHITE)),
-            ..default()
+            base: ButtonStyle::ghost(fg(PHOSPHOR_PRESSED, PHOSPHOR_BRIGHT)),
+            named: HashMap::from([(
+                ButtonVariantId::PRIMARY,
+                ButtonStyle::ghost(fg(PHOSPHOR_BRIGHT, Color::WHITE)),
+            )]),
         },
         font: FontSource::serif(),
         ..default()
