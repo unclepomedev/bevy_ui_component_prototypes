@@ -156,7 +156,10 @@ impl ButtonStyle {
             fg,
             border: StateColors::uniform(Color::NONE),
             focus_ring: FocusRing::NONE,
-            shape: ButtonShape::default(),
+            shape: ButtonShape {
+                border_width: 0.0,
+                ..ButtonShape::default()
+            },
             surface: None,
         }
     }

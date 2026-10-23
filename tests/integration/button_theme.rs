@@ -95,6 +95,19 @@ fn a_ghost_style_leaves_the_button_without_a_background_and_colors_only_the_labe
     assert_eq!(label_color(&app, button), fg.normal);
 }
 
+#[test]
+fn a_ghost_button_takes_no_room_for_a_border() {
+    let mut app = test_app();
+    let mut theme = Theme::default();
+    *primary_mut(&mut theme) = ButtonStyle::ghost(StateColors::uniform(Color::WHITE));
+    app.insert_resource(GlobalTheme(theme));
+    let button = spawn_primary(&mut app);
+
+    app.update();
+
+    assert_eq!(node(&app, button).border, UiRect::all(Val::Px(0.0)));
+}
+
 // ---------------------------------------------------------------------------
 // Interaction states
 // ---------------------------------------------------------------------------
