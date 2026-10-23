@@ -19,8 +19,7 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyles, ButtonVariant, GlobalTheme, Theme, UiComponentPrototypesPlugin,
-    icon_button,
+    ButtonSizeId, ButtonVariantId, GlobalTheme, Theme, UiComponentPrototypesPlugin, icon_button,
 };
 
 /// Marker that identifies which button emitted an `Activate` event.
@@ -53,6 +52,7 @@ fn main() {
             TabNavigationPlugin,
             UiComponentPrototypesPlugin,
         ))
+        .insert_resource(GlobalTheme(theme_for(false)))
         .init_resource::<ActivationCount>()
         .add_systems(Startup, setup)
         .add_systems(
@@ -72,10 +72,8 @@ fn main() {
 // Layout
 // ---------------------------------------------------------------------------
 
-fn setup(mut commands: Commands, global: Res<GlobalTheme>) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
-
-    let custom = custom_variant(&global);
 
     commands
         .spawn((
@@ -91,30 +89,33 @@ fn setup(mut commands: Commands, global: Res<GlobalTheme>) {
             TabGroup::default(),
         ))
         .with_children(|root| {
-            spawn_variant_row(root, custom);
+            spawn_variant_row(root);
             spawn_disable_target(root);
             spawn_scoped_panel(root);
             spawn_help(root);
         });
 }
 
-/// A `Custom` variant: the neutral style with only the text colors changed.
-fn custom_variant(global: &GlobalTheme) -> ButtonVariant {
-    let mut style = global.buttons.neutral.clone();
+/// A variant of the app's own: the neutral style with only the text colors changed.
+const GOLD: ButtonVariantId = ButtonVariantId::new("gold");
+
+fn with_gold(mut theme: Theme) -> Theme {
+    let mut style = theme.buttons.base.clone();
     style.fg.normal = Color::srgb(1.0, 0.85, 0.3);
     style.fg.hovered = Color::srgb(1.0, 0.95, 0.6);
     style.fg.pressed = Color::srgb(0.8, 0.65, 0.2);
-    ButtonVariant::Custom(Box::new(style))
+    theme.buttons.named.insert(GOLD, style);
+    theme
 }
 
 /// One button per variant. Follows the global theme.
-fn spawn_variant_row(root: &mut ChildSpawnerCommands, custom: ButtonVariant) {
+fn spawn_variant_row(root: &mut ChildSpawnerCommands) {
     let variants = [
-        ("Neutral", ButtonVariant::Neutral),
-        ("Primary", ButtonVariant::Primary),
-        ("Affirmative", ButtonVariant::Affirmative),
-        ("Danger", ButtonVariant::Danger),
-        ("Custom", custom),
+        ("Neutral", ButtonVariantId::NEUTRAL),
+        ("Primary", ButtonVariantId::PRIMARY),
+        ("Affirmative", ButtonVariantId::AFFIRMATIVE),
+        ("Danger", ButtonVariantId::DANGER),
+        ("Gold", GOLD),
     ];
 
     root.spawn(Node {
@@ -125,7 +126,7 @@ fn spawn_variant_row(root: &mut ChildSpawnerCommands, custom: ButtonVariant) {
         for (label, variant) in variants {
             row.spawn((
                 icon_button(label)
-                    .size(ButtonSize::Medium)
+                    .size(ButtonSizeId::MEDIUM)
                     .variant(variant)
                     .build(),
                 Tag { name: label },
@@ -138,8 +139,8 @@ fn spawn_variant_row(root: &mut ChildSpawnerCommands, custom: ButtonVariant) {
 fn spawn_disable_target(root: &mut ChildSpawnerCommands) {
     root.spawn((
         icon_button("target (toggle disabled with D)")
-            .size(ButtonSize::Small)
-            .variant(ButtonVariant::Primary)
+            .size(ButtonSizeId::SMALL)
+            .variant(ButtonVariantId::PRIMARY)
             .build(),
         Tag { name: "target" },
         DisableTarget,
@@ -161,12 +162,12 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
     ))
     .with_children(|panel| {
         for (label, variant) in [
-            ("Scoped Primary", ButtonVariant::Primary),
-            ("Scoped Affirmative", ButtonVariant::Affirmative),
+            ("Scoped Primary", ButtonVariantId::PRIMARY),
+            ("Scoped Affirmative", ButtonVariantId::AFFIRMATIVE),
         ] {
             panel.spawn((
                 icon_button(label)
-                    .size(ButtonSize::Medium)
+                    .size(ButtonSizeId::MEDIUM)
                     .variant(variant)
                     .build(),
                 Tag { name: label },
@@ -233,8 +234,8 @@ fn spawn_panel_button(mut commands: Commands, panels: Query<Entity, With<ScopedP
     for panel in &panels {
         commands.spawn((
             icon_button("New")
-                .size(ButtonSize::Medium)
-                .variant(ButtonVariant::Danger)
+                .size(ButtonSizeId::MEDIUM)
+                .variant(ButtonVariantId::DANGER)
                 .build(),
             Tag { name: "New" },
             ChildOf(panel),
@@ -242,20 +243,15 @@ fn spawn_panel_button(mut commands: Commands, panels: Query<Entity, With<ScopedP
     }
 }
 
-/// When `swapped`, returns a theme with the Primary/Affirmative palettes
-/// exchanged and a different font, so that the change is easy to see.
 fn theme_for(swapped: bool) -> Theme {
-    let base = Theme::default();
-    if !swapped {
-        return base;
+    let mut theme = with_gold(Theme::default());
+    if swapped {
+        let named = &mut theme.buttons.named;
+        let primary = named.remove(&ButtonVariantId::PRIMARY);
+        let affirmative = named.remove(&ButtonVariantId::AFFIRMATIVE);
+        named.extend(affirmative.map(|style| (ButtonVariantId::PRIMARY, style)));
+        named.extend(primary.map(|style| (ButtonVariantId::AFFIRMATIVE, style)));
+        theme.font = FontSource::sans_serif();
     }
-    Theme {
-        buttons: ButtonStyles {
-            primary: base.buttons.affirmative,
-            affirmative: base.buttons.primary,
-            ..base.buttons
-        },
-        font: FontSource::sans_serif(),
-        ..default()
-    }
+    theme
 }

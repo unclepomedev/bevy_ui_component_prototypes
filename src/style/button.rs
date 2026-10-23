@@ -9,6 +9,7 @@ use crate::style::{
     spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
 };
 use bevy::{asset::Handle, color::Color, image::Image, prelude::*};
+use std::collections::HashMap;
 
 /// Outline drawn around a button while its focus indicator is visible.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -63,42 +64,76 @@ pub struct ButtonMetrics {
 
 impl Default for ButtonMetrics {
     fn default() -> Self {
-        ButtonSizes::default().large
+        Self::large()
     }
 }
 
-/// What `ButtonSize::Small`, `Medium` and `Large` mean in a theme.
-#[derive(Clone, Copy, Debug, PartialEq)]
+impl ButtonMetrics {
+    fn small() -> Self {
+        Self {
+            height: Val::Px(40.0),
+            padding: UiRect::all(SPACING_SM),
+            column_gap: SPACING_SM,
+            font_size: FONT_SIZE_SM,
+            icon_size: 20.0,
+        }
+    }
+
+    fn medium() -> Self {
+        Self {
+            height: Val::Px(56.0),
+            padding: UiRect::axes(SPACING_MD, SPACING_SM),
+            column_gap: SPACING_SM,
+            font_size: FONT_SIZE_MD,
+            icon_size: 28.0,
+        }
+    }
+
+    fn large() -> Self {
+        Self {
+            height: Val::Px(80.0),
+            padding: UiRect::axes(SPACING_LG, SPACING_SM),
+            column_gap: SPACING_SM,
+            font_size: FONT_SIZE_LG,
+            icon_size: 40.0,
+        }
+    }
+}
+
+/// The name of a button size. Define one as a constant and use it for both the theme and the buttons.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct ButtonSizeId(&'static str);
+
+impl ButtonSizeId {
+    /// Creates an ID. The name is the key into [`ButtonSizes::named`].
+    /// A name with no entry there falls back to [`ButtonSizes::base`].
+    pub const fn new(name: &'static str) -> Self {
+        Self(name)
+    }
+
+    // The names of `ButtonSizes::default()`.
+    pub const SMALL: Self = Self::new("small");
+    pub const MEDIUM: Self = Self::new("medium");
+    pub const LARGE: Self = Self::new("large");
+}
+
+/// The sizes a theme defines.
+#[derive(Clone, Debug, PartialEq)]
 pub struct ButtonSizes {
-    pub small: ButtonMetrics,
-    pub medium: ButtonMetrics,
-    pub large: ButtonMetrics,
+    /// Used by `ButtonSize::Default`, and by a name that has no entry in `named`.
+    pub base: ButtonMetrics,
+    pub named: HashMap<ButtonSizeId, ButtonMetrics>,
 }
 
 impl Default for ButtonSizes {
     fn default() -> Self {
         Self {
-            small: ButtonMetrics {
-                height: Val::Px(40.0),
-                padding: UiRect::all(SPACING_SM),
-                column_gap: SPACING_SM,
-                font_size: FONT_SIZE_SM,
-                icon_size: 20.0,
-            },
-            medium: ButtonMetrics {
-                height: Val::Px(56.0),
-                padding: UiRect::axes(SPACING_MD, SPACING_SM),
-                column_gap: SPACING_SM,
-                font_size: FONT_SIZE_MD,
-                icon_size: 28.0,
-            },
-            large: ButtonMetrics {
-                height: Val::Px(80.0),
-                padding: UiRect::axes(SPACING_LG, SPACING_SM),
-                column_gap: SPACING_SM,
-                font_size: FONT_SIZE_LG,
-                icon_size: 40.0,
-            },
+            base: ButtonMetrics::large(),
+            named: HashMap::from([
+                (ButtonSizeId::SMALL, ButtonMetrics::small()),
+                (ButtonSizeId::MEDIUM, ButtonMetrics::medium()),
+                (ButtonSizeId::LARGE, ButtonMetrics::large()),
+            ]),
         }
     }
 }
@@ -123,18 +158,36 @@ impl ButtonStyle {
             fg,
             border: StateColors::uniform(Color::NONE),
             focus_ring: FocusRing::NONE,
-            shape: ButtonShape::default(),
+            shape: ButtonShape {
+                border_width: 0.0,
+                ..ButtonShape::default()
+            },
             surface: None,
         }
     }
 }
 
+/// The name of a button variant. Define one as a constant and use it for both the theme and the buttons.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct ButtonVariantId(&'static str);
+
+impl ButtonVariantId {
+    pub const fn new(name: &'static str) -> Self {
+        Self(name)
+    }
+
+    // The names of `ButtonStyles::default()`.
+    pub const NEUTRAL: Self = Self::new("neutral");
+    pub const PRIMARY: Self = Self::new("primary");
+    pub const AFFIRMATIVE: Self = Self::new("affirmative");
+    pub const DANGER: Self = Self::new("danger");
+}
+
 #[derive(Clone, Debug)]
 pub struct ButtonStyles {
-    pub neutral: ButtonStyle,
-    pub primary: ButtonStyle,
-    pub affirmative: ButtonStyle,
-    pub danger: ButtonStyle,
+    /// Used by `ButtonVariant::Default`, and by a name that has no entry in `named`.
+    pub base: ButtonStyle,
+    pub named: HashMap<ButtonVariantId, ButtonStyle>,
 }
 
 impl Default for ButtonStyles {
@@ -163,11 +216,24 @@ impl Default for ButtonStyles {
             shape: ButtonShape::default(),
             surface: None,
         };
+        let neutral = solid(BG_NORMAL, BG_HOVERED, BG_PRESSED);
         Self {
-            neutral: solid(BG_NORMAL, BG_HOVERED, BG_PRESSED),
-            primary: solid(PRIMARY_NORMAL, PRIMARY_HOVERED, PRIMARY_PRESSED),
-            affirmative: solid(AFFIRM_NORMAL, AFFIRM_HOVERED, AFFIRM_PRESSED),
-            danger: solid(DANGER_NORMAL, DANGER_HOVERED, DANGER_PRESSED),
+            base: neutral.clone(),
+            named: HashMap::from([
+                (ButtonVariantId::NEUTRAL, neutral),
+                (
+                    ButtonVariantId::PRIMARY,
+                    solid(PRIMARY_NORMAL, PRIMARY_HOVERED, PRIMARY_PRESSED),
+                ),
+                (
+                    ButtonVariantId::AFFIRMATIVE,
+                    solid(AFFIRM_NORMAL, AFFIRM_HOVERED, AFFIRM_PRESSED),
+                ),
+                (
+                    ButtonVariantId::DANGER,
+                    solid(DANGER_NORMAL, DANGER_HOVERED, DANGER_PRESSED),
+                ),
+            ]),
         }
     }
 }
@@ -215,7 +281,7 @@ mod tests {
     use crate::style::theme::Theme;
 
     fn style(surface: Option<SlicedImage>) -> ButtonStyle {
-        let mut style = Theme::default().buttons.primary;
+        let mut style = Theme::default().buttons.base;
         style.surface = surface;
         style
     }

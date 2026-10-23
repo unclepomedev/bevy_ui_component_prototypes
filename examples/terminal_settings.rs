@@ -33,10 +33,14 @@ use bevy::{
     ui_widgets::{Activate, SliderValue, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonSize, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing,
-    GlobalTheme, ShowsFocus, SliderSegments, SliderShape, SliderStyle, StateColors, Theme,
-    UiComponentPrototypesPlugin, icon_button, slider,
+    ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant,
+    ButtonVariantId, FocusRing, GlobalTheme, ShowsFocus, SliderSegments, SliderShape, SliderStyle,
+    StateColors, Theme, UiComponentPrototypesPlugin, icon_button, slider,
 };
+use std::collections::HashMap;
+
+/// The size of a row of the settings: a slim ghost button.
+const ROW: ButtonSizeId = ButtonSizeId::new("row");
 
 const VOLUME_STEP: f32 = 10.0;
 const BRIGHT: Color = Color::srgb(0.30, 1.0, 0.40);
@@ -90,9 +94,17 @@ fn terminal_theme() -> Theme {
     };
     Theme {
         buttons: ButtonStyles {
-            neutral: ButtonStyle::ghost(fg(DIM, BRIGHT)),
-            primary: ButtonStyle::ghost(fg(BRIGHT, Color::WHITE)),
-            ..default()
+            base: ButtonStyle::ghost(fg(DIM, BRIGHT)),
+            named: HashMap::from([
+                (
+                    ButtonVariantId::NEUTRAL,
+                    ButtonStyle::ghost(fg(DIM, BRIGHT)),
+                ),
+                (
+                    ButtonVariantId::PRIMARY,
+                    ButtonStyle::ghost(fg(BRIGHT, Color::WHITE)),
+                ),
+            ]),
         },
         slider: SliderStyle {
             // Ten square blocks without a thumb; the lit ones are bright.
@@ -108,6 +120,19 @@ fn terminal_theme() -> Theme {
             rail: StateColors::uniform(RAIL),
             fill: StateColors::uniform(BRIGHT),
             focus_ring: FocusRing::NONE,
+            ..default()
+        },
+        button_sizes: ButtonSizes {
+            named: HashMap::from([(
+                ROW,
+                ButtonMetrics {
+                    height: px(28),
+                    padding: UiRect::ZERO,
+                    column_gap: px(8),
+                    font_size: FontSize::Px(14.0),
+                    icon_size: 20.0,
+                },
+            )]),
             ..default()
         },
         font: FontSource::monospace(),
@@ -254,8 +279,8 @@ fn spawn_fullscreen_row(commands: &mut Commands, panel: Entity) {
     let (row, control) = spawn_row(commands, panel, "FULLSCREEN");
     commands.entity(control).insert((
         icon_button("[ON]")
-            .size(row_size())
-            .variant(ButtonVariant::Primary)
+            .size(ROW)
+            .variant(ButtonVariantId::PRIMARY)
             .build(),
         FullscreenButton,
         AutoDirectionalNavigation::default(),
@@ -267,24 +292,16 @@ fn spawn_language_row(commands: &mut Commands, panel: Entity, index: usize, name
     let label = if index == 0 { "LANGUAGE" } else { "" };
     let (row, control) = spawn_row(commands, panel, label);
     let variant = if index == 0 {
-        ButtonVariant::Primary
+        ButtonVariantId::PRIMARY
     } else {
-        ButtonVariant::Neutral
+        ButtonVariantId::NEUTRAL
     };
     commands.entity(control).insert((
-        icon_button(name).size(row_size()).variant(variant).build(),
+        icon_button(name).size(ROW).variant(variant).build(),
         Language(index),
         AutoDirectionalNavigation::default(),
         ChildOf(row),
     ));
-}
-
-fn row_size() -> ButtonSize {
-    ButtonSize::Custom(Box::new(ButtonMetrics {
-        height: px(28),
-        padding: UiRect::ZERO,
-        ..ButtonSizes::default().small
-    }))
 }
 
 // ---------------------------------------------------------------------------
@@ -363,19 +380,21 @@ fn on_activate(
             }
         }
         let variant = if now {
-            ButtonVariant::Primary
+            ButtonVariantId::PRIMARY
         } else {
-            ButtonVariant::Neutral
+            ButtonVariantId::NEUTRAL
         };
-        commands.entity(activate.entity).insert(variant);
+        commands
+            .entity(activate.entity)
+            .insert(ButtonVariant::from(variant));
     } else if let Ok((_, chosen)) = languages.get(activate.entity) {
         for (entity, language) in &languages {
             let variant = if language.0 == chosen.0 {
-                ButtonVariant::Primary
+                ButtonVariantId::PRIMARY
             } else {
-                ButtonVariant::Neutral
+                ButtonVariantId::NEUTRAL
             };
-            commands.entity(entity).insert(variant);
+            commands.entity(entity).insert(ButtonVariant::from(variant));
         }
     }
 }

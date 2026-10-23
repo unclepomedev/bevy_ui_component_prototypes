@@ -19,9 +19,9 @@ use bevy::{
     ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonShape, ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant,
-    FocusIndicator, GlobalTheme, SlicedImage, StateColors, Theme, UiComponentPrototypesPlugin,
-    icon_button,
+    ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonStyle, ButtonVariant,
+    ButtonVariantId, FocusIndicator, GlobalTheme, SlicedImage, StateColors, Theme,
+    UiComponentPrototypesPlugin, icon_button,
 };
 
 // ---------------------------------------------------------------------------
@@ -54,11 +54,8 @@ fn newly_spawned_button_is_styled_after_one_update() {
     app.update();
 
     let expected = Theme::default();
-    assert_eq!(bg(&app, button), expected.buttons.primary.bg.normal);
-    assert_eq!(
-        label_color(&app, button),
-        expected.buttons.primary.fg.normal
-    );
+    assert_eq!(bg(&app, button), primary(&expected).bg.normal);
+    assert_eq!(label_color(&app, button), primary(&expected).fg.normal);
     assert_eq!(label_font(&app, button), expected.font);
 }
 
@@ -69,7 +66,7 @@ fn a_button_attached_to_an_existing_entity_is_styled_after_one_update() {
         .world_mut()
         .spawn((
             PickingInteraction::None,
-            ButtonVariant::Primary,
+            ButtonVariant::Named(ButtonVariantId::PRIMARY),
             BackgroundColor(Color::NONE),
             BorderColor::all(Color::NONE),
             Outline::default(),
@@ -80,7 +77,7 @@ fn a_button_attached_to_an_existing_entity_is_styled_after_one_update() {
     app.world_mut().entity_mut(entity).insert(Button);
     app.update();
 
-    assert_eq!(bg(&app, entity), Theme::default().buttons.primary.bg.normal);
+    assert_eq!(bg(&app, entity), primary(&Theme::default()).bg.normal);
 }
 
 #[test]
@@ -88,7 +85,7 @@ fn a_ghost_style_leaves_the_button_without_a_background_and_colors_only_the_labe
     let mut app = test_app();
     let fg = StateColors::uniform(Color::srgb(0.2, 0.9, 0.3));
     let mut theme = Theme::default();
-    theme.buttons.primary = ButtonStyle::ghost(fg);
+    *primary_mut(&mut theme) = ButtonStyle::ghost(fg);
     app.insert_resource(GlobalTheme(theme));
     let button = spawn_primary(&mut app);
 
@@ -96,6 +93,19 @@ fn a_ghost_style_leaves_the_button_without_a_background_and_colors_only_the_labe
 
     assert_eq!(bg(&app, button), Color::NONE);
     assert_eq!(label_color(&app, button), fg.normal);
+}
+
+#[test]
+fn a_ghost_button_takes_no_room_for_a_border() {
+    let mut app = test_app();
+    let mut theme = Theme::default();
+    *primary_mut(&mut theme) = ButtonStyle::ghost(StateColors::uniform(Color::WHITE));
+    app.insert_resource(GlobalTheme(theme));
+    let button = spawn_primary(&mut app);
+
+    app.update();
+
+    assert_eq!(node(&app, button).border, UiRect::all(Val::Px(0.0)));
 }
 
 // ---------------------------------------------------------------------------
@@ -106,7 +116,7 @@ fn a_ghost_style_leaves_the_button_without_a_background_and_colors_only_the_labe
 fn hover_and_press_change_colors_and_release_restores_them() {
     let mut app = test_app();
     let button = spawn_primary(&mut app);
-    let style = Theme::default().buttons.primary;
+    let style = primary(&Theme::default());
     app.update();
 
     for (state, expected) in [
@@ -124,7 +134,7 @@ fn hover_and_press_change_colors_and_release_restores_them() {
 fn interaction_disabled_grays_the_button_and_removal_restores_it() {
     let mut app = test_app();
     let button = spawn_primary(&mut app);
-    let style = Theme::default().buttons.primary;
+    let style = primary(&Theme::default());
     app.update();
 
     app.world_mut()
@@ -159,9 +169,9 @@ fn global_theme_change_updates_unscoped_buttons_but_not_scoped_ones() {
     app.update();
 
     let swapped = swapped_theme();
-    assert_eq!(bg(&app, unscoped), swapped.buttons.primary.bg.normal);
+    assert_eq!(bg(&app, unscoped), primary(&swapped).bg.normal);
     assert_eq!(label_font(&app, unscoped), swapped.font);
-    assert_eq!(bg(&app, scoped), Theme::default().buttons.primary.bg.normal);
+    assert_eq!(bg(&app, scoped), primary(&Theme::default()).bg.normal);
 }
 
 #[test]
@@ -186,7 +196,7 @@ fn surface_theme_tints_the_image_and_keeps_the_background_transparent() {
     let button = spawn_primary(&mut app);
     app.update();
 
-    let style = surface_theme().buttons.primary;
+    let style = primary(&surface_theme());
     let node = image_node(&app, button).expect("surface adds an ImageNode");
     assert_eq!(node.image, panel_image());
     assert!(matches!(node.image_mode, NodeImageMode::Sliced(_)));
@@ -221,7 +231,7 @@ fn swapping_to_a_theme_without_surface_removes_the_image_and_restores_the_backgr
     app.insert_resource(GlobalTheme(Theme::default()));
     app.update();
     assert!(image_node(&app, button).is_none());
-    assert_eq!(bg(&app, button), Theme::default().buttons.primary.bg.normal);
+    assert_eq!(bg(&app, button), primary(&Theme::default()).bg.normal);
 
     app.insert_resource(GlobalTheme(surface_theme()));
     app.update();
@@ -248,11 +258,8 @@ fn scoped_theme_change_updates_only_buttons_inside_the_scope() {
     *app.world_mut().get_mut::<Theme>(panel).unwrap() = swapped_theme();
     app.update();
 
-    assert_eq!(bg(&app, inside), swapped_theme().buttons.primary.bg.normal);
-    assert_eq!(
-        bg(&app, outside),
-        Theme::default().buttons.primary.bg.normal
-    );
+    assert_eq!(bg(&app, inside), primary(&swapped_theme()).bg.normal);
+    assert_eq!(bg(&app, outside), primary(&Theme::default()).bg.normal);
 }
 
 #[test]
@@ -264,7 +271,7 @@ fn button_spawned_later_inside_a_scope_uses_the_scope_theme_immediately() {
     let late = spawn_primary_under(&mut app, panel);
     app.update();
 
-    assert_eq!(bg(&app, late), swapped_theme().buttons.primary.bg.normal);
+    assert_eq!(bg(&app, late), primary(&swapped_theme()).bg.normal);
     assert_eq!(label_font(&app, late), swapped_theme().font);
 }
 
@@ -274,12 +281,12 @@ fn removing_the_theme_component_makes_buttons_follow_the_global_theme() {
     let panel = app.world_mut().spawn(swapped_theme()).id();
     let button = spawn_primary_under(&mut app, panel);
     app.update();
-    assert_eq!(bg(&app, button), swapped_theme().buttons.primary.bg.normal);
+    assert_eq!(bg(&app, button), primary(&swapped_theme()).bg.normal);
 
     app.world_mut().entity_mut(panel).remove::<Theme>();
     app.update();
 
-    assert_eq!(bg(&app, button), Theme::default().buttons.primary.bg.normal);
+    assert_eq!(bg(&app, button), primary(&Theme::default()).bg.normal);
 }
 
 #[test]
@@ -292,23 +299,25 @@ fn detaching_a_button_from_a_scope_makes_it_follow_the_global_theme() {
     app.world_mut().entity_mut(button).remove::<ChildOf>();
     app.update();
 
-    assert_eq!(bg(&app, button), Theme::default().buttons.primary.bg.normal);
+    assert_eq!(bg(&app, button), primary(&Theme::default()).bg.normal);
 }
 
 // ---------------------------------------------------------------------------
 // Size and shape
 // ---------------------------------------------------------------------------
 
+const ROW: ButtonSizeId = ButtonSizeId::new("row");
+
 #[test]
 fn a_button_takes_its_size_and_shape_from_the_theme_after_one_update() {
     let mut app = test_app();
-    let button = spawn_sized(&mut app, ButtonSize::Medium);
+    let button = spawn_sized(&mut app, ButtonSizeId::MEDIUM);
 
     app.update();
 
     let theme = Theme::default();
-    let metrics = theme.button_sizes.medium;
-    let shape = theme.buttons.primary.shape;
+    let metrics = theme.button_sizes.named[&ButtonSizeId::MEDIUM];
+    let shape = primary(&theme).shape;
     let node = node(&app, button);
     assert_eq!(node.height, metrics.height);
     assert_eq!(node.padding, metrics.padding);
@@ -319,10 +328,14 @@ fn a_button_takes_its_size_and_shape_from_the_theme_after_one_update() {
 }
 
 #[test]
-fn the_three_sizes_grow_in_height_and_text() {
+fn the_default_theme_defines_three_sizes_that_grow_in_height_and_text() {
     let mut app = test_app();
-    let buttons = [ButtonSize::Small, ButtonSize::Medium, ButtonSize::Large]
-        .map(|size| spawn_sized(&mut app, size));
+    let buttons = [
+        ButtonSizeId::SMALL,
+        ButtonSizeId::MEDIUM,
+        ButtonSizeId::LARGE,
+    ]
+    .map(|id| spawn_sized(&mut app, id));
 
     app.update();
 
@@ -333,6 +346,52 @@ fn the_three_sizes_grow_in_height_and_text() {
 }
 
 #[test]
+fn a_name_of_the_apps_own_is_defined_by_the_theme() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(roomy_theme()));
+    let button = spawn_sized(&mut app, ROW);
+
+    app.update();
+
+    assert_eq!(node(&app, button).height, roomy_row().height);
+    assert_eq!(node(&app, button).padding, roomy_row().padding);
+}
+
+#[test]
+fn the_default_size_is_the_base_size_of_the_theme() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(roomy_theme()));
+    let button = app
+        .world_mut()
+        .spawn(
+            icon_button("button")
+                .variant(ButtonVariantId::PRIMARY)
+                .build(),
+        )
+        .id();
+
+    app.update();
+
+    assert_eq!(
+        node(&app, button).height,
+        roomy_theme().button_sizes.base.height
+    );
+}
+
+#[test]
+fn a_name_the_theme_does_not_define_falls_back_to_the_base_size() {
+    let mut app = test_app();
+    let button = spawn_sized(&mut app, ROW);
+
+    app.update();
+
+    assert_eq!(
+        node(&app, button).height,
+        Theme::default().button_sizes.base.height
+    );
+}
+
+#[test]
 fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
     let mut app = test_app();
     let button = app
@@ -340,8 +399,8 @@ fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
         .spawn(
             icon_button("button")
                 .icon(Handle::default())
-                .size(ButtonSize::Small)
-                .variant(ButtonVariant::Primary)
+                .size(ROW)
+                .variant(ButtonVariantId::PRIMARY)
                 .build(),
         )
         .id();
@@ -350,39 +409,39 @@ fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
     app.insert_resource(GlobalTheme(roomy_theme()));
     app.update();
 
-    let theme = roomy_theme();
+    let row = roomy_row();
     let node = node(&app, button);
-    assert_eq!(node.height, theme.button_sizes.small.height);
+    assert_eq!(node.height, row.height);
     assert_eq!(node.border, UiRect::all(Val::Px(0.0)));
     assert_eq!(node.border_radius, BorderRadius::all(Val::Px(0.0)));
-    assert_eq!(label_size(&app, button), theme.button_sizes.small.font_size);
+    assert_eq!(label_size(&app, button), row.font_size);
     let icon = icon_size(&app, button);
     assert_eq!((icon.width, icon.height), (Val::Px(33.0), Val::Px(33.0)));
 
-    // And back: nothing of the other theme is left.
+    // And back: the name is no longer defined, and nothing of the other theme is left.
     app.insert_resource(GlobalTheme(Theme::default()));
     app.update();
     assert_eq!(
         self::node(&app, button).height,
-        Theme::default().button_sizes.small.height
+        Theme::default().button_sizes.base.height
     );
     assert_eq!(
         self::node(&app, button).border,
-        UiRect::all(Val::Px(Theme::default().buttons.primary.shape.border_width))
+        UiRect::all(Val::Px(primary(&Theme::default()).shape.border_width))
     );
 }
 
 #[test]
 fn a_scoped_theme_resizes_only_the_buttons_inside_the_scope() {
     let mut app = test_app();
-    let outside = spawn_sized(&mut app, ButtonSize::Small);
+    let outside = spawn_sized(&mut app, ROW);
     let panel = app.world_mut().spawn(roomy_theme()).id();
     let inside = app
         .world_mut()
         .spawn((
             icon_button("button")
-                .size(ButtonSize::Small)
-                .variant(ButtonVariant::Primary)
+                .size(ROW)
+                .variant(ButtonVariantId::PRIMARY)
                 .build(),
             ChildOf(panel),
         ))
@@ -390,45 +449,117 @@ fn a_scoped_theme_resizes_only_the_buttons_inside_the_scope() {
 
     app.update();
 
-    assert_eq!(
-        node(&app, inside).height,
-        roomy_theme().button_sizes.small.height
-    );
+    assert_eq!(node(&app, inside).height, roomy_row().height);
     assert_eq!(
         node(&app, outside).height,
-        Theme::default().button_sizes.small.height
+        Theme::default().button_sizes.base.height
     );
-}
-
-#[test]
-fn a_custom_size_ignores_the_theme() {
-    let mut app = test_app();
-    app.insert_resource(GlobalTheme(roomy_theme()));
-    let custom = ButtonMetrics {
-        height: Val::Px(28.0),
-        padding: UiRect::ZERO,
-        ..ButtonMetrics::default()
-    };
-    let button = spawn_sized(&mut app, ButtonSize::Custom(Box::new(custom)));
-
-    app.update();
-
-    assert_eq!(node(&app, button).height, Val::Px(28.0));
-    assert_eq!(node(&app, button).padding, UiRect::ZERO);
 }
 
 #[test]
 fn changing_the_size_of_a_button_resizes_it() {
     let mut app = test_app();
-    let button = spawn_sized(&mut app, ButtonSize::Small);
+    let button = spawn_sized(&mut app, ButtonSizeId::SMALL);
     app.update();
 
-    app.world_mut().entity_mut(button).insert(ButtonSize::Large);
+    app.world_mut()
+        .entity_mut(button)
+        .insert(ButtonSize::Named(ButtonSizeId::LARGE));
     app.update();
 
-    let large = Theme::default().button_sizes.large;
+    let large = Theme::default().button_sizes.named[&ButtonSizeId::LARGE];
     assert_eq!(node(&app, button).height, large.height);
     assert_eq!(label_size(&app, button), large.font_size);
+}
+
+// ---------------------------------------------------------------------------
+// Variants
+// ---------------------------------------------------------------------------
+
+const GOLD: ButtonVariantId = ButtonVariantId::new("gold");
+
+#[test]
+fn a_name_of_the_apps_own_takes_its_style_from_the_theme() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(gold_theme()));
+    let button = spawn_variant(&mut app, GOLD);
+
+    app.update();
+
+    assert_eq!(bg(&app, button), gold_style().bg.normal);
+    assert_eq!(label_color(&app, button), gold_style().fg.normal);
+}
+
+#[test]
+fn the_default_variant_is_the_base_style_of_the_theme() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(gold_theme()));
+    let button = app.world_mut().spawn(icon_button("button").build()).id();
+
+    app.update();
+
+    assert_eq!(bg(&app, button), gold_theme().buttons.base.bg.normal);
+}
+
+#[test]
+fn a_name_the_theme_does_not_define_falls_back_to_the_base_style() {
+    let mut app = test_app();
+    let button = spawn_variant(&mut app, GOLD);
+
+    app.update();
+
+    assert_eq!(bg(&app, button), Theme::default().buttons.base.bg.normal);
+}
+
+#[test]
+fn the_default_theme_defines_four_distinct_variants() {
+    let mut app = test_app();
+    let ids = [
+        ButtonVariantId::NEUTRAL,
+        ButtonVariantId::PRIMARY,
+        ButtonVariantId::AFFIRMATIVE,
+        ButtonVariantId::DANGER,
+    ];
+    let buttons = ids.map(|id| spawn_variant(&mut app, id));
+
+    app.update();
+
+    let colors = buttons.map(|button| bg(&app, button));
+    for (index, color) in colors.iter().enumerate() {
+        assert_eq!(
+            *color,
+            Theme::default().buttons.named[&ids[index]].bg.normal
+        );
+        assert!(!colors[index + 1..].contains(color));
+    }
+}
+
+#[test]
+fn changing_the_variant_of_a_button_restyles_it() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(gold_theme()));
+    let button = spawn_variant(&mut app, ButtonVariantId::PRIMARY);
+    app.update();
+
+    app.world_mut()
+        .entity_mut(button)
+        .insert(ButtonVariant::Named(GOLD));
+    app.update();
+
+    assert_eq!(bg(&app, button), gold_style().bg.normal);
+}
+
+#[test]
+fn a_theme_change_that_drops_a_name_restyles_its_buttons_with_the_base_style() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(gold_theme()));
+    let button = spawn_variant(&mut app, GOLD);
+    app.update();
+
+    app.insert_resource(GlobalTheme(Theme::default()));
+    app.update();
+
+    assert_eq!(bg(&app, button), Theme::default().buttons.base.bg.normal);
 }
 
 // ---------------------------------------------------------------------------
@@ -444,7 +575,7 @@ fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {
     focus(&mut app, button, true);
     app.update();
 
-    let style = focus_theme().buttons.primary;
+    let style = primary(&focus_theme());
     assert_eq!(bg(&app, button), style.bg.focused);
     assert_eq!(label_color(&app, button), style.fg.focused);
     let ring = outline(&app, button);
@@ -461,7 +592,7 @@ fn focus_is_not_shown_while_the_indicator_is_hidden() {
     focus(&mut app, button, false);
     app.update();
 
-    assert_eq!(bg(&app, button), focus_theme().buttons.primary.bg.normal);
+    assert_eq!(bg(&app, button), primary(&focus_theme()).bg.normal);
     assert_eq!(outline(&app, button).color, Color::NONE);
 }
 
@@ -476,7 +607,7 @@ fn hiding_the_indicator_removes_the_ring_and_focused_colors() {
     app.world_mut().resource_mut::<InputFocusVisible>().0 = false;
     app.update();
 
-    assert_eq!(bg(&app, button), focus_theme().buttons.primary.bg.normal);
+    assert_eq!(bg(&app, button), primary(&focus_theme()).bg.normal);
     assert_eq!(outline(&app, button).color, Color::NONE);
 }
 
@@ -492,7 +623,7 @@ fn moving_focus_moves_the_ring() {
     focus(&mut app, second, true);
     app.update();
 
-    let style = focus_theme().buttons.primary;
+    let style = primary(&focus_theme());
     assert_eq!(outline(&app, first).color, Color::NONE);
     assert_eq!(bg(&app, first), style.bg.normal);
     assert_eq!(outline(&app, second).color, style.focus_ring.color);
@@ -509,7 +640,7 @@ fn an_always_visible_indicator_draws_the_ring_while_bevy_hides_it() {
     focus(&mut app, button, false);
     app.update();
 
-    let style = focus_theme().buttons.primary;
+    let style = primary(&focus_theme());
     assert_eq!(outline(&app, button).color, style.focus_ring.color);
     assert_eq!(bg(&app, button), style.bg.focused);
 
@@ -529,7 +660,7 @@ fn hover_wins_over_focus_for_colors_but_the_ring_stays() {
         .insert(PickingInteraction::Hovered);
     app.update();
 
-    let style = focus_theme().buttons.primary;
+    let style = primary(&focus_theme());
     assert_eq!(bg(&app, button), style.bg.hovered);
     assert_eq!(outline(&app, button).color, style.focus_ring.color);
 }
@@ -545,7 +676,7 @@ fn disabled_button_shows_neither_ring_nor_focused_colors() {
         .insert(InteractionDisabled);
     app.update();
 
-    assert_eq!(bg(&app, button), focus_theme().buttons.primary.bg.disabled);
+    assert_eq!(bg(&app, button), primary(&focus_theme()).bg.disabled);
     assert_eq!(outline(&app, button).color, Color::NONE);
 }
 
@@ -730,24 +861,22 @@ fn test_app() -> App {
 /// A theme whose Primary/Affirmative palettes are exchanged and whose font differs
 /// so that it is distinguishable from `Theme::default()`.
 fn swapped_theme() -> Theme {
-    let base = Theme::default();
-    Theme {
-        buttons: ButtonStyles {
-            primary: base.buttons.affirmative,
-            affirmative: base.buttons.primary,
-            ..base.buttons
-        },
-        font: FontSource::sans_serif(),
-        ..default()
-    }
+    let mut theme = Theme::default();
+    let named = &mut theme.buttons.named;
+    let primary = named.remove(&ButtonVariantId::PRIMARY);
+    let affirmative = named.remove(&ButtonVariantId::AFFIRMATIVE);
+    named.extend(affirmative.map(|style| (ButtonVariantId::PRIMARY, style)));
+    named.extend(primary.map(|style| (ButtonVariantId::AFFIRMATIVE, style)));
+    theme.font = FontSource::sans_serif();
+    theme
 }
 
 fn spawn_primary(app: &mut App) -> Entity {
     app.world_mut()
         .spawn(
             icon_button("button")
-                .size(ButtonSize::Small)
-                .variant(ButtonVariant::Primary)
+                .size(ButtonSizeId::SMALL)
+                .variant(ButtonVariantId::PRIMARY)
                 .build(),
         )
         .id()
@@ -757,8 +886,8 @@ fn spawn_primary_under(app: &mut App, parent: Entity) -> Entity {
     app.world_mut()
         .spawn((
             icon_button("button")
-                .size(ButtonSize::Small)
-                .variant(ButtonVariant::Primary)
+                .size(ButtonSizeId::SMALL)
+                .variant(ButtonVariantId::PRIMARY)
                 .build(),
             ChildOf(parent),
         ))
@@ -768,8 +897,9 @@ fn spawn_primary_under(app: &mut App, parent: Entity) -> Entity {
 /// Default theme whose `focused` colors differ from every other state, so a test can tell them apart.
 fn focus_theme() -> Theme {
     let mut theme = Theme::default();
-    theme.buttons.primary.bg.focused = Color::srgb(0.1, 0.2, 0.3);
-    theme.buttons.primary.fg.focused = Color::srgb(0.9, 0.8, 0.7);
+    let style = primary_mut(&mut theme);
+    style.bg.focused = Color::srgb(0.1, 0.2, 0.3);
+    style.fg.focused = Color::srgb(0.9, 0.8, 0.7);
     theme
 }
 
@@ -790,8 +920,8 @@ fn outline(app: &App, button: Entity) -> Outline {
 
 fn spawn_bundle() -> impl Bundle {
     icon_button("button")
-        .size(ButtonSize::Small)
-        .variant(ButtonVariant::Primary)
+        .size(ButtonSizeId::SMALL)
+        .variant(ButtonVariantId::PRIMARY)
         .build()
 }
 
@@ -836,12 +966,7 @@ fn surface_theme() -> Theme {
             ..default()
         },
     };
-    for style in [
-        &mut theme.buttons.neutral,
-        &mut theme.buttons.primary,
-        &mut theme.buttons.affirmative,
-        &mut theme.buttons.danger,
-    ] {
+    for style in theme.buttons.named.values_mut() {
         style.surface = Some(surface.clone());
     }
     theme
@@ -871,12 +996,12 @@ fn label_font(app: &App, button: Entity) -> FontSource {
         .expect("button has a label child")
 }
 
-fn spawn_sized(app: &mut App, size: ButtonSize) -> Entity {
+fn spawn_sized(app: &mut App, size: impl Into<ButtonSize>) -> Entity {
     app.world_mut()
         .spawn(
             icon_button("button")
                 .size(size)
-                .variant(ButtonVariant::Primary)
+                .variant(ButtonVariantId::PRIMARY)
                 .build(),
         )
         .id()
@@ -886,17 +1011,26 @@ fn node(app: &App, button: Entity) -> Node {
     app.world().get::<Node>(button).unwrap().clone()
 }
 
-/// A theme whose small size and primary shape differ from the default in every field.
-fn roomy_theme() -> Theme {
-    let mut theme = Theme::default();
-    theme.button_sizes.small = ButtonMetrics {
+/// The `ROW` size of `roomy_theme`: every field differs from the default.
+fn roomy_row() -> ButtonMetrics {
+    ButtonMetrics {
         height: Val::Px(33.0),
         padding: UiRect::all(Val::Px(3.0)),
         column_gap: Val::Px(3.0),
         font_size: FontSize::Px(33.0),
         icon_size: 33.0,
+    }
+}
+
+/// A theme that defines `ROW`, has its own base size, and gives the primary buttons another shape.
+fn roomy_theme() -> Theme {
+    let mut theme = Theme::default();
+    theme.button_sizes.named.insert(ROW, roomy_row());
+    theme.button_sizes.base = ButtonMetrics {
+        height: Val::Px(77.0),
+        ..roomy_row()
     };
-    theme.buttons.primary.shape = ButtonShape {
+    primary_mut(&mut theme).shape = ButtonShape {
         border_width: 0.0,
         radius: 0.0,
     };
@@ -936,4 +1070,37 @@ fn px_font(size: FontSize) -> f32 {
         FontSize::Px(px) => px,
         other => panic!("not pixels: {other:?}"),
     }
+}
+
+fn primary(theme: &Theme) -> ButtonStyle {
+    theme.buttons.named[&ButtonVariantId::PRIMARY].clone()
+}
+
+fn primary_mut(theme: &mut Theme) -> &mut ButtonStyle {
+    theme
+        .buttons
+        .named
+        .get_mut(&ButtonVariantId::PRIMARY)
+        .unwrap()
+}
+
+fn spawn_variant(app: &mut App, variant: impl Into<ButtonVariant>) -> Entity {
+    app.world_mut()
+        .spawn(icon_button("button").variant(variant).build())
+        .id()
+}
+
+/// A style that differs from every style of the default theme.
+fn gold_style() -> ButtonStyle {
+    let mut style = ButtonStyle::ghost(StateColors::uniform(Color::srgb(1.0, 0.85, 0.3)));
+    style.bg = StateColors::uniform(Color::srgb(0.3, 0.2, 0.0));
+    style
+}
+
+/// The default theme plus `GOLD`, and a base style of its own.
+fn gold_theme() -> Theme {
+    let mut theme = Theme::default();
+    theme.buttons.named.insert(GOLD, gold_style());
+    theme.buttons.base.bg = StateColors::uniform(Color::srgb(0.0, 0.2, 0.3));
+    theme
 }
