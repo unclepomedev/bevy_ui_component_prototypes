@@ -33,9 +33,9 @@ use bevy::{
     ui_widgets::{Activate, SliderValue, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing, GlobalTheme, ShowsFocus,
-    SliderSegments, SliderShape, SliderStyle, StateColors, Theme, UiComponentPrototypesPlugin,
-    icon_button, slider,
+    ButtonMetrics, ButtonSize, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing,
+    GlobalTheme, ShowsFocus, SliderSegments, SliderShape, SliderStyle, StateColors, Theme,
+    UiComponentPrototypesPlugin, icon_button, slider,
 };
 
 const VOLUME_STEP: f32 = 10.0;
@@ -280,11 +280,11 @@ fn spawn_language_row(commands: &mut Commands, panel: Entity, index: usize, name
 }
 
 fn row_size() -> ButtonSize {
-    ButtonSize {
+    ButtonSize::Custom(Box::new(ButtonMetrics {
         height: px(28),
         padding: UiRect::ZERO,
-        ..ButtonSize::small()
-    }
+        ..ButtonSizes::default().small
+    }))
 }
 
 // ---------------------------------------------------------------------------

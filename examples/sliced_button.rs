@@ -26,8 +26,9 @@ use bevy::{
 };
 use bevy_asset_loader::prelude::*;
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant, FocusRing, GlobalTheme, SlicedImage,
-    StateColors, Theme, UiComponentPrototypesPlugin, icon_button,
+    ButtonMetrics, ButtonShape, ButtonSize, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant,
+    FocusRing, GlobalTheme, SlicedImage, StateColors, Theme, UiComponentPrototypesPlugin,
+    icon_button,
 };
 
 #[derive(Component)]
@@ -99,7 +100,7 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
             TabGroup::default(),
         ))
         .with_children(|root| {
-            for size in [large(), medium(), small()] {
+            for size in [ButtonSize::Large, ButtonSize::Medium, ButtonSize::Small] {
                 root.spawn(Node {
                     column_gap: px(12),
                     ..default()
@@ -111,13 +112,18 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
                         ("OK", ButtonVariant::Affirmative),
                         ("DELETE", ButtonVariant::Danger),
                     ] {
-                        row.spawn(icon_button(label).size(size).variant(variant).build());
+                        row.spawn(
+                            icon_button(label)
+                                .size(size.clone())
+                                .variant(variant)
+                                .build(),
+                        );
                     }
                 });
             }
             root.spawn((
                 icon_button("CONTINUE")
-                    .size(medium())
+                    .size(ButtonSize::Medium)
                     .variant(ButtonVariant::Primary)
                     .build(),
                 InteractionDisabled,
@@ -127,28 +133,6 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
                 "[Tab] move   [D] toggle CONTINUE   [S] font smoothing   [T] swap theme",
             ));
         });
-}
-
-// Pixel fonts stay crisp at integer multiples of their native size (12 px).
-fn large() -> ButtonSize {
-    ButtonSize {
-        font_size: FontSize::Px(36.0),
-        ..ButtonSize::large()
-    }
-}
-
-fn medium() -> ButtonSize {
-    ButtonSize {
-        font_size: FontSize::Px(24.0),
-        ..ButtonSize::medium()
-    }
-}
-
-fn small() -> ButtonSize {
-    ButtonSize {
-        font_size: FontSize::Px(12.0),
-        ..ButtonSize::small()
-    }
 }
 
 /// One white image, tinted into one color per variant. A white image can be tinted to any color,
@@ -181,10 +165,22 @@ fn sliced_theme(assets: &Assets) -> Theme {
                 width: px(2),
                 offset: px(2),
             },
+            shape: ButtonShape::default(),
             surface: Some(surface.clone()),
         }
     };
+    // Pixel fonts stay crisp at integer multiples of their native size (12 px).
+    let defaults = ButtonSizes::default();
+    let pixel = |metrics: ButtonMetrics, size: f32| ButtonMetrics {
+        font_size: FontSize::Px(size),
+        ..metrics
+    };
     Theme {
+        button_sizes: ButtonSizes {
+            small: pixel(defaults.small, 12.0),
+            medium: pixel(defaults.medium, 24.0),
+            large: pixel(defaults.large, 36.0),
+        },
         buttons: ButtonStyles {
             neutral: style(Color::srgb(0.55, 0.65, 0.95)),
             primary: style(Color::srgb(0.95, 0.8, 0.45)),

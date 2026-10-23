@@ -1,8 +1,12 @@
 use super::state::{StateColors, VisualState};
-use crate::style::color::{
-    AFFIRM_HOVERED, AFFIRM_NORMAL, AFFIRM_PRESSED, BG_HOVERED, BG_NORMAL, BG_PRESSED, BORDER,
-    DANGER_HOVERED, DANGER_NORMAL, DANGER_PRESSED, DISABLED, FOCUS_RING, PRIMARY_HOVERED,
-    PRIMARY_NORMAL, PRIMARY_PRESSED, TEXT_MAIN, TEXT_MUTED,
+use crate::style::{
+    color::{
+        AFFIRM_HOVERED, AFFIRM_NORMAL, AFFIRM_PRESSED, BG_HOVERED, BG_NORMAL, BG_PRESSED, BORDER,
+        DANGER_HOVERED, DANGER_NORMAL, DANGER_PRESSED, DISABLED, FOCUS_RING, PRIMARY_HOVERED,
+        PRIMARY_NORMAL, PRIMARY_PRESSED, TEXT_MAIN, TEXT_MUTED,
+    },
+    font_size::{FONT_SIZE_LG, FONT_SIZE_MD, FONT_SIZE_SM},
+    spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
 };
 use bevy::{asset::Handle, color::Color, image::Image, prelude::*};
 
@@ -30,6 +34,75 @@ pub struct SlicedImage {
     pub slicer: TextureSlicer,
 }
 
+/// Border width and corner radius of a button, in pixels.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ButtonShape {
+    pub border_width: f32,
+    pub radius: f32,
+}
+
+impl Default for ButtonShape {
+    fn default() -> Self {
+        Self {
+            border_width: 2.0,
+            radius: 8.0,
+        }
+    }
+}
+
+/// The footprint of a button: its height, inner padding and gap, label font size and icon box.
+/// They are meant to scale together.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ButtonMetrics {
+    pub height: Val,
+    pub padding: UiRect,
+    pub column_gap: Val,
+    pub font_size: FontSize,
+    pub icon_size: f32,
+}
+
+impl Default for ButtonMetrics {
+    fn default() -> Self {
+        ButtonSizes::default().large
+    }
+}
+
+/// What `ButtonSize::Small`, `Medium` and `Large` mean in a theme.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ButtonSizes {
+    pub small: ButtonMetrics,
+    pub medium: ButtonMetrics,
+    pub large: ButtonMetrics,
+}
+
+impl Default for ButtonSizes {
+    fn default() -> Self {
+        Self {
+            small: ButtonMetrics {
+                height: Val::Px(40.0),
+                padding: UiRect::all(SPACING_SM),
+                column_gap: SPACING_SM,
+                font_size: FONT_SIZE_SM,
+                icon_size: 20.0,
+            },
+            medium: ButtonMetrics {
+                height: Val::Px(56.0),
+                padding: UiRect::axes(SPACING_MD, SPACING_SM),
+                column_gap: SPACING_SM,
+                font_size: FONT_SIZE_MD,
+                icon_size: 28.0,
+            },
+            large: ButtonMetrics {
+                height: Val::Px(80.0),
+                padding: UiRect::axes(SPACING_LG, SPACING_SM),
+                column_gap: SPACING_SM,
+                font_size: FONT_SIZE_LG,
+                icon_size: 40.0,
+            },
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ButtonStyle {
     /// Background color. With a `surface`, it tints the image instead, and the node's own background stays transparent.
@@ -37,6 +110,7 @@ pub struct ButtonStyle {
     pub fg: StateColors,
     pub border: StateColors,
     pub focus_ring: FocusRing,
+    pub shape: ButtonShape,
     /// `None` draws `bg` as a plain background.
     pub surface: Option<SlicedImage>,
 }
@@ -49,6 +123,7 @@ impl ButtonStyle {
             fg,
             border: StateColors::uniform(Color::NONE),
             focus_ring: FocusRing::NONE,
+            shape: ButtonShape::default(),
             surface: None,
         }
     }
@@ -85,6 +160,7 @@ impl Default for ButtonStyles {
                 width: Val::Px(2.0),
                 offset: Val::Px(2.0),
             },
+            shape: ButtonShape::default(),
             surface: None,
         };
         Self {
