@@ -19,8 +19,9 @@ use bevy::{
     ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant, FocusIndicator, GlobalTheme, SlicedImage,
-    StateColors, Theme, UiComponentPrototypesPlugin, icon_button,
+    ButtonMetrics, ButtonShape, ButtonSize, ButtonStyle, ButtonStyles, ButtonVariant,
+    FocusIndicator, GlobalTheme, SlicedImage, StateColors, Theme, UiComponentPrototypesPlugin,
+    icon_button,
 };
 
 // ---------------------------------------------------------------------------
@@ -292,6 +293,142 @@ fn detaching_a_button_from_a_scope_makes_it_follow_the_global_theme() {
     app.update();
 
     assert_eq!(bg(&app, button), Theme::default().buttons.primary.bg.normal);
+}
+
+// ---------------------------------------------------------------------------
+// Size and shape
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_button_takes_its_size_and_shape_from_the_theme_after_one_update() {
+    let mut app = test_app();
+    let button = spawn_sized(&mut app, ButtonSize::Medium);
+
+    app.update();
+
+    let theme = Theme::default();
+    let metrics = theme.button_sizes.medium;
+    let shape = theme.buttons.primary.shape;
+    let node = node(&app, button);
+    assert_eq!(node.height, metrics.height);
+    assert_eq!(node.padding, metrics.padding);
+    assert_eq!(node.column_gap, metrics.column_gap);
+    assert_eq!(node.border, UiRect::all(Val::Px(shape.border_width)));
+    assert_eq!(node.border_radius, BorderRadius::all(Val::Px(shape.radius)));
+    assert_eq!(label_size(&app, button), metrics.font_size);
+}
+
+#[test]
+fn the_three_sizes_grow_in_height_and_text() {
+    let mut app = test_app();
+    let buttons = [ButtonSize::Small, ButtonSize::Medium, ButtonSize::Large]
+        .map(|size| spawn_sized(&mut app, size));
+
+    app.update();
+
+    let heights = buttons.map(|button| px(node(&app, button).height));
+    let texts = buttons.map(|button| px_font(label_size(&app, button)));
+    assert!(heights[0] < heights[1] && heights[1] < heights[2]);
+    assert!(texts[0] < texts[1] && texts[1] < texts[2]);
+}
+
+#[test]
+fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn(
+            icon_button("button")
+                .icon(Handle::default())
+                .size(ButtonSize::Small)
+                .variant(ButtonVariant::Primary)
+                .build(),
+        )
+        .id();
+    app.update();
+
+    app.insert_resource(GlobalTheme(roomy_theme()));
+    app.update();
+
+    let theme = roomy_theme();
+    let node = node(&app, button);
+    assert_eq!(node.height, theme.button_sizes.small.height);
+    assert_eq!(node.border, UiRect::all(Val::Px(0.0)));
+    assert_eq!(node.border_radius, BorderRadius::all(Val::Px(0.0)));
+    assert_eq!(label_size(&app, button), theme.button_sizes.small.font_size);
+    let icon = icon_size(&app, button);
+    assert_eq!((icon.width, icon.height), (Val::Px(33.0), Val::Px(33.0)));
+
+    // And back: nothing of the other theme is left.
+    app.insert_resource(GlobalTheme(Theme::default()));
+    app.update();
+    assert_eq!(
+        self::node(&app, button).height,
+        Theme::default().button_sizes.small.height
+    );
+    assert_eq!(
+        self::node(&app, button).border,
+        UiRect::all(Val::Px(Theme::default().buttons.primary.shape.border_width))
+    );
+}
+
+#[test]
+fn a_scoped_theme_resizes_only_the_buttons_inside_the_scope() {
+    let mut app = test_app();
+    let outside = spawn_sized(&mut app, ButtonSize::Small);
+    let panel = app.world_mut().spawn(roomy_theme()).id();
+    let inside = app
+        .world_mut()
+        .spawn((
+            icon_button("button")
+                .size(ButtonSize::Small)
+                .variant(ButtonVariant::Primary)
+                .build(),
+            ChildOf(panel),
+        ))
+        .id();
+
+    app.update();
+
+    assert_eq!(
+        node(&app, inside).height,
+        roomy_theme().button_sizes.small.height
+    );
+    assert_eq!(
+        node(&app, outside).height,
+        Theme::default().button_sizes.small.height
+    );
+}
+
+#[test]
+fn a_custom_size_ignores_the_theme() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(roomy_theme()));
+    let custom = ButtonMetrics {
+        height: Val::Px(28.0),
+        padding: UiRect::ZERO,
+        ..ButtonMetrics::default()
+    };
+    let button = spawn_sized(&mut app, ButtonSize::Custom(Box::new(custom)));
+
+    app.update();
+
+    assert_eq!(node(&app, button).height, Val::Px(28.0));
+    assert_eq!(node(&app, button).padding, UiRect::ZERO);
+}
+
+#[test]
+fn changing_the_size_of_a_button_resizes_it() {
+    let mut app = test_app();
+    let button = spawn_sized(&mut app, ButtonSize::Small);
+    app.update();
+
+    app.world_mut().entity_mut(button).insert(ButtonSize::Large);
+    app.update();
+
+    let large = Theme::default().button_sizes.large;
+    assert_eq!(node(&app, button).height, large.height);
+    assert_eq!(label_size(&app, button), large.font_size);
 }
 
 // ---------------------------------------------------------------------------
@@ -609,7 +746,7 @@ fn spawn_primary(app: &mut App) -> Entity {
     app.world_mut()
         .spawn(
             icon_button("button")
-                .size(ButtonSize::small())
+                .size(ButtonSize::Small)
                 .variant(ButtonVariant::Primary)
                 .build(),
         )
@@ -620,7 +757,7 @@ fn spawn_primary_under(app: &mut App, parent: Entity) -> Entity {
     app.world_mut()
         .spawn((
             icon_button("button")
-                .size(ButtonSize::small())
+                .size(ButtonSize::Small)
                 .variant(ButtonVariant::Primary)
                 .build(),
             ChildOf(parent),
@@ -653,7 +790,7 @@ fn outline(app: &App, button: Entity) -> Outline {
 
 fn spawn_bundle() -> impl Bundle {
     icon_button("button")
-        .size(ButtonSize::small())
+        .size(ButtonSize::Small)
         .variant(ButtonVariant::Primary)
         .build()
 }
@@ -732,4 +869,71 @@ fn label_font(app: &App, button: Entity) -> FontSource {
         .iter()
         .find_map(|child| world.get::<TextFont>(child).map(|f| f.font.clone()))
         .expect("button has a label child")
+}
+
+fn spawn_sized(app: &mut App, size: ButtonSize) -> Entity {
+    app.world_mut()
+        .spawn(
+            icon_button("button")
+                .size(size)
+                .variant(ButtonVariant::Primary)
+                .build(),
+        )
+        .id()
+}
+
+fn node(app: &App, button: Entity) -> Node {
+    app.world().get::<Node>(button).unwrap().clone()
+}
+
+/// A theme whose small size and primary shape differ from the default in every field.
+fn roomy_theme() -> Theme {
+    let mut theme = Theme::default();
+    theme.button_sizes.small = ButtonMetrics {
+        height: Val::Px(33.0),
+        padding: UiRect::all(Val::Px(3.0)),
+        column_gap: Val::Px(3.0),
+        font_size: FontSize::Px(33.0),
+        icon_size: 33.0,
+    };
+    theme.buttons.primary.shape = ButtonShape {
+        border_width: 0.0,
+        radius: 0.0,
+    };
+    theme
+}
+
+fn label_size(app: &App, button: Entity) -> FontSize {
+    let world = app.world();
+    world
+        .get::<Children>(button)
+        .unwrap()
+        .iter()
+        .find_map(|child| world.get::<TextFont>(child).map(|f| f.font_size))
+        .expect("button has a label child")
+}
+
+fn icon_size(app: &App, button: Entity) -> Node {
+    let world = app.world();
+    world
+        .get::<Children>(button)
+        .unwrap()
+        .iter()
+        .find(|child| world.get::<ImageNode>(*child).is_some())
+        .map(|icon| world.get::<Node>(icon).unwrap().clone())
+        .expect("button has an icon child")
+}
+
+fn px(value: Val) -> f32 {
+    match value {
+        Val::Px(px) => px,
+        other => panic!("not pixels: {other:?}"),
+    }
+}
+
+fn px_font(size: FontSize) -> f32 {
+    match size {
+        FontSize::Px(px) => px,
+        other => panic!("not pixels: {other:?}"),
+    }
 }

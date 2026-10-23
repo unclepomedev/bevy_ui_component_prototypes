@@ -8,12 +8,13 @@ pub use self::variant::ButtonVariant;
 use self::{content::ButtonContent, surface::ButtonSurface};
 use super::{
     focus::FocusRingTracker,
+    icon_button::{ButtonSize, icon_button_node},
     style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
 };
 use crate::style::{button::ButtonLook, state::VisualState};
 use bevy::{
-    ecs::system::SystemParam,
+    ecs::{query::QueryData, system::SystemParam},
     picking::hover::PickingInteraction,
     prelude::*,
     ui::{InteractionDisabled, UiSystems},
@@ -39,36 +40,52 @@ fn sync_button_style(
     let targets = targets.collect(lookup.needs_resync(), focus_moved);
 
     for entity in targets {
-        let Ok((interaction, variant, disabled, mut bg, mut border, mut outline)) =
-            buttons.get_mut(entity)
-        else {
+        let Ok(mut button) = buttons.get_mut(entity) else {
             continue;
         };
 
         let theme = lookup.for_entity(entity);
-        let style = variant.resolve(theme);
+        let style = button.variant.resolve(theme);
+        let metrics = button.size.map(|size| size.resolve(theme));
         let is_focused = focused == Some(entity);
-        let state = VisualState::resolve(interaction, is_focused, disabled);
+        let state = VisualState::resolve(button.interaction, is_focused, button.disabled);
         let look = style.look(state, is_focused);
 
-        write_node(&look, &mut bg, &mut border, &mut outline);
+        write_node(&look, &mut button);
+        if let (Some(metrics), Some(node)) = (metrics, button.node.as_mut()) {
+            write_layout(node, &icon_button_node(metrics, &style.shape));
+        }
         parts
             .surface
             .apply(entity, style.surface.as_ref(), look.tint);
-        parts.content.apply(entity, look.fg, theme);
+        parts.content.apply(entity, look.fg, metrics, theme);
+    }
+}
+
+/// Writes the size and the shape, only where they changed.
+fn write_layout(node: &mut Mut<Node>, want: &Node) {
+    if node.height != want.height {
+        node.height = want.height;
+    }
+    if node.padding != want.padding {
+        node.padding = want.padding;
+    }
+    if node.column_gap != want.column_gap {
+        node.column_gap = want.column_gap;
+    }
+    if node.border != want.border {
+        node.border = want.border;
+    }
+    if node.border_radius != want.border_radius {
+        node.border_radius = want.border_radius;
     }
 }
 
 /// Writes the node-level colors and the focus ring, only where they changed.
-fn write_node(
-    look: &ButtonLook,
-    bg: &mut Mut<BackgroundColor>,
-    border: &mut Mut<BorderColor>,
-    outline: &mut Mut<Outline>,
-) {
-    bg.set_if_neq(BackgroundColor(look.background));
-    border.set_if_neq(BorderColor::all(look.border));
-    outline.set_if_neq(Outline::new(
+fn write_node(look: &ButtonLook, button: &mut ButtonRowItem) {
+    button.bg.set_if_neq(BackgroundColor(look.background));
+    button.border.set_if_neq(BorderColor::all(look.border));
+    button.outline.set_if_neq(Outline::new(
         look.ring.width,
         look.ring.offset,
         look.ring.color,
@@ -108,6 +125,7 @@ type ChangedButtons<'w, 's> = Query<
             Added<Button>,
             Changed<PickingInteraction>,
             Changed<ButtonVariant>,
+            Changed<ButtonSize>,
             Added<InteractionDisabled>,
         )>,
     ),
@@ -120,16 +138,20 @@ struct ButtonParts<'w, 's> {
     surface: ButtonSurface<'w, 's>,
 }
 
-type ButtonQuery<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static PickingInteraction,
-        &'static ButtonVariant,
-        Has<InteractionDisabled>,
-        &'static mut BackgroundColor,
-        &'static mut BorderColor,
-        &'static mut Outline,
-    ),
-    With<Button>,
->;
+// Without the icon, which the content writes a `Node` of its own to.
+type ButtonQuery<'w, 's> = Query<'w, 's, ButtonRow, (With<Button>, Without<ButtonIcon>)>;
+
+/// What the sync reads from a button and writes to it.
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct ButtonRow {
+    interaction: &'static PickingInteraction,
+    variant: &'static ButtonVariant,
+    size: Option<&'static ButtonSize>,
+    disabled: Has<InteractionDisabled>,
+    bg: &'static mut BackgroundColor,
+    border: &'static mut BorderColor,
+    outline: &'static mut Outline,
+    // A button without a `Node` of its own is styled all the same.
+    node: Option<&'static mut Node>,
+}

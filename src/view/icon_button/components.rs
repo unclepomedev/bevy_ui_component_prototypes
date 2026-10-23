@@ -1,7 +1,7 @@
 use crate::style::{
-    font_size::{FONT_SIZE_LG, FONT_SIZE_MD, FONT_SIZE_SM},
+    button::{ButtonMetrics, ButtonShape, ButtonSizes},
     layout,
-    spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
+    theme::Theme,
 };
 use crate::view::{KeyboardNavigable, button::ButtonVariant};
 use bevy::{
@@ -16,6 +16,9 @@ use bevy::{
 /// Text placed next to the button is not associated with it: give the button a name for screen readers with `AccessibleLabel`.
 /// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
 /// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
+///
+/// Its height, padding, border, and corners come from the theme (`Theme::button_sizes` for
+/// [`ButtonSize`], `ButtonStyle::shape` for the variant), so they follow a theme change.
 #[derive(Component)]
 #[require(
     Button,
@@ -23,68 +26,48 @@ use bevy::{
     TabIndex(0),
     KeyboardNavigable,
     ButtonVariant,
+    ButtonSize,
     Outline = hidden_outline(),
-    Node = default_icon_button_node()
+    Node = icon_button_node(&ButtonMetrics::default(), &ButtonShape::default())
 )]
 pub struct IconButton;
 
-/// Coherent footprint of an icon button: outer height, inner padding/gap,
-/// label font size, and icon box all scale together.
-#[derive(Clone, Copy, Debug)]
-pub struct ButtonSize {
-    pub height: Val,
-    pub padding: UiRect,
-    pub column_gap: Val,
-    pub font_size: FontSize,
-    pub icon_size: f32,
-}
-
-impl Default for ButtonSize {
-    fn default() -> Self {
-        Self::large()
-    }
+/// Which footprint of the theme a button takes.
+#[derive(Component, Clone, Debug, Default)]
+pub enum ButtonSize {
+    Small,
+    Medium,
+    #[default]
+    Large,
+    /// A footprint of this button alone, whatever the theme says.
+    Custom(Box<ButtonMetrics>),
 }
 
 impl ButtonSize {
-    pub fn large() -> Self {
-        Self {
-            height: Val::Px(80.0),
-            padding: UiRect::axes(SPACING_LG, SPACING_SM),
-            column_gap: SPACING_SM,
-            font_size: FONT_SIZE_LG,
-            icon_size: 40.0,
-        }
-    }
-
-    pub fn medium() -> Self {
-        Self {
-            height: Val::Px(56.0),
-            padding: UiRect::axes(SPACING_MD, SPACING_SM),
-            column_gap: SPACING_SM,
-            font_size: FONT_SIZE_MD,
-            icon_size: 28.0,
-        }
-    }
-
-    pub fn small() -> Self {
-        Self {
-            height: Val::Px(40.0),
-            padding: UiRect::all(SPACING_SM),
-            column_gap: SPACING_SM,
-            font_size: FONT_SIZE_SM,
-            icon_size: 20.0,
+    /// Returns the footprint this size selects from `theme`.
+    pub(crate) fn resolve<'a>(&'a self, theme: &'a Theme) -> &'a ButtonMetrics {
+        let ButtonSizes {
+            small,
+            medium,
+            large,
+        } = &theme.button_sizes;
+        match self {
+            Self::Small => small,
+            Self::Medium => medium,
+            Self::Large => large,
+            Self::Custom(metrics) => metrics,
         }
     }
 }
 
-/// Border and corner radius are intentionally constant (chrome, not scale).
-pub(crate) fn icon_button_node(size: &ButtonSize) -> Node {
+/// The layout of a button: what the size and the shape decide.
+pub(crate) fn icon_button_node(metrics: &ButtonMetrics, shape: &ButtonShape) -> Node {
     Node {
-        height: size.height,
-        padding: size.padding,
-        column_gap: size.column_gap,
-        border: UiRect::all(Val::Px(2.0)),
-        border_radius: BorderRadius::all(SPACING_SM),
+        height: metrics.height,
+        padding: metrics.padding,
+        column_gap: metrics.column_gap,
+        border: UiRect::all(Val::Px(shape.border_width)),
+        border_radius: BorderRadius::all(Val::Px(shape.radius)),
         align_items: AlignItems::Center,
         justify_content: JustifyContent::Center,
         ..layout::row_center()
@@ -95,8 +78,4 @@ pub(crate) fn icon_button_node(size: &ButtonSize) -> Node {
 /// It is toggled through its color, which avoids table moves.
 fn hidden_outline() -> Outline {
     Outline::new(Val::Px(0.0), Val::Px(0.0), Color::NONE)
-}
-
-fn default_icon_button_node() -> Node {
-    icon_button_node(&ButtonSize::default())
 }

@@ -1,9 +1,14 @@
-use super::{button::ButtonStyles, slider::SliderStyle, switch::SwitchStyle};
+use super::{
+    button::{ButtonSizes, ButtonStyles},
+    slider::SliderStyle,
+    switch::SwitchStyle,
+};
 use bevy::prelude::*;
 
 #[derive(Component, Clone, Debug, Default)]
 pub struct Theme {
     pub buttons: ButtonStyles,
+    pub button_sizes: ButtonSizes,
     pub switch: SwitchStyle,
     pub slider: SliderStyle,
     pub font: FontSource,

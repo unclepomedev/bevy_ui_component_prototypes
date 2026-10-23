@@ -1,7 +1,10 @@
-use super::{ButtonSize, IconButton, icon_button_node};
-use crate::view::{
-    button::{ButtonIcon, ButtonLabel, ButtonVariant},
-    picking::pass_through,
+use super::{ButtonSize, IconButton};
+use crate::{
+    style::button::ButtonMetrics,
+    view::{
+        button::{ButtonIcon, ButtonLabel, ButtonVariant},
+        picking::pass_through,
+    },
 };
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
@@ -47,10 +50,11 @@ impl IconButtonBuilder {
             size,
             variant,
         } = self;
+        let metrics = ButtonMetrics::default();
 
         (
             IconButton,
-            icon_button_node(&size),
+            size,
             variant,
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 if let Some(icon) = icon {
@@ -58,8 +62,8 @@ impl IconButtonBuilder {
                         ButtonIcon,
                         ImageNode::new(icon),
                         Node {
-                            width: Val::Px(size.icon_size),
-                            height: Val::Px(size.icon_size),
+                            width: Val::Px(metrics.icon_size),
+                            height: Val::Px(metrics.icon_size),
                             ..default()
                         },
                         pass_through(),
@@ -69,7 +73,7 @@ impl IconButtonBuilder {
                     ButtonLabel,
                     Text::new(label),
                     TextFont {
-                        font_size: size.font_size,
+                        font_size: metrics.font_size,
                         ..default()
                     },
                     pass_through(),
