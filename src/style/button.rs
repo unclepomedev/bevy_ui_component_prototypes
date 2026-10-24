@@ -5,8 +5,8 @@ use crate::style::{
         DANGER_HOVERED, DANGER_NORMAL, DANGER_PRESSED, DISABLED, FOCUS_RING, PRIMARY_HOVERED,
         PRIMARY_NORMAL, PRIMARY_PRESSED, TEXT_MAIN, TEXT_MUTED,
     },
-    font_size::{FONT_SIZE_LG, FONT_SIZE_MD, FONT_SIZE_SM},
-    spacing::{SPACING_LG, SPACING_MD, SPACING_SM},
+    font_size::FONT_SIZE_LG,
+    spacing::{SPACING_LG, SPACING_SM},
 };
 use bevy::{asset::Handle, color::Color, image::Image, prelude::*};
 use std::collections::HashMap;
@@ -64,32 +64,6 @@ pub struct ButtonMetrics {
 
 impl Default for ButtonMetrics {
     fn default() -> Self {
-        Self::large()
-    }
-}
-
-impl ButtonMetrics {
-    fn small() -> Self {
-        Self {
-            height: Val::Px(40.0),
-            padding: UiRect::all(SPACING_SM),
-            column_gap: SPACING_SM,
-            font_size: FONT_SIZE_SM,
-            icon_size: 20.0,
-        }
-    }
-
-    fn medium() -> Self {
-        Self {
-            height: Val::Px(56.0),
-            padding: UiRect::axes(SPACING_MD, SPACING_SM),
-            column_gap: SPACING_SM,
-            font_size: FONT_SIZE_MD,
-            icon_size: 28.0,
-        }
-    }
-
-    fn large() -> Self {
         Self {
             height: Val::Px(80.0),
             padding: UiRect::axes(SPACING_LG, SPACING_SM),
@@ -110,32 +84,14 @@ impl ButtonSizeId {
     pub const fn new(name: &'static str) -> Self {
         Self(name)
     }
-
-    // The names of `ButtonSizes::default()`.
-    pub const SMALL: Self = Self::new("small");
-    pub const MEDIUM: Self = Self::new("medium");
-    pub const LARGE: Self = Self::new("large");
 }
 
 /// The sizes a theme defines.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct ButtonSizes {
     /// Used by `ButtonSize::Default`, and by a name that has no entry in `named`.
     pub base: ButtonMetrics,
     pub named: HashMap<ButtonSizeId, ButtonMetrics>,
-}
-
-impl Default for ButtonSizes {
-    fn default() -> Self {
-        Self {
-            base: ButtonMetrics::large(),
-            named: HashMap::from([
-                (ButtonSizeId::SMALL, ButtonMetrics::small()),
-                (ButtonSizeId::MEDIUM, ButtonMetrics::medium()),
-                (ButtonSizeId::LARGE, ButtonMetrics::large()),
-            ]),
-        }
-    }
 }
 
 #[derive(Clone, Debug)]
