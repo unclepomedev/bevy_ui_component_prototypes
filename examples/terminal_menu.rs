@@ -32,8 +32,9 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSizeId, ButtonStyle, ButtonStyles, ButtonVariantId, FocusIndicator, GlobalTheme,
-    ShowsFocus, StateColors, Theme, UiComponentPrototypesPlugin, icon_button,
+    ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
+    FocusIndicator, GlobalTheme, ShowsFocus, StateColors, Theme, UiComponentPrototypesPlugin,
+    icon_button,
 };
 use std::collections::HashMap;
 
@@ -42,6 +43,9 @@ const SCREEN: Color = Color::srgb(0.03, 0.04, 0.045);
 const PHOSPHOR_BRIGHT: Color = Color::srgb(0.86, 0.96, 0.85);
 const PHOSPHOR_PRESSED: Color = Color::srgb(0.45, 0.52, 0.44);
 const PHOSPHOR_OFF: Color = Color::srgb(0.28, 0.32, 0.28);
+
+/// A row of the menu. Both themes define it, so [T] keeps the layout.
+const MENU_ITEM: ButtonSizeId = ButtonSizeId::new("menu-item");
 
 /// Label of the button, shown in the status line when it is activated.
 #[derive(Component)]
@@ -113,7 +117,24 @@ fn terminal_theme() -> Theme {
                 ButtonStyle::ghost(fg(PHOSPHOR_BRIGHT, Color::WHITE)),
             )]),
         },
+        button_sizes: menu_sizes(),
         font: FontSource::serif(),
+        ..default()
+    }
+}
+
+fn menu_sizes() -> ButtonSizes {
+    ButtonSizes {
+        named: HashMap::from([(
+            MENU_ITEM,
+            ButtonMetrics {
+                height: px(56),
+                padding: UiRect::axes(px(16), px(8)),
+                font_size: FontSize::Px(20.0),
+                icon_size: 28.0,
+                ..default()
+            },
+        )]),
         ..default()
     }
 }
@@ -158,7 +179,7 @@ fn spawn_item(root: &mut ChildSpawnerCommands, label: &'static str, autofocus: b
     })
     .with_children(|row| {
         let mut button = row.spawn((
-            icon_button(label).size(ButtonSizeId::MEDIUM).build(),
+            icon_button(label).size(MENU_ITEM).build(),
             Label(label),
             AutoDirectionalNavigation::default(),
         ));
@@ -314,6 +335,9 @@ fn swap_theme(
     *global = GlobalTheme(if look.0 {
         terminal_theme()
     } else {
-        Theme::default()
+        Theme {
+            button_sizes: menu_sizes(),
+            ..default()
+        }
     });
 }

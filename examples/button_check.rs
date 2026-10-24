@@ -19,7 +19,7 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonSizeId, ButtonVariantId, GlobalTheme, Theme, UiComponentPrototypesPlugin, icon_button,
+    ButtonVariantId, GlobalTheme, Theme, UiComponentPrototypesPlugin, icon_button,
 };
 
 /// Marker that identifies which button emitted an `Activate` event.
@@ -125,10 +125,7 @@ fn spawn_variant_row(root: &mut ChildSpawnerCommands) {
     .with_children(|row| {
         for (label, variant) in variants {
             row.spawn((
-                icon_button(label)
-                    .size(ButtonSizeId::MEDIUM)
-                    .variant(variant)
-                    .build(),
+                icon_button(label).variant(variant).build(),
                 Tag { name: label },
             ));
         }
@@ -139,7 +136,6 @@ fn spawn_variant_row(root: &mut ChildSpawnerCommands) {
 fn spawn_disable_target(root: &mut ChildSpawnerCommands) {
     root.spawn((
         icon_button("target (toggle disabled with D)")
-            .size(ButtonSizeId::SMALL)
             .variant(ButtonVariantId::PRIMARY)
             .build(),
         Tag { name: "target" },
@@ -166,10 +162,7 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
             ("Scoped Affirmative", ButtonVariantId::AFFIRMATIVE),
         ] {
             panel.spawn((
-                icon_button(label)
-                    .size(ButtonSizeId::MEDIUM)
-                    .variant(variant)
-                    .build(),
+                icon_button(label).variant(variant).build(),
                 Tag { name: label },
             ));
         }
@@ -233,10 +226,7 @@ fn swap_panel_theme(mut panels: Query<&mut Theme, With<ScopedPanel>>, mut swappe
 fn spawn_panel_button(mut commands: Commands, panels: Query<Entity, With<ScopedPanel>>) {
     for panel in &panels {
         commands.spawn((
-            icon_button("New")
-                .size(ButtonSizeId::MEDIUM)
-                .variant(ButtonVariantId::DANGER)
-                .build(),
+            icon_button("New").variant(ButtonVariantId::DANGER).build(),
             Tag { name: "New" },
             ChildOf(panel),
         ));

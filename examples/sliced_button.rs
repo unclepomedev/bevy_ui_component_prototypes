@@ -26,10 +26,16 @@ use bevy::{
 };
 use bevy_asset_loader::prelude::*;
 use bevy_ui_component_prototypes::{
-    ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId, FocusRing,
-    GlobalTheme, SlicedImage, StateColors, Theme, UiComponentPrototypesPlugin, icon_button,
+    ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
+    ButtonVariantId, FocusRing, GlobalTheme, SlicedImage, StateColors, Theme,
+    UiComponentPrototypesPlugin, icon_button,
 };
 use std::collections::HashMap;
+
+// Text scales of the pixel font: multiples of its native 12 px.
+const HEADLINE: ButtonSizeId = ButtonSizeId::new("headline");
+const BODY: ButtonSizeId = ButtonSizeId::new("body");
+const CAPTION: ButtonSizeId = ButtonSizeId::new("caption");
 
 #[derive(Component)]
 struct ContinueItem;
@@ -100,11 +106,7 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
             TabGroup::default(),
         ))
         .with_children(|root| {
-            for size in [
-                ButtonSizeId::LARGE,
-                ButtonSizeId::MEDIUM,
-                ButtonSizeId::SMALL,
-            ] {
+            for size in [HEADLINE, BODY, CAPTION] {
                 root.spawn(Node {
                     column_gap: px(12),
                     ..default()
@@ -122,7 +124,7 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
             }
             root.spawn((
                 icon_button("CONTINUE")
-                    .size(ButtonSizeId::MEDIUM)
+                    .size(BODY)
                     .variant(ButtonVariantId::PRIMARY)
                     .build(),
                 InteractionDisabled,
@@ -168,19 +170,8 @@ fn sliced_theme(assets: &Assets) -> Theme {
             surface: Some(surface.clone()),
         }
     };
-    // Pixel fonts stay crisp at integer multiples of their native size (12 px).
-    let mut sizes = ButtonSizes::default();
-    for (id, size) in [
-        (ButtonSizeId::SMALL, 12.0),
-        (ButtonSizeId::MEDIUM, 24.0),
-        (ButtonSizeId::LARGE, 36.0),
-    ] {
-        if let Some(metrics) = sizes.named.get_mut(&id) {
-            metrics.font_size = FontSize::Px(size);
-        }
-    }
     Theme {
-        button_sizes: sizes,
+        button_sizes: text_scales(),
         buttons: ButtonStyles {
             base: style(Color::srgb(0.55, 0.65, 0.95)),
             named: HashMap::from([
@@ -202,6 +193,24 @@ fn sliced_theme(assets: &Assets) -> Theme {
         font: assets.font.clone().into(),
         font_smoothing: FontSmoothing::None,
         ..default() // unrelated theme
+    }
+}
+
+// Pixel fonts stay crisp at integer multiples of their native size (12 px).
+fn text_scales() -> ButtonSizes {
+    let pixel = |height: f32, text: f32, icon_size: f32| ButtonMetrics {
+        height: px(height),
+        font_size: FontSize::Px(text),
+        icon_size,
+        ..default()
+    };
+    ButtonSizes {
+        named: HashMap::from([
+            (HEADLINE, pixel(80.0, 36.0, 40.0)),
+            (BODY, pixel(56.0, 24.0, 28.0)),
+            (CAPTION, pixel(40.0, 12.0, 20.0)),
+        ]),
+        ..default()
     }
 }
 
@@ -234,6 +243,9 @@ fn swap_theme(mut global: ResMut<GlobalTheme>, mut look: ResMut<SlicedLook>, ass
     *global = GlobalTheme(if look.0 {
         sliced_theme(&assets)
     } else {
-        Theme::default()
+        Theme {
+            button_sizes: text_scales(),
+            ..default()
+        }
     });
 }
