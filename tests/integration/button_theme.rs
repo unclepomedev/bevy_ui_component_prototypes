@@ -2,6 +2,7 @@
 //!
 //! Real pointer picking, layout, and text shaping are not covered by `examples/button_check.rs`.
 
+use crate::probe::probe_theme;
 use bevy::{
     a11y::AccessibilityNode,
     asset::uuid_handle,
@@ -19,11 +20,10 @@ use bevy::{
     ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
-    ButtonVariant, ButtonVariantId, FocusIndicator, FocusRing, GlobalTheme, SlicedImage,
-    StateColors, Theme, UiComponentPrototypesPlugin, icon_button,
+    ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonStyle, ButtonVariant,
+    ButtonVariantId, FocusIndicator, GlobalTheme, SlicedImage, StateColors, Theme,
+    UiComponentPrototypesPlugin, icon_button,
 };
-use std::collections::HashMap;
 
 // ---------------------------------------------------------------------------
 // Behavior wiring
@@ -709,59 +709,6 @@ fn test_app() -> App {
     app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
     app.insert_resource(GlobalTheme(probe_theme()));
     app
-}
-
-/// The theme every test starts from. No two of its values agree and none is a default, so a test
-/// that reads a value from it cannot pass by chance, and a change of `probe_theme()` breaks nothing here.
-fn probe_theme() -> Theme {
-    Theme {
-        buttons: ButtonStyles {
-            base: probe_style(0.1),
-            named: HashMap::from([
-                (ButtonVariantId::PRIMARY, probe_style(0.2)),
-                (ButtonVariantId::AFFIRMATIVE, probe_style(0.3)),
-            ]),
-        },
-        button_sizes: ButtonSizes {
-            base: ButtonMetrics {
-                height: Val::Px(70.0),
-                padding: UiRect::all(Val::Px(5.0)),
-                column_gap: Val::Px(6.0),
-                font_size: FontSize::Px(17.0),
-                icon_size: 18.0,
-            },
-            named: HashMap::new(),
-        },
-        font: FontSource::monospace(),
-        font_smoothing: FontSmoothing::AntiAliased,
-        ..default()
-    }
-}
-
-/// A style whose every state has a color of its own; `seed` tells one style from another.
-fn probe_style(seed: f32) -> ButtonStyle {
-    let tones = |part: f32| StateColors {
-        normal: Color::srgb(seed, part, 0.1),
-        hovered: Color::srgb(seed, part, 0.2),
-        pressed: Color::srgb(seed, part, 0.3),
-        disabled: Color::srgb(seed, part, 0.4),
-        focused: Color::srgb(seed, part, 0.5),
-    };
-    ButtonStyle {
-        bg: tones(0.1),
-        fg: tones(0.5),
-        border: tones(0.9),
-        focus_ring: FocusRing {
-            color: Color::srgb(seed, 0.7, 0.7),
-            width: Val::Px(3.0),
-            offset: Val::Px(4.0),
-        },
-        shape: ButtonShape {
-            border_width: 3.0,
-            radius: 5.0,
-        },
-        surface: None,
-    }
 }
 
 /// The probe theme with its Primary/Affirmative palettes exchanged and another font.

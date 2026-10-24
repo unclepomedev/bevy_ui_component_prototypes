@@ -3,6 +3,7 @@
 //!
 //! Real pointer picking, layout and the sliding look are covered by `examples/toggle_check.rs`.
 
+use crate::probe::probe_theme;
 use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
@@ -46,7 +47,7 @@ fn unchecked_switch_is_styled_after_one_update() {
 
     app.update();
 
-    let style = Theme::default().switch;
+    let style = probe_theme().switch;
     assert_eq!(track(&app, switch), style.track.unchecked.normal);
     assert_eq!(thumb(&app, switch), style.thumb.unchecked.normal);
     assert_eq!(thumb_side(&app, switch), JustifyContent::Start);
@@ -60,7 +61,7 @@ fn a_switch_without_a_thumb_is_still_styled() {
 
     app.update();
 
-    let style = Theme::default().switch;
+    let style = probe_theme().switch;
     assert_eq!(track(&app, switch), style.track.unchecked.normal);
     assert_eq!(thumb_side(&app, switch), JustifyContent::Start);
 }
@@ -74,7 +75,7 @@ fn attaching_the_component_to_an_existing_entity_styles_it() {
     app.world_mut().entity_mut(entity).insert(ToggleSwitch);
     app.update();
 
-    let style = Theme::default().switch;
+    let style = probe_theme().switch;
     assert_eq!(track(&app, entity), style.track.unchecked.normal);
 }
 
@@ -85,7 +86,7 @@ fn a_switch_spawned_checked_is_styled_as_on_after_one_update() {
 
     app.update();
 
-    let style = Theme::default().switch;
+    let style = probe_theme().switch;
     assert_eq!(track(&app, switch), style.track.checked.normal);
     assert_eq!(thumb_side(&app, switch), JustifyContent::End);
 }
@@ -94,7 +95,7 @@ fn a_switch_spawned_checked_is_styled_as_on_after_one_update() {
 fn checked_toggles_the_track_color_and_moves_the_thumb_both_ways() {
     let mut app = test_app();
     let switch = spawn_switch(&mut app);
-    let style = Theme::default().switch;
+    let style = probe_theme().switch;
     app.update();
 
     app.world_mut().entity_mut(switch).insert(Checked);
@@ -117,7 +118,7 @@ fn checked_toggles_the_track_color_and_moves_the_thumb_both_ways() {
 fn hover_and_press_change_colors_for_both_states_and_release_restores_them() {
     let mut app = test_app();
     let switch = spawn_switch(&mut app);
-    let style = Theme::default().switch;
+    let style = probe_theme().switch;
     app.update();
 
     for (checked, colors) in [(false, style.track.unchecked), (true, style.track.checked)] {
@@ -140,7 +141,7 @@ fn hover_and_press_change_colors_for_both_states_and_release_restores_them() {
 fn interaction_disabled_grays_the_switch_and_removal_restores_it() {
     let mut app = test_app();
     let switch = spawn_switch_checked(&mut app);
-    let style = Theme::default().switch;
+    let style = probe_theme().switch;
     app.update();
 
     app.world_mut()
@@ -166,7 +167,7 @@ fn interaction_disabled_grays_the_switch_and_removal_restores_it() {
 fn global_theme_change_updates_unscoped_switches_but_not_scoped_ones() {
     let mut app = test_app();
     let unscoped = spawn_switch_checked(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
+    let panel = app.world_mut().spawn(probe_theme()).id();
     let scoped = spawn_switch_checked_under(&mut app, panel);
     app.update();
 
@@ -176,7 +177,7 @@ fn global_theme_change_updates_unscoped_switches_but_not_scoped_ones() {
     assert_eq!(track(&app, unscoped), red());
     assert_eq!(
         track(&app, scoped),
-        Theme::default().switch.track.checked.normal
+        probe_theme().switch.track.checked.normal
     );
 }
 
@@ -184,7 +185,7 @@ fn global_theme_change_updates_unscoped_switches_but_not_scoped_ones() {
 fn scoped_theme_change_updates_only_switches_inside_the_scope() {
     let mut app = test_app();
     let outside = spawn_switch_checked(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
+    let panel = app.world_mut().spawn(probe_theme()).id();
     let inside = spawn_switch_checked_under(&mut app, panel);
     app.update();
 
@@ -194,7 +195,7 @@ fn scoped_theme_change_updates_only_switches_inside_the_scope() {
     assert_eq!(track(&app, inside), red());
     assert_eq!(
         track(&app, outside),
-        Theme::default().switch.track.checked.normal
+        probe_theme().switch.track.checked.normal
     );
 }
 
@@ -216,14 +217,14 @@ fn switch_spawned_later_inside_a_scope_uses_the_scope_theme_immediately() {
 
 #[test]
 fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let switch = spawn_switch(&mut app);
     app.update();
 
     focus(&mut app, switch, true);
     app.update();
 
-    let style = focus_theme().switch;
+    let style = probe_theme().switch;
     assert_eq!(track(&app, switch), style.track.unchecked.focused);
     let ring = outline(&app, switch);
     assert_eq!(ring.color, style.focus_ring.color);
@@ -233,7 +234,7 @@ fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {
 // Pointer clicks hide the indicator while the entity keeps focus.
 #[test]
 fn focus_is_not_shown_while_the_indicator_is_hidden() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let switch = spawn_switch(&mut app);
     app.update();
 
@@ -242,14 +243,14 @@ fn focus_is_not_shown_while_the_indicator_is_hidden() {
 
     assert_eq!(
         track(&app, switch),
-        focus_theme().switch.track.unchecked.normal
+        probe_theme().switch.track.unchecked.normal
     );
     assert_eq!(outline(&app, switch).color, Color::NONE);
 }
 
 #[test]
 fn moving_focus_moves_the_ring() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let first = spawn_switch(&mut app);
     let second = spawn_switch(&mut app);
     app.update();
@@ -262,13 +263,13 @@ fn moving_focus_moves_the_ring() {
     assert_eq!(outline(&app, first).color, Color::NONE);
     assert_eq!(
         outline(&app, second).color,
-        focus_theme().switch.focus_ring.color
+        probe_theme().switch.focus_ring.color
     );
 }
 
 #[test]
 fn disabled_switch_shows_neither_ring_nor_focused_colors() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let switch = spawn_switch(&mut app);
     app.update();
     focus(&mut app, switch, true);
@@ -279,7 +280,7 @@ fn disabled_switch_shows_neither_ring_nor_focused_colors() {
 
     assert_eq!(
         track(&app, switch),
-        focus_theme().switch.track.unchecked.disabled
+        probe_theme().switch.track.unchecked.disabled
     );
     assert_eq!(outline(&app, switch).color, Color::NONE);
 }
@@ -390,6 +391,7 @@ fn the_app_applying_the_request_flips_the_look() {
 fn test_app() -> App {
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
+    app.insert_resource(GlobalTheme(probe_theme()));
     app
 }
 
@@ -413,24 +415,11 @@ fn red() -> Color {
     Color::srgb(0.9, 0.1, 0.1)
 }
 
-/// Default theme whose checked track is red, so that it is distinguishable from the default.
+/// The probe theme with a red checked track.
 fn red_on_theme() -> Theme {
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     theme.switch.track.checked = StateColors::uniform(red());
     theme
-}
-
-/// Default theme whose `focused` track color differs from every other state.
-fn focus_theme() -> Theme {
-    let mut theme = Theme::default();
-    theme.switch.track.unchecked.focused = Color::srgb(0.1, 0.2, 0.3);
-    theme
-}
-
-fn test_app_with_focus_theme() -> App {
-    let mut app = test_app();
-    app.insert_resource(GlobalTheme(focus_theme()));
-    app
 }
 
 fn focus(app: &mut App, switch: Entity, visible: bool) {
