@@ -43,6 +43,14 @@ fn icon_button_carries_the_bevy_button_behavior_components() {
     assert_eq!(outline(&app, button).color, Color::NONE);
 }
 
+#[test]
+fn a_label_never_wraps_because_the_button_is_one_line_high() {
+    let mut app = test_app();
+    let button = spawn_primary(&mut app);
+
+    assert_eq!(label_layout(&app, button).linebreak, LineBreak::NoWrap);
+}
+
 // ---------------------------------------------------------------------------
 // Initial styling
 // ---------------------------------------------------------------------------
@@ -830,6 +838,16 @@ fn label_smoothing(app: &App, button: Entity) -> FontSmoothing {
         .unwrap()
         .iter()
         .find_map(|child| world.get::<TextFont>(child).map(|f| f.font_smoothing))
+        .expect("button has a label child")
+}
+
+fn label_layout(app: &App, button: Entity) -> TextLayout {
+    let world = app.world();
+    world
+        .get::<Children>(button)
+        .unwrap()
+        .iter()
+        .find_map(|child| world.get::<TextLayout>(child).copied())
         .expect("button has a label child")
 }
 

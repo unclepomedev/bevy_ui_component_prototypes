@@ -76,6 +76,7 @@ impl IconButtonBuilder {
                         font_size: metrics.font_size,
                         ..default()
                     },
+                    TextLayout::new(Justify::Left, LineBreak::NoWrap),
                     pass_through(),
                 ));
             })),
