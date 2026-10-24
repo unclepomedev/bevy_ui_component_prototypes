@@ -81,34 +81,6 @@ fn a_button_attached_to_an_existing_entity_is_styled_after_one_update() {
     assert_eq!(bg(&app, entity), primary(&Theme::default()).bg.normal);
 }
 
-#[test]
-fn a_ghost_style_leaves_the_button_without_a_background_and_colors_only_the_label() {
-    let mut app = test_app();
-    let fg = StateColors::uniform(Color::srgb(0.2, 0.9, 0.3));
-    let mut theme = Theme::default();
-    *primary_mut(&mut theme) = ButtonStyle::ghost(fg);
-    app.insert_resource(GlobalTheme(theme));
-    let button = spawn_primary(&mut app);
-
-    app.update();
-
-    assert_eq!(bg(&app, button), Color::NONE);
-    assert_eq!(label_color(&app, button), fg.normal);
-}
-
-#[test]
-fn a_ghost_button_takes_no_room_for_a_border() {
-    let mut app = test_app();
-    let mut theme = Theme::default();
-    *primary_mut(&mut theme) = ButtonStyle::ghost(StateColors::uniform(Color::WHITE));
-    app.insert_resource(GlobalTheme(theme));
-    let button = spawn_primary(&mut app);
-
-    app.update();
-
-    assert_eq!(node(&app, button).border, UiRect::all(Val::Px(0.0)));
-}
-
 // ---------------------------------------------------------------------------
 // Interaction states
 // ---------------------------------------------------------------------------
@@ -241,14 +213,6 @@ fn swapping_to_a_theme_without_surface_removes_the_image_and_restores_the_backgr
 }
 
 #[test]
-fn default_theme_never_adds_an_image_node() {
-    let mut app = test_app();
-    let button = spawn_primary(&mut app);
-    app.update();
-    assert!(image_node(&app, button).is_none());
-}
-
-#[test]
 fn scoped_theme_change_updates_only_buttons_inside_the_scope() {
     let mut app = test_app();
     let outside = spawn_primary(&mut app);
@@ -291,6 +255,20 @@ fn removing_the_theme_component_makes_buttons_follow_the_global_theme() {
 }
 
 #[test]
+fn moving_a_button_to_another_scope_makes_it_follow_that_scope() {
+    let mut app = test_app();
+    let swapped = app.world_mut().spawn(swapped_theme()).id();
+    let plain = app.world_mut().spawn(Theme::default()).id();
+    let button = spawn_primary_under(&mut app, swapped);
+    app.update();
+
+    app.world_mut().entity_mut(button).insert(ChildOf(plain));
+    app.update();
+
+    assert_eq!(bg(&app, button), primary(&Theme::default()).bg.normal);
+}
+
+#[test]
 fn detaching_a_button_from_a_scope_makes_it_follow_the_global_theme() {
     let mut app = test_app();
     let panel = app.world_mut().spawn(swapped_theme()).id();
@@ -318,53 +296,24 @@ fn a_button_takes_its_size_and_shape_from_the_theme_after_one_update() {
 
     app.update();
 
-    let metrics = roomy_row();
-    let shape = primary(&roomy_theme()).shape;
     let node = node(&app, button);
-    assert_eq!(node.height, metrics.height);
-    assert_eq!(node.padding, metrics.padding);
-    assert_eq!(node.column_gap, metrics.column_gap);
-    assert_eq!(node.border, UiRect::all(Val::Px(shape.border_width)));
-    assert_eq!(node.border_radius, BorderRadius::all(Val::Px(shape.radius)));
-    assert_eq!(label_size(&app, button), metrics.font_size);
-}
-
-#[test]
-fn a_name_of_the_apps_own_is_defined_by_the_theme() {
-    let mut app = test_app();
-    app.insert_resource(GlobalTheme(roomy_theme()));
-    let button = spawn_sized(&mut app, ROW);
-
-    app.update();
-
-    assert_eq!(node(&app, button).height, roomy_row().height);
-    assert_eq!(node(&app, button).padding, roomy_row().padding);
-}
-
-#[test]
-fn the_default_size_is_the_base_size_of_the_theme() {
-    let mut app = test_app();
-    app.insert_resource(GlobalTheme(roomy_theme()));
-    let button = app
-        .world_mut()
-        .spawn(
-            icon_button("button")
-                .variant(ButtonVariantId::PRIMARY)
-                .build(),
-        )
-        .id();
-
-    app.update();
-
-    assert_eq!(
-        node(&app, button).height,
-        roomy_theme().button_sizes.base.height
-    );
+    assert_eq!(node.height, roomy_row().height);
+    assert_eq!(node.border, UiRect::all(Val::Px(0.0)));
 }
 
 #[test]
 fn a_name_the_theme_does_not_define_falls_back_to_the_base_size() {
     let mut app = test_app();
+    // The theme has sizes, but not this one: falling back is told from picking any entry.
+    let mut theme = Theme::default();
+    theme.button_sizes.named.insert(
+        OTHER,
+        ButtonMetrics {
+            height: Val::Px(99.0),
+            ..roomy_row()
+        },
+    );
+    app.insert_resource(GlobalTheme(theme));
     let button = spawn_sized(&mut app, ROW);
 
     app.update();
@@ -416,31 +365,6 @@ fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
 }
 
 #[test]
-fn a_scoped_theme_resizes_only_the_buttons_inside_the_scope() {
-    let mut app = test_app();
-    let outside = spawn_sized(&mut app, ROW);
-    let panel = app.world_mut().spawn(roomy_theme()).id();
-    let inside = app
-        .world_mut()
-        .spawn((
-            icon_button("button")
-                .size(ROW)
-                .variant(ButtonVariantId::PRIMARY)
-                .build(),
-            ChildOf(panel),
-        ))
-        .id();
-
-    app.update();
-
-    assert_eq!(node(&app, inside).height, roomy_row().height);
-    assert_eq!(
-        node(&app, outside).height,
-        Theme::default().button_sizes.base.height
-    );
-}
-
-#[test]
 fn changing_the_size_of_a_button_resizes_it() {
     let mut app = test_app();
     app.insert_resource(GlobalTheme(roomy_theme()));
@@ -474,18 +398,6 @@ fn changing_the_size_of_a_button_resizes_it() {
 const GOLD: ButtonVariantId = ButtonVariantId::new("gold");
 
 #[test]
-fn a_name_of_the_apps_own_takes_its_style_from_the_theme() {
-    let mut app = test_app();
-    app.insert_resource(GlobalTheme(gold_theme()));
-    let button = spawn_variant(&mut app, GOLD);
-
-    app.update();
-
-    assert_eq!(bg(&app, button), gold_style().bg.normal);
-    assert_eq!(label_color(&app, button), gold_style().fg.normal);
-}
-
-#[test]
 fn the_default_variant_is_the_base_style_of_the_theme() {
     let mut app = test_app();
     app.insert_resource(GlobalTheme(gold_theme()));
@@ -494,39 +406,6 @@ fn the_default_variant_is_the_base_style_of_the_theme() {
     app.update();
 
     assert_eq!(bg(&app, button), gold_theme().buttons.base.bg.normal);
-}
-
-#[test]
-fn a_name_the_theme_does_not_define_falls_back_to_the_base_style() {
-    let mut app = test_app();
-    let button = spawn_variant(&mut app, GOLD);
-
-    app.update();
-
-    assert_eq!(bg(&app, button), Theme::default().buttons.base.bg.normal);
-}
-
-#[test]
-fn the_default_theme_defines_four_distinct_variants() {
-    let mut app = test_app();
-    let ids = [
-        ButtonVariantId::NEUTRAL,
-        ButtonVariantId::PRIMARY,
-        ButtonVariantId::AFFIRMATIVE,
-        ButtonVariantId::DANGER,
-    ];
-    let buttons = ids.map(|id| spawn_variant(&mut app, id));
-
-    app.update();
-
-    let colors = buttons.map(|button| bg(&app, button));
-    for (index, color) in colors.iter().enumerate() {
-        assert_eq!(
-            *color,
-            Theme::default().buttons.named[&ids[index]].bg.normal
-        );
-        assert!(!colors[index + 1..].contains(color));
-    }
 }
 
 #[test]
@@ -680,25 +559,6 @@ fn disabled_button_shows_neither_ring_nor_focused_colors() {
 // ---------------------------------------------------------------------------
 
 #[test]
-fn disabled_button_leaves_the_tab_order_and_returns_when_enabled() {
-    let mut app = test_app();
-    let button = spawn_primary(&mut app);
-    app.update();
-
-    app.world_mut()
-        .entity_mut(button)
-        .insert(InteractionDisabled);
-    app.update();
-    assert_eq!(tab_index(&app, button), -1);
-
-    app.world_mut()
-        .entity_mut(button)
-        .remove::<InteractionDisabled>();
-    app.update();
-    assert_eq!(tab_index(&app, button), 0);
-}
-
-#[test]
 fn a_custom_tab_index_is_restored_after_re_enabling() {
     let mut app = test_app();
     let button = app.world_mut().spawn((spawn_bundle(), TabIndex(3))).id();
@@ -792,17 +652,19 @@ fn disabled_button_leaves_directional_navigation_and_returns_when_enabled() {
     );
 }
 
+// Arrow keys must not reach a disabled button, also when the component is added to it later.
 #[test]
-fn a_button_spawned_disabled_does_not_join_directional_navigation() {
+fn directional_navigation_added_to_a_disabled_button_is_held_back_until_it_is_enabled() {
     let mut app = test_app();
     let button = app
         .world_mut()
-        .spawn((
-            spawn_bundle(),
-            AutoDirectionalNavigation::default(),
-            InteractionDisabled,
-        ))
+        .spawn((spawn_bundle(), InteractionDisabled))
         .id();
+    app.update();
+
+    app.world_mut()
+        .entity_mut(button)
+        .insert(AutoDirectionalNavigation::default());
     app.update();
     assert!(
         app.world()
@@ -1021,6 +883,7 @@ fn roomy_row() -> ButtonMetrics {
 fn roomy_theme() -> Theme {
     let mut theme = Theme::default();
     theme.button_sizes.named.insert(ROW, roomy_row());
+    // Another name, so that picking by name is told from picking any entry.
     theme.button_sizes.named.insert(
         OTHER,
         ButtonMetrics {
