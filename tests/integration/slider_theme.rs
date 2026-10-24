@@ -3,6 +3,7 @@
 //!
 //! Real pointer picking, layout, and dragging are covered by `examples/slider_check.rs`.
 
+use crate::probe::probe_theme;
 use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
@@ -103,7 +104,7 @@ fn a_slider_is_styled_after_one_update() {
 
     app.update();
 
-    let style = Theme::default().slider;
+    let style = probe_theme().slider;
     assert_eq!(rail(&app, slider), style.rail.normal);
     assert_eq!(fill(&app, slider), style.fill.normal);
     assert_eq!(thumb(&app, slider), style.thumb.normal);
@@ -305,7 +306,7 @@ fn a_plain_slider_has_no_gradients_and_keeps_its_colors() {
 
     app.update();
 
-    let style = Theme::default().slider;
+    let style = probe_theme().slider;
     assert!(stops(&app, rail_part(&app, slider)).is_empty());
     assert!(stops(&app, fill_part(&app, slider)).is_empty());
     assert_eq!(rail(&app, slider), style.rail.normal);
@@ -327,11 +328,11 @@ fn swapping_between_segmented_and_plain_themes_switches_the_look_back_and_forth(
     assert!(!stops(&app, rail_part(&app, slider)).is_empty());
     assert_eq!(fill(&app, slider), Color::NONE);
 
-    app.insert_resource(GlobalTheme(Theme::default()));
+    app.insert_resource(GlobalTheme(probe_theme()));
     app.update();
     assert!(stops(&app, rail_part(&app, slider)).is_empty());
     assert!(stops(&app, fill_part(&app, slider)).is_empty());
-    assert_eq!(fill(&app, slider), Theme::default().slider.fill.normal);
+    assert_eq!(fill(&app, slider), probe_theme().slider.fill.normal);
     assert_eq!(
         node(&app, fill_part(&app, slider)).width,
         Val::Percent(50.0)
@@ -346,7 +347,7 @@ fn swapping_between_segmented_and_plain_themes_switches_the_look_back_and_forth(
 fn hovering_the_slider_changes_the_colors() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
-    let style = Theme::default().slider;
+    let style = probe_theme().slider;
     app.update();
 
     // `Hovered` already includes the descendants, so it covers the pickable thumb.
@@ -363,7 +364,7 @@ fn hovering_the_slider_changes_the_colors() {
 fn a_rail_click_shows_the_pressed_colors_until_release() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
-    let style = Theme::default().slider;
+    let style = probe_theme().slider;
     app.update();
 
     app.world_mut().entity_mut(slider).insert(Pressed);
@@ -381,7 +382,7 @@ fn a_rail_click_shows_the_pressed_colors_until_release() {
 fn dragging_shows_the_pressed_colors_until_the_drag_ends() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
-    let style = Theme::default().slider;
+    let style = probe_theme().slider;
     app.update();
 
     app.world_mut()
@@ -403,7 +404,7 @@ fn dragging_shows_the_pressed_colors_until_the_drag_ends() {
 fn interaction_disabled_grays_the_slider_and_removal_restores_it() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
-    let style = Theme::default().slider;
+    let style = probe_theme().slider;
     app.update();
 
     app.world_mut()
@@ -430,7 +431,7 @@ fn interaction_disabled_grays_the_slider_and_removal_restores_it() {
 fn global_theme_change_updates_unscoped_sliders_but_not_scoped_ones() {
     let mut app = test_app();
     let unscoped = spawn_slider(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
+    let panel = app.world_mut().spawn(probe_theme()).id();
     let scoped = spawn_slider_under(&mut app, panel);
     app.update();
 
@@ -439,15 +440,18 @@ fn global_theme_change_updates_unscoped_sliders_but_not_scoped_ones() {
 
     assert_eq!(node(&app, unscoped).height, Val::Px(10.0));
     assert_eq!(fill(&app, unscoped), red());
-    assert_eq!(node(&app, scoped).height, Val::Px(20.0));
-    assert_eq!(fill(&app, scoped), Theme::default().slider.fill.normal);
+    assert_eq!(
+        node(&app, scoped).height,
+        Val::Px(probe_theme().slider.shape.thumb_size)
+    );
+    assert_eq!(fill(&app, scoped), probe_theme().slider.fill.normal);
 }
 
 #[test]
 fn scoped_theme_change_updates_only_sliders_inside_the_scope() {
     let mut app = test_app();
     let outside = spawn_slider(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
+    let panel = app.world_mut().spawn(probe_theme()).id();
     let inside = spawn_slider_under(&mut app, panel);
     app.update();
 
@@ -456,8 +460,11 @@ fn scoped_theme_change_updates_only_sliders_inside_the_scope() {
 
     assert_eq!(node(&app, inside).height, Val::Px(10.0));
     assert_eq!(fill(&app, inside), red());
-    assert_eq!(node(&app, outside).height, Val::Px(20.0));
-    assert_eq!(fill(&app, outside), Theme::default().slider.fill.normal);
+    assert_eq!(
+        node(&app, outside).height,
+        Val::Px(probe_theme().slider.shape.thumb_size)
+    );
+    assert_eq!(fill(&app, outside), probe_theme().slider.fill.normal);
 }
 
 #[test]
@@ -475,7 +482,7 @@ fn slider_spawned_later_inside_a_scope_uses_the_scope_theme_immediately() {
 #[test]
 fn editing_follows_a_custom_theme() {
     let mut app = test_app();
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     theme.slider.editing_thumb = red();
     theme.slider.editing_ring = red();
     app.insert_resource(GlobalTheme(theme));
@@ -497,14 +504,14 @@ fn editing_follows_a_custom_theme() {
 
 #[test]
 fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let slider = spawn_slider(&mut app);
     app.update();
 
     focus(&mut app, slider, true);
     app.update();
 
-    let style = focus_theme().slider;
+    let style = probe_theme().slider;
     assert_eq!(fill(&app, slider), style.fill.focused);
     let ring = outline(&app, slider);
     assert_eq!(ring.color, style.focus_ring.color);
@@ -514,20 +521,20 @@ fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {
 // Pointer clicks hide the indicator while the entity keeps focus.
 #[test]
 fn focus_is_not_shown_while_the_indicator_is_hidden() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let slider = spawn_slider(&mut app);
     app.update();
 
     focus(&mut app, slider, false);
     app.update();
 
-    assert_eq!(fill(&app, slider), focus_theme().slider.fill.normal);
+    assert_eq!(fill(&app, slider), probe_theme().slider.fill.normal);
     assert_eq!(outline(&app, slider).color, Color::NONE);
 }
 
 #[test]
 fn moving_focus_moves_the_ring() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let first = spawn_slider(&mut app);
     let second = spawn_slider(&mut app);
     app.update();
@@ -540,13 +547,13 @@ fn moving_focus_moves_the_ring() {
     assert_eq!(outline(&app, first).color, Color::NONE);
     assert_eq!(
         outline(&app, second).color,
-        focus_theme().slider.focus_ring.color
+        probe_theme().slider.focus_ring.color
     );
 }
 
 #[test]
 fn disabled_slider_shows_neither_ring_nor_focused_colors() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let slider = spawn_slider(&mut app);
     app.update();
     focus(&mut app, slider, true);
@@ -555,7 +562,7 @@ fn disabled_slider_shows_neither_ring_nor_focused_colors() {
         .insert(InteractionDisabled);
     app.update();
 
-    assert_eq!(fill(&app, slider), focus_theme().slider.fill.disabled);
+    assert_eq!(fill(&app, slider), probe_theme().slider.fill.disabled);
     assert_eq!(outline(&app, slider).color, Color::NONE);
 }
 
@@ -567,7 +574,7 @@ fn disabled_slider_shows_neither_ring_nor_focused_colors() {
 fn editing_changes_the_thumb_and_the_ring_and_removal_restores_them() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
-    let style = Theme::default().slider;
+    let style = probe_theme().slider;
     app.update();
     focus(&mut app, slider, true);
     app.update();
@@ -601,14 +608,14 @@ fn editing_shows_no_ring_while_the_focus_indicator_is_hidden() {
     app.update();
 
     assert_eq!(outline(&app, slider).color, Color::NONE);
-    assert_eq!(thumb(&app, slider), Theme::default().slider.editing_thumb);
+    assert_eq!(thumb(&app, slider), probe_theme().slider.editing_thumb);
 }
 
 #[test]
 fn disabled_slider_ignores_editing() {
     let mut app = test_app();
     let slider = spawn_slider(&mut app);
-    let style = Theme::default().slider;
+    let style = probe_theme().slider;
     app.update();
 
     focus(&mut app, slider, true);
@@ -709,6 +716,7 @@ fn the_app_applying_the_request_moves_the_parts() {
 fn test_app() -> App {
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
+    app.insert_resource(GlobalTheme(probe_theme()));
     app
 }
 
@@ -726,9 +734,9 @@ fn red() -> Color {
     Color::srgb(0.9, 0.1, 0.1)
 }
 
-/// Default theme whose fill is red and rail is thick/square, distinguishable in color and shape.
+/// The probe theme with a red fill.
 fn red_fill_theme() -> Theme {
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     theme.slider.shape = SliderShape {
         rail_height: 10.0,
         thumb_size: 0.0,
@@ -739,9 +747,9 @@ fn red_fill_theme() -> Theme {
     theme
 }
 
-/// Default theme with a thick, square rail and no thumb.
+/// The probe theme with a thick, square rail and no thumb.
 fn squared_theme() -> Theme {
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     theme.slider.shape = SliderShape {
         rail_height: 10.0,
         thumb_size: 0.0,
@@ -751,9 +759,9 @@ fn squared_theme() -> Theme {
     theme
 }
 
-/// Default theme with a ten-block bar.
+/// The probe theme with a ten-block bar.
 fn blocks_theme() -> Theme {
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     theme.slider.shape = SliderShape {
         rounded: false,
         segments: Some(SliderSegments {
@@ -763,19 +771,6 @@ fn blocks_theme() -> Theme {
         ..default()
     };
     theme
-}
-
-/// Default theme whose `focused` fill color differs from every other state.
-fn focus_theme() -> Theme {
-    let mut theme = Theme::default();
-    theme.slider.fill.focused = Color::srgb(0.1, 0.2, 0.3);
-    theme
-}
-
-fn test_app_with_focus_theme() -> App {
-    let mut app = test_app();
-    app.insert_resource(GlobalTheme(focus_theme()));
-    app
 }
 
 fn focus(app: &mut App, slider: Entity, visible: bool) {

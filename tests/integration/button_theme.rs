@@ -2,6 +2,7 @@
 //!
 //! Real pointer picking, layout, and text shaping are not covered by `examples/button_check.rs`.
 
+use crate::probe::probe_theme;
 use bevy::{
     a11y::AccessibilityNode,
     asset::uuid_handle,
@@ -19,11 +20,10 @@ use bevy::{
     ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonStyle, ButtonStyles, ButtonVariant,
+    ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonStyle, ButtonVariant,
     ButtonVariantId, FocusIndicator, GlobalTheme, SlicedImage, StateColors, Theme,
     UiComponentPrototypesPlugin, icon_button,
 };
-use std::collections::HashMap;
 
 // ---------------------------------------------------------------------------
 // Behavior wiring
@@ -73,7 +73,7 @@ fn a_button_attached_to_an_existing_entity_is_styled_after_one_update() {
     app.world_mut().entity_mut(entity).insert(Button);
     app.update();
 
-    assert_eq!(bg(&app, entity), primary(&Theme::default()).bg.normal);
+    assert_eq!(bg(&app, entity), primary(&probe_theme()).bg.normal);
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +84,7 @@ fn a_button_attached_to_an_existing_entity_is_styled_after_one_update() {
 fn hover_and_press_change_colors_and_release_restores_them() {
     let mut app = test_app();
     let button = spawn_primary(&mut app);
-    let style = primary(&Theme::default());
+    let style = primary(&probe_theme());
     app.update();
 
     for (state, expected) in [
@@ -101,7 +101,7 @@ fn hover_and_press_change_colors_and_release_restores_them() {
 #[test]
 fn the_border_color_follows_the_state() {
     let mut app = test_app();
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     primary_mut(&mut theme).border = StateColors {
         normal: Color::srgb(0.1, 0.0, 0.0),
         hovered: Color::srgb(0.2, 0.0, 0.0),
@@ -129,7 +129,7 @@ fn the_border_color_follows_the_state() {
 fn interaction_disabled_grays_the_button_and_removal_restores_it() {
     let mut app = test_app();
     let button = spawn_primary(&mut app);
-    let style = primary(&Theme::default());
+    let style = primary(&probe_theme());
     app.update();
 
     app.world_mut()
@@ -156,7 +156,7 @@ fn interaction_disabled_grays_the_button_and_removal_restores_it() {
 fn global_theme_change_updates_unscoped_buttons_but_not_scoped_ones() {
     let mut app = test_app();
     let unscoped = spawn_primary(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
+    let panel = app.world_mut().spawn(probe_theme()).id();
     let scoped = spawn_primary_under(&mut app, panel);
     app.update();
 
@@ -166,7 +166,7 @@ fn global_theme_change_updates_unscoped_buttons_but_not_scoped_ones() {
     let swapped = swapped_theme();
     assert_eq!(bg(&app, unscoped), primary(&swapped).bg.normal);
     assert_eq!(label_font(&app, unscoped), swapped.font);
-    assert_eq!(bg(&app, scoped), primary(&Theme::default()).bg.normal);
+    assert_eq!(bg(&app, scoped), primary(&probe_theme()).bg.normal);
 }
 
 #[test]
@@ -178,7 +178,7 @@ fn theme_font_smoothing_is_applied_to_the_label_and_follows_theme_changes() {
 
     app.insert_resource(GlobalTheme(Theme {
         font_smoothing: FontSmoothing::None,
-        ..default()
+        ..probe_theme()
     }));
     app.update();
     assert_eq!(label_smoothing(&app, button), FontSmoothing::None);
@@ -223,10 +223,10 @@ fn swapping_to_a_theme_without_surface_removes_the_image_and_restores_the_backgr
     app.update();
     assert!(image_node(&app, button).is_some());
 
-    app.insert_resource(GlobalTheme(Theme::default()));
+    app.insert_resource(GlobalTheme(probe_theme()));
     app.update();
     assert!(image_node(&app, button).is_none());
-    assert_eq!(bg(&app, button), primary(&Theme::default()).bg.normal);
+    assert_eq!(bg(&app, button), primary(&probe_theme()).bg.normal);
 
     app.insert_resource(GlobalTheme(surface_theme()));
     app.update();
@@ -234,6 +234,7 @@ fn swapping_to_a_theme_without_surface_removes_the_image_and_restores_the_backgr
     assert_eq!(bg(&app, button), Color::NONE);
 }
 
+// A default `ImageNode` paints a white box, so a style without a surface must never add one.
 #[test]
 fn a_style_without_a_surface_never_adds_an_image_node() {
     let mut app = test_app();
@@ -248,7 +249,7 @@ fn a_style_without_a_surface_never_adds_an_image_node() {
 fn scoped_theme_change_updates_only_buttons_inside_the_scope() {
     let mut app = test_app();
     let outside = spawn_primary(&mut app);
-    let panel = app.world_mut().spawn(Theme::default()).id();
+    let panel = app.world_mut().spawn(probe_theme()).id();
     let inside = spawn_primary_under(&mut app, panel);
     app.update();
 
@@ -256,7 +257,7 @@ fn scoped_theme_change_updates_only_buttons_inside_the_scope() {
     app.update();
 
     assert_eq!(bg(&app, inside), primary(&swapped_theme()).bg.normal);
-    assert_eq!(bg(&app, outside), primary(&Theme::default()).bg.normal);
+    assert_eq!(bg(&app, outside), primary(&probe_theme()).bg.normal);
 }
 
 #[test]
@@ -283,21 +284,21 @@ fn removing_the_theme_component_makes_buttons_follow_the_global_theme() {
     app.world_mut().entity_mut(panel).remove::<Theme>();
     app.update();
 
-    assert_eq!(bg(&app, button), primary(&Theme::default()).bg.normal);
+    assert_eq!(bg(&app, button), primary(&probe_theme()).bg.normal);
 }
 
 #[test]
 fn moving_a_button_to_another_scope_makes_it_follow_that_scope() {
     let mut app = test_app();
     let swapped = app.world_mut().spawn(swapped_theme()).id();
-    let plain = app.world_mut().spawn(Theme::default()).id();
+    let plain = app.world_mut().spawn(probe_theme()).id();
     let button = spawn_primary_under(&mut app, swapped);
     app.update();
 
     app.world_mut().entity_mut(button).insert(ChildOf(plain));
     app.update();
 
-    assert_eq!(bg(&app, button), primary(&Theme::default()).bg.normal);
+    assert_eq!(bg(&app, button), primary(&probe_theme()).bg.normal);
 }
 
 #[test]
@@ -310,7 +311,7 @@ fn detaching_a_button_from_a_scope_makes_it_follow_the_global_theme() {
     app.world_mut().entity_mut(button).remove::<ChildOf>();
     app.update();
 
-    assert_eq!(bg(&app, button), primary(&Theme::default()).bg.normal);
+    assert_eq!(bg(&app, button), primary(&probe_theme()).bg.normal);
 }
 
 // ---------------------------------------------------------------------------
@@ -324,7 +325,7 @@ const OTHER: ButtonSizeId = ButtonSizeId::new("other");
 fn a_name_the_theme_does_not_define_falls_back_to_the_base_size() {
     let mut app = test_app();
     // The theme has sizes, but not this one: falling back is told from picking any entry.
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     theme.button_sizes.named.insert(
         OTHER,
         ButtonMetrics {
@@ -339,7 +340,7 @@ fn a_name_the_theme_does_not_define_falls_back_to_the_base_size() {
 
     assert_eq!(
         node(&app, button).height,
-        Theme::default().button_sizes.base.height
+        probe_theme().button_sizes.base.height
     );
 }
 
@@ -374,15 +375,15 @@ fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
     assert_eq!(icon_tint(&app, button), primary(&roomy_theme()).fg.normal);
 
     // And back: the name is no longer defined, and nothing of the other theme is left.
-    app.insert_resource(GlobalTheme(Theme::default()));
+    app.insert_resource(GlobalTheme(probe_theme()));
     app.update();
     assert_eq!(
         self::node(&app, button).height,
-        Theme::default().button_sizes.base.height
+        probe_theme().button_sizes.base.height
     );
     assert_eq!(
         self::node(&app, button).border,
-        UiRect::all(Val::Px(primary(&Theme::default()).shape.border_width))
+        UiRect::all(Val::Px(primary(&probe_theme()).shape.border_width))
     );
 }
 
@@ -452,10 +453,10 @@ fn a_theme_change_that_drops_a_name_restyles_its_buttons_with_the_base_style() {
     let button = spawn_variant(&mut app, GOLD);
     app.update();
 
-    app.insert_resource(GlobalTheme(Theme::default()));
+    app.insert_resource(GlobalTheme(probe_theme()));
     app.update();
 
-    assert_eq!(bg(&app, button), Theme::default().buttons.base.bg.normal);
+    assert_eq!(bg(&app, button), probe_theme().buttons.base.bg.normal);
 }
 
 // ---------------------------------------------------------------------------
@@ -464,14 +465,14 @@ fn a_theme_change_that_drops_a_name_restyles_its_buttons_with_the_base_style() {
 
 #[test]
 fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let button = spawn_primary(&mut app);
     app.update();
 
     focus(&mut app, button, true);
     app.update();
 
-    let style = primary(&focus_theme());
+    let style = primary(&probe_theme());
     assert_eq!(bg(&app, button), style.bg.focused);
     assert_eq!(label_color(&app, button), style.fg.focused);
     let ring = outline(&app, button);
@@ -481,7 +482,7 @@ fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {
 
 #[test]
 fn moving_focus_moves_the_ring() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let first = spawn_primary(&mut app);
     let second = spawn_primary(&mut app);
     app.update();
@@ -491,7 +492,7 @@ fn moving_focus_moves_the_ring() {
     focus(&mut app, second, true);
     app.update();
 
-    let style = primary(&focus_theme());
+    let style = primary(&probe_theme());
     assert_eq!(outline(&app, first).color, Color::NONE);
     assert_eq!(bg(&app, first), style.bg.normal);
     assert_eq!(outline(&app, second).color, style.focus_ring.color);
@@ -500,7 +501,7 @@ fn moving_focus_moves_the_ring() {
 
 #[test]
 fn an_always_visible_indicator_draws_the_ring_while_bevy_hides_it() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     app.insert_resource(FocusIndicator::Always);
     let button = spawn_primary(&mut app);
     app.update();
@@ -508,7 +509,7 @@ fn an_always_visible_indicator_draws_the_ring_while_bevy_hides_it() {
     focus(&mut app, button, false);
     app.update();
 
-    let style = primary(&focus_theme());
+    let style = primary(&probe_theme());
     assert_eq!(outline(&app, button).color, style.focus_ring.color);
     assert_eq!(bg(&app, button), style.bg.focused);
 
@@ -519,7 +520,7 @@ fn an_always_visible_indicator_draws_the_ring_while_bevy_hides_it() {
 
 #[test]
 fn hover_wins_over_focus_for_colors_but_the_ring_stays() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let button = spawn_primary(&mut app);
     app.update();
     focus(&mut app, button, true);
@@ -528,14 +529,14 @@ fn hover_wins_over_focus_for_colors_but_the_ring_stays() {
         .insert(PickingInteraction::Hovered);
     app.update();
 
-    let style = primary(&focus_theme());
+    let style = primary(&probe_theme());
     assert_eq!(bg(&app, button), style.bg.hovered);
     assert_eq!(outline(&app, button).color, style.focus_ring.color);
 }
 
 #[test]
 fn disabled_button_shows_neither_ring_nor_focused_colors() {
-    let mut app = test_app_with_focus_theme();
+    let mut app = test_app();
     let button = spawn_primary(&mut app);
     app.update();
     focus(&mut app, button, true);
@@ -544,7 +545,7 @@ fn disabled_button_shows_neither_ring_nor_focused_colors() {
         .insert(InteractionDisabled);
     app.update();
 
-    assert_eq!(bg(&app, button), primary(&focus_theme()).bg.disabled);
+    assert_eq!(bg(&app, button), primary(&probe_theme()).bg.disabled);
     assert_eq!(outline(&app, button).color, Color::NONE);
 }
 
@@ -706,24 +707,20 @@ fn re_enabling_does_not_add_directional_navigation() {
 fn test_app() -> App {
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
+    app.insert_resource(GlobalTheme(probe_theme()));
     app
 }
 
-/// A theme whose Primary/Affirmative palettes are exchanged and whose font differs
-/// so that it is distinguishable from `Theme::default()`.
+/// The probe theme with its Primary/Affirmative palettes exchanged and another font.
 fn swapped_theme() -> Theme {
-    let base = Theme::default();
-    Theme {
-        buttons: ButtonStyles {
-            named: HashMap::from([
-                (ButtonVariantId::PRIMARY, affirmative(&base)),
-                (ButtonVariantId::AFFIRMATIVE, primary(&base)),
-            ]),
-            ..base.buttons.clone()
-        },
-        font: FontSource::sans_serif(),
-        ..default()
-    }
+    let mut theme = probe_theme();
+    let named = &mut theme.buttons.named;
+    let primary = named.remove(&ButtonVariantId::PRIMARY);
+    let affirmative = named.remove(&ButtonVariantId::AFFIRMATIVE);
+    named.extend(affirmative.map(|style| (ButtonVariantId::PRIMARY, style)));
+    named.extend(primary.map(|style| (ButtonVariantId::AFFIRMATIVE, style)));
+    theme.font = FontSource::sans_serif();
+    theme
 }
 
 fn spawn_primary(app: &mut App) -> Entity {
@@ -745,20 +742,6 @@ fn spawn_primary_under(app: &mut App, parent: Entity) -> Entity {
             ChildOf(parent),
         ))
         .id()
-}
-
-/// Default theme whose `focused` colors differ from every other state, so a test can tell them apart.
-fn focus_theme() -> Theme {
-    let mut theme = Theme::default();
-    primary_mut(&mut theme).bg.focused = Color::srgb(0.1, 0.2, 0.3);
-    primary_mut(&mut theme).fg.focused = Color::srgb(0.9, 0.8, 0.7);
-    theme
-}
-
-fn test_app_with_focus_theme() -> App {
-    let mut app = test_app();
-    app.insert_resource(GlobalTheme(focus_theme()));
-    app
 }
 
 fn focus(app: &mut App, button: Entity, visible: bool) {
@@ -811,9 +794,9 @@ fn panel_image() -> Handle<Image> {
     uuid_handle!("6a1f5c3e-0b52-4d8e-9a77-3c1d2e4f5a60")
 }
 
-/// Default theme with a 9-sliced image on every button.
+/// The probe theme with a 9-sliced image on every button.
 fn surface_theme() -> Theme {
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     let surface = SlicedImage {
         image: panel_image(),
         slicer: TextureSlicer {
@@ -876,7 +859,7 @@ fn node(app: &App, button: Entity) -> Node {
     app.world().get::<Node>(button).unwrap().clone()
 }
 
-/// The `ROW` size of `roomy_theme`: every field differs from the default.
+/// The `ROW` size of `roomy_theme`: every field differs from the probe theme's base size.
 fn roomy_row() -> ButtonMetrics {
     ButtonMetrics {
         height: Val::Px(33.0),
@@ -889,7 +872,7 @@ fn roomy_row() -> ButtonMetrics {
 
 /// A theme that defines `ROW`, has its own base size, and gives the primary buttons another shape and text color.
 fn roomy_theme() -> Theme {
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     theme.button_sizes.named.insert(ROW, roomy_row());
     // Another name, so that picking by name is told from picking any entry.
     theme.button_sizes.named.insert(
@@ -947,10 +930,6 @@ fn primary(theme: &Theme) -> ButtonStyle {
     theme.buttons.named[&ButtonVariantId::PRIMARY].clone()
 }
 
-fn affirmative(theme: &Theme) -> ButtonStyle {
-    theme.buttons.named[&ButtonVariantId::AFFIRMATIVE].clone()
-}
-
 fn primary_mut(theme: &mut Theme) -> &mut ButtonStyle {
     theme
         .buttons
@@ -965,17 +944,16 @@ fn spawn_variant(app: &mut App, variant: impl Into<ButtonVariant>) -> Entity {
         .id()
 }
 
-/// A style that differs from every style of the default theme.
+/// A style that differs from every style of the probe theme.
 fn gold_style() -> ButtonStyle {
     let mut style = ButtonStyle::ghost(StateColors::uniform(Color::srgb(1.0, 0.85, 0.3)));
     style.bg = StateColors::uniform(Color::srgb(0.3, 0.2, 0.0));
     style
 }
 
-/// The default theme plus `GOLD`, and a base style of its own.
+/// The probe theme plus `GOLD`.
 fn gold_theme() -> Theme {
-    let mut theme = Theme::default();
+    let mut theme = probe_theme();
     theme.buttons.named.insert(GOLD, gold_style());
-    theme.buttons.base.bg = StateColors::uniform(Color::srgb(0.0, 0.2, 0.3));
     theme
 }
