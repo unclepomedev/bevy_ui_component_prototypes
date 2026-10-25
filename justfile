@@ -22,3 +22,6 @@ check:
     cargo clippy --workspace --all-targets --all-features -- -D warnings
     cargo test --workspace --all-features --lib --tests
 c: check
+
+dep:
+    cargo tree -i accesskit
