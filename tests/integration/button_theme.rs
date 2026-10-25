@@ -124,6 +124,54 @@ fn icon_bundles_land_on_the_icon_only_and_accumulate() {
 }
 
 #[test]
+fn a_button_without_a_label_has_no_label_entity() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn(icon_button().icon(Handle::<Image>::default()).build())
+        .id();
+    app.update();
+
+    let world = app.world();
+    let children: Vec<Entity> = world.get::<Children>(button).unwrap().iter().collect();
+    assert_eq!(children.len(), 1);
+    assert!(world.get::<Text>(children[0]).is_none());
+}
+
+#[test]
+fn a_label_bundle_spawns_an_empty_label_to_fill_in_later() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn(icon_button().label_bundle(Marker(1)).build())
+        .id();
+    app.update();
+
+    let world = app.world();
+    let children: Vec<Entity> = world.get::<Children>(button).unwrap().iter().collect();
+    assert_eq!(children.len(), 1);
+    assert_eq!(
+        world.get::<Text>(children[0]).map(|t| t.0.as_str()),
+        Some("")
+    );
+    assert!(world.get::<Marker>(children[0]).is_some());
+}
+
+#[test]
+fn the_label_text_is_the_one_given() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn(icon_button().label("OK").label_bundle(Marker(1)).build())
+        .id();
+    app.update();
+
+    let world = app.world();
+    let label = world.get::<Children>(button).unwrap()[0];
+    assert_eq!(world.get::<Text>(label).map(|t| t.0.as_str()), Some("OK"));
+}
+
+#[test]
 fn a_label_never_wraps_because_the_button_is_one_line_high() {
     let mut app = test_app();
     let button = spawn_primary(&mut app);
