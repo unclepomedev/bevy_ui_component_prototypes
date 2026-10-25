@@ -82,34 +82,52 @@ impl IconButtonBuilder {
             variant,
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 if let Some(icon) = icon {
-                    let mut icon = parent.spawn((
-                        ButtonIcon,
-                        ImageNode::new(icon),
-                        Node {
-                            width: Val::Px(metrics.icon_size),
-                            height: Val::Px(metrics.icon_size),
-                            ..default()
-                        },
-                        pass_through(),
-                    ));
-                    for extra in icon_extras {
-                        extra(&mut icon);
-                    }
+                    spawn_icon(parent, icon, icon_extras, &metrics);
                 }
-                let mut label = parent.spawn((
-                    ButtonLabel,
-                    Text::new(label),
-                    TextFont {
-                        font_size: metrics.font_size,
-                        ..default()
-                    },
-                    TextLayout::new(Justify::Left, LineBreak::NoWrap),
-                    pass_through(),
-                ));
-                for extra in label_extras {
-                    extra(&mut label);
-                }
+                spawn_label(parent, label, label_extras, &metrics);
             })),
         )
+    }
+}
+
+fn spawn_icon(
+    parent: &mut RelatedSpawner<ChildOf>,
+    icon: Handle<Image>,
+    extras: Vec<Extra>,
+    metrics: &ButtonMetrics,
+) {
+    let mut entity = parent.spawn((
+        ButtonIcon,
+        ImageNode::new(icon),
+        Node {
+            width: Val::Px(metrics.icon_size),
+            height: Val::Px(metrics.icon_size),
+            ..default()
+        },
+        pass_through(),
+    ));
+    for extra in extras {
+        extra(&mut entity);
+    }
+}
+
+fn spawn_label(
+    parent: &mut RelatedSpawner<ChildOf>,
+    label: String,
+    extras: Vec<Extra>,
+    metrics: &ButtonMetrics,
+) {
+    let mut entity = parent.spawn((
+        ButtonLabel,
+        Text::new(label),
+        TextFont {
+            font_size: metrics.font_size,
+            ..default()
+        },
+        TextLayout::new(Justify::Left, LineBreak::NoWrap),
+        pass_through(),
+    ));
+    for extra in extras {
+        extra(&mut entity);
     }
 }
