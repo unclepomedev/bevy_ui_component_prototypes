@@ -25,7 +25,7 @@ fn a_focused_widget_with_a_visible_indicator_is_marked() {
 fn buttons_switches_and_sliders_are_all_marked() {
     let mut app = test_app();
     let widgets = [
-        app.world_mut().spawn(icon_button("b").build()).id(),
+        app.world_mut().spawn(icon_button().label("b").build()).id(),
         app.world_mut().spawn(toggle_switch().build()).id(),
         app.world_mut().spawn(slider().build()).id(),
     ];
@@ -173,7 +173,7 @@ fn an_always_visible_indicator_still_skips_disabled_and_unfocused_widgets() {
     app.insert_resource(FocusIndicator::Always);
     let disabled = app
         .world_mut()
-        .spawn((icon_button("b").build(), InteractionDisabled))
+        .spawn((icon_button().label("b").build(), InteractionDisabled))
         .id();
     let other = spawn_button(&mut app);
 
@@ -191,7 +191,9 @@ fn test_app() -> App {
 }
 
 fn spawn_button(app: &mut App) -> Entity {
-    app.world_mut().spawn(icon_button("button").build()).id()
+    app.world_mut()
+        .spawn(icon_button().label("button").build())
+        .id()
 }
 
 fn focus(app: &mut App, entity: Entity, visible: bool) {

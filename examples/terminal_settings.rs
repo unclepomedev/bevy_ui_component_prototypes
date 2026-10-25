@@ -278,7 +278,8 @@ fn spawn_volume_row(commands: &mut Commands, panel: Entity) {
 fn spawn_fullscreen_row(commands: &mut Commands, panel: Entity) {
     let (row, control) = spawn_row(commands, panel, "FULLSCREEN");
     commands.entity(control).insert((
-        icon_button("[ON]")
+        icon_button()
+            .label("[ON]")
             .size(ROW)
             .variant(ButtonVariantId::PRIMARY)
             .build(),
@@ -297,7 +298,7 @@ fn spawn_language_row(commands: &mut Commands, panel: Entity, index: usize, name
         ButtonVariantId::NEUTRAL
     };
     commands.entity(control).insert((
-        icon_button(name).size(ROW).variant(variant).build(),
+        icon_button().label(name).size(ROW).variant(variant).build(),
         Language(index),
         AutoDirectionalNavigation::default(),
         ChildOf(row),

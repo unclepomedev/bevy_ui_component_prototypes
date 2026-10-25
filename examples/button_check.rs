@@ -125,7 +125,7 @@ fn spawn_variant_row(root: &mut ChildSpawnerCommands) {
     .with_children(|row| {
         for (label, variant) in variants {
             row.spawn((
-                icon_button(label).variant(variant).build(),
+                icon_button().label(label).variant(variant).build(),
                 Tag { name: label },
             ));
         }
@@ -135,7 +135,8 @@ fn spawn_variant_row(root: &mut ChildSpawnerCommands) {
 /// Target for the disabled toggle. Follows the global theme.
 fn spawn_disable_target(root: &mut ChildSpawnerCommands) {
     root.spawn((
-        icon_button("target (toggle disabled with D)")
+        icon_button()
+            .label("target (toggle disabled with D)")
             .variant(ButtonVariantId::PRIMARY)
             .build(),
         Tag { name: "target" },
@@ -162,7 +163,7 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
             ("Scoped Affirmative", ButtonVariantId::AFFIRMATIVE),
         ] {
             panel.spawn((
-                icon_button(label).variant(variant).build(),
+                icon_button().label(label).variant(variant).build(),
                 Tag { name: label },
             ));
         }
@@ -226,7 +227,10 @@ fn swap_panel_theme(mut panels: Query<&mut Theme, With<ScopedPanel>>, mut swappe
 fn spawn_panel_button(mut commands: Commands, panels: Query<Entity, With<ScopedPanel>>) {
     for panel in &panels {
         commands.spawn((
-            icon_button("New").variant(ButtonVariantId::DANGER).build(),
+            icon_button()
+                .label("New")
+                .variant(ButtonVariantId::DANGER)
+                .build(),
             Tag { name: "New" },
             ChildOf(panel),
         ));

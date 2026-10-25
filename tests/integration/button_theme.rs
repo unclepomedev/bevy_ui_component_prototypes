@@ -56,7 +56,8 @@ fn label_bundles_land_on_the_label_only_and_accumulate() {
     let button = app
         .world_mut()
         .spawn(
-            icon_button("button")
+            icon_button()
+                .label("button")
                 .icon(icon)
                 .variant(ButtonVariantId::PRIMARY)
                 .label_bundle(Marker(7))
@@ -93,7 +94,8 @@ fn icon_bundles_land_on_the_icon_only_and_accumulate() {
     let button = app
         .world_mut()
         .spawn(
-            icon_button("button")
+            icon_button()
+                .label("button")
                 .icon(Handle::<Image>::default())
                 .icon_bundle(Marker(3))
                 .icon_bundle(Other)
@@ -119,6 +121,54 @@ fn icon_bundles_land_on_the_icon_only_and_accumulate() {
             .filter(|c| world.get::<ImageNode>(**c).is_none())
             .all(|c| world.get::<Marker>(*c).is_none())
     );
+}
+
+#[test]
+fn a_button_without_a_label_has_no_label_entity() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn(icon_button().icon(Handle::<Image>::default()).build())
+        .id();
+    app.update();
+
+    let world = app.world();
+    let children: Vec<Entity> = world.get::<Children>(button).unwrap().iter().collect();
+    assert_eq!(children.len(), 1);
+    assert!(world.get::<Text>(children[0]).is_none());
+}
+
+#[test]
+fn a_label_bundle_spawns_an_empty_label_to_fill_in_later() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn(icon_button().label_bundle(Marker(1)).build())
+        .id();
+    app.update();
+
+    let world = app.world();
+    let children: Vec<Entity> = world.get::<Children>(button).unwrap().iter().collect();
+    assert_eq!(children.len(), 1);
+    assert_eq!(
+        world.get::<Text>(children[0]).map(|t| t.0.as_str()),
+        Some("")
+    );
+    assert!(world.get::<Marker>(children[0]).is_some());
+}
+
+#[test]
+fn the_label_text_is_the_one_given() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn(icon_button().label("OK").label_bundle(Marker(1)).build())
+        .id();
+    app.update();
+
+    let world = app.world();
+    let label = world.get::<Children>(button).unwrap()[0];
+    assert_eq!(world.get::<Text>(label).map(|t| t.0.as_str()), Some("OK"));
 }
 
 #[test]
@@ -428,7 +478,8 @@ fn a_theme_change_resizes_and_reshapes_the_buttons_with_their_content() {
     let button = app
         .world_mut()
         .spawn(
-            icon_button("button")
+            icon_button()
+                .label("button")
                 .icon(Handle::default())
                 .size(ROW)
                 .variant(ButtonVariantId::PRIMARY)
@@ -472,7 +523,8 @@ fn changing_the_size_of_a_button_resizes_it() {
     let button = app
         .world_mut()
         .spawn(
-            icon_button("button")
+            icon_button()
+                .label("button")
                 .variant(ButtonVariantId::PRIMARY)
                 .build(),
         )
@@ -502,7 +554,10 @@ const GOLD: ButtonVariantId = ButtonVariantId::new("gold");
 fn the_default_variant_is_the_base_style_of_the_theme() {
     let mut app = test_app();
     app.insert_resource(GlobalTheme(gold_theme()));
-    let button = app.world_mut().spawn(icon_button("button").build()).id();
+    let button = app
+        .world_mut()
+        .spawn(icon_button().label("button").build())
+        .id();
 
     app.update();
 
@@ -804,7 +859,8 @@ fn swapped_theme() -> Theme {
 fn spawn_primary(app: &mut App) -> Entity {
     app.world_mut()
         .spawn(
-            icon_button("button")
+            icon_button()
+                .label("button")
                 .variant(ButtonVariantId::PRIMARY)
                 .build(),
         )
@@ -814,7 +870,8 @@ fn spawn_primary(app: &mut App) -> Entity {
 fn spawn_primary_under(app: &mut App, parent: Entity) -> Entity {
     app.world_mut()
         .spawn((
-            icon_button("button")
+            icon_button()
+                .label("button")
                 .variant(ButtonVariantId::PRIMARY)
                 .build(),
             ChildOf(parent),
@@ -832,7 +889,8 @@ fn outline(app: &App, button: Entity) -> Outline {
 }
 
 fn spawn_bundle() -> impl Bundle {
-    icon_button("button")
+    icon_button()
+        .label("button")
         .variant(ButtonVariantId::PRIMARY)
         .build()
 }
@@ -925,7 +983,8 @@ fn label_font(app: &App, button: Entity) -> FontSource {
 fn spawn_sized(app: &mut App, size: impl Into<ButtonSize>) -> Entity {
     app.world_mut()
         .spawn(
-            icon_button("button")
+            icon_button()
+                .label("button")
                 .size(size)
                 .variant(ButtonVariantId::PRIMARY)
                 .build(),
@@ -1018,7 +1077,7 @@ fn primary_mut(theme: &mut Theme) -> &mut ButtonStyle {
 
 fn spawn_variant(app: &mut App, variant: impl Into<ButtonVariant>) -> Entity {
     app.world_mut()
-        .spawn(icon_button("button").variant(variant).build())
+        .spawn(icon_button().label("button").variant(variant).build())
         .id()
 }
 

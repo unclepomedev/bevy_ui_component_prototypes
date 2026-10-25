@@ -118,12 +118,19 @@ fn setup(mut commands: Commands, assets: Res<Assets>) {
                         ("OK", ButtonVariantId::AFFIRMATIVE),
                         ("DELETE", ButtonVariantId::DANGER),
                     ] {
-                        row.spawn(icon_button(label).size(size).variant(variant).build());
+                        row.spawn(
+                            icon_button()
+                                .label(label)
+                                .size(size)
+                                .variant(variant)
+                                .build(),
+                        );
                     }
                 });
             }
             root.spawn((
-                icon_button("CONTINUE")
+                icon_button()
+                    .label("CONTINUE")
                     .size(BODY)
                     .variant(ButtonVariantId::PRIMARY)
                     .build(),

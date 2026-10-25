@@ -131,7 +131,7 @@ fn spawn_widget_row(root: &mut ChildSpawnerCommands) {
 
 fn apply_button() -> impl Bundle {
     (
-        icon_button("Apply").build(),
+        icon_button().label("Apply").build(),
         AutoDirectionalNavigation::default(),
         FirstFocus,
         Tag("Apply"),
