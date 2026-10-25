@@ -88,6 +88,40 @@ fn label_bundles_land_on_the_label_only_and_accumulate() {
 }
 
 #[test]
+fn icon_bundles_land_on_the_icon_only_and_accumulate() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn(
+            icon_button("button")
+                .icon(Handle::<Image>::default())
+                .icon_bundle(Marker(3))
+                .icon_bundle(Other)
+                .build(),
+        )
+        .id();
+    app.update();
+
+    let world = app.world();
+    let children: Vec<Entity> = world.get::<Children>(button).unwrap().iter().collect();
+    let icons: Vec<_> = children
+        .iter()
+        .filter(|c| world.get::<ImageNode>(**c).is_some())
+        .collect();
+    assert_eq!(icons.len(), 1);
+    assert_eq!(world.get::<Marker>(*icons[0]).map(|m| m.0), Some(3));
+    assert!(world.get::<Other>(*icons[0]).is_some());
+    // Neither the root nor the label gets them.
+    assert!(world.get::<Marker>(button).is_none());
+    assert!(
+        children
+            .iter()
+            .filter(|c| world.get::<ImageNode>(**c).is_none())
+            .all(|c| world.get::<Marker>(*c).is_none())
+    );
+}
+
+#[test]
 fn a_label_never_wraps_because_the_button_is_one_line_high() {
     let mut app = test_app();
     let button = spawn_primary(&mut app);

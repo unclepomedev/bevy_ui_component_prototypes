@@ -11,11 +11,12 @@ use bevy::{
     prelude::*,
 };
 
-type LabelExtra = Box<dyn FnOnce(&mut EntityWorldMut) + Send + Sync>;
+type Extra = Box<dyn FnOnce(&mut EntityWorldMut) + Send + Sync>;
 
 pub struct IconButtonBuilder {
     label: String,
-    label_extras: Vec<LabelExtra>,
+    label_extras: Vec<Extra>,
+    icon_extras: Vec<Extra>,
     icon: Option<Handle<Image>>,
     size: ButtonSize,
     variant: ButtonVariant,
@@ -25,6 +26,7 @@ pub fn icon_button(label: impl Into<String>) -> IconButtonBuilder {
     IconButtonBuilder {
         label: label.into(),
         label_extras: Vec::new(),
+        icon_extras: Vec::new(),
         icon: None,
         size: ButtonSize::default(),
         variant: ButtonVariant::default(),
@@ -45,6 +47,14 @@ impl IconButtonBuilder {
         self
     }
 
+    /// Adds `bundle` to the icon entity. Ignored without `icon`. Can be called more than once.
+    pub fn icon_bundle(mut self, bundle: impl Bundle) -> Self {
+        self.icon_extras.push(Box::new(move |icon| {
+            icon.insert(bundle);
+        }));
+        self
+    }
+
     pub fn size(mut self, size: impl Into<ButtonSize>) -> Self {
         self.size = size.into();
         self
@@ -59,6 +69,7 @@ impl IconButtonBuilder {
         let Self {
             label,
             label_extras,
+            icon_extras,
             icon,
             size,
             variant,
@@ -71,7 +82,7 @@ impl IconButtonBuilder {
             variant,
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 if let Some(icon) = icon {
-                    parent.spawn((
+                    let mut icon = parent.spawn((
                         ButtonIcon,
                         ImageNode::new(icon),
                         Node {
@@ -81,6 +92,9 @@ impl IconButtonBuilder {
                         },
                         pass_through(),
                     ));
+                    for extra in icon_extras {
+                        extra(&mut icon);
+                    }
                 }
                 let mut label = parent.spawn((
                     ButtonLabel,
