@@ -11,8 +11,11 @@ use bevy::{
     prelude::*,
 };
 
+type LabelExtra = Box<dyn FnOnce(&mut EntityWorldMut) + Send + Sync>;
+
 pub struct IconButtonBuilder {
     label: String,
+    label_extras: Vec<LabelExtra>,
     icon: Option<Handle<Image>>,
     size: ButtonSize,
     variant: ButtonVariant,
@@ -21,6 +24,7 @@ pub struct IconButtonBuilder {
 pub fn icon_button(label: impl Into<String>) -> IconButtonBuilder {
     IconButtonBuilder {
         label: label.into(),
+        label_extras: Vec::new(),
         icon: None,
         size: ButtonSize::default(),
         variant: ButtonVariant::default(),
@@ -30,6 +34,14 @@ pub fn icon_button(label: impl Into<String>) -> IconButtonBuilder {
 impl IconButtonBuilder {
     pub fn icon(mut self, icon: Handle<Image>) -> Self {
         self.icon = Some(icon);
+        self
+    }
+
+    /// Adds `bundle` to the label entity. Can be called more than once.
+    pub fn label_bundle(mut self, bundle: impl Bundle) -> Self {
+        self.label_extras.push(Box::new(move |label| {
+            label.insert(bundle);
+        }));
         self
     }
 
@@ -46,6 +58,7 @@ impl IconButtonBuilder {
     pub fn build(self) -> impl Bundle {
         let Self {
             label,
+            label_extras,
             icon,
             size,
             variant,
@@ -69,7 +82,7 @@ impl IconButtonBuilder {
                         pass_through(),
                     ));
                 }
-                parent.spawn((
+                let mut label = parent.spawn((
                     ButtonLabel,
                     Text::new(label),
                     TextFont {
@@ -79,6 +92,9 @@ impl IconButtonBuilder {
                     TextLayout::new(Justify::Left, LineBreak::NoWrap),
                     pass_through(),
                 ));
+                for extra in label_extras {
+                    extra(&mut label);
+                }
             })),
         )
     }

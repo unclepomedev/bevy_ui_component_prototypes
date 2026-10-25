@@ -43,6 +43,50 @@ fn icon_button_carries_the_bevy_button_behavior_components() {
     assert_eq!(outline(&app, button).color, Color::NONE);
 }
 
+#[derive(Component)]
+struct Marker(u8);
+
+#[derive(Component)]
+struct Other;
+
+#[test]
+fn label_bundles_land_on_the_label_only_and_accumulate() {
+    let mut app = test_app();
+    let icon = Handle::<Image>::default();
+    let button = app
+        .world_mut()
+        .spawn(
+            icon_button("button")
+                .icon(icon)
+                .variant(ButtonVariantId::PRIMARY)
+                .label_bundle(Marker(7))
+                .label_bundle(Other)
+                .build(),
+        )
+        .id();
+    app.update();
+
+    let world = app.world();
+    let children: Vec<Entity> = world.get::<Children>(button).unwrap().iter().collect();
+    let labels: Vec<_> = children
+        .iter()
+        .filter(|c| world.get::<Text>(**c).is_some())
+        .collect();
+    assert_eq!(labels.len(), 1);
+    assert_eq!(world.get::<Marker>(*labels[0]).map(|m| m.0), Some(7));
+    assert!(world.get::<Other>(*labels[0]).is_some());
+    // Neither the root nor the icon gets them.
+    assert!(world.get::<Marker>(button).is_none());
+    assert!(
+        children
+            .iter()
+            .filter(|c| world.get::<Text>(**c).is_none())
+            .all(|c| world.get::<Marker>(*c).is_none())
+    );
+    // The theme still styles the label.
+    assert_eq!(label_font(&app, button), probe_theme().font);
+}
+
 #[test]
 fn a_label_never_wraps_because_the_button_is_one_line_high() {
     let mut app = test_app();
