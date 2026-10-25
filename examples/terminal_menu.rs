@@ -179,7 +179,7 @@ fn spawn_item(root: &mut ChildSpawnerCommands, label: &'static str, autofocus: b
     })
     .with_children(|row| {
         let mut button = row.spawn((
-            icon_button(label).size(MENU_ITEM).build(),
+            icon_button().label(label).size(MENU_ITEM).build(),
             Label(label),
             AutoDirectionalNavigation::default(),
         ));
