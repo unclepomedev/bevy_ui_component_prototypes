@@ -3,7 +3,7 @@ use crate::{
     style::button::ButtonMetrics,
     view::{
         button::{ButtonIcon, ButtonLabel, ButtonVariant},
-        picking::pass_through,
+        pass_through,
     },
 };
 use bevy::{

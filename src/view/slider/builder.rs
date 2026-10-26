@@ -2,7 +2,7 @@ use super::{
     ValueSlider,
     components::{SliderPart, fill_node, rail_node, slider_node, thumb_node, travel_node},
 };
-use crate::{SliderShape, view::pass_through};
+use crate::{style::slider::SliderShape, view::pass_through};
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     prelude::*,

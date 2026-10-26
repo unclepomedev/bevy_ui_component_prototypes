@@ -2,7 +2,7 @@ use super::{
     ToggleSwitch,
     components::{SwitchThumb, thumb_node, track_node},
 };
-use crate::view::picking::pass_through;
+use crate::view::pass_through;
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     prelude::*,
