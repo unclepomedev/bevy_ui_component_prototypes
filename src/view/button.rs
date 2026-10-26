@@ -1,15 +1,18 @@
 mod content;
+mod layout;
 mod size;
 mod surface;
 mod variant;
 
-pub(crate) use self::content::{ButtonIcon, ButtonLabel};
+pub(crate) use self::{
+    content::{ButtonIcon, ButtonLabel},
+    layout::button_node,
+};
 pub use self::{size::ButtonSize, variant::ButtonVariant};
 
 use self::{content::ButtonContent, surface::ButtonSurface};
 use super::{
     focus::FocusRingTracker,
-    icon_button::icon_button_node,
     style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
 };
@@ -54,7 +57,7 @@ fn sync_button_style(
 
         write_node(&look, &mut button);
         if let (Some(metrics), Some(node)) = (metrics, button.node.as_mut()) {
-            write_layout(node, &icon_button_node(metrics, &style.shape));
+            write_layout(node, &button_node(metrics, &style.shape));
         }
         parts
             .surface
