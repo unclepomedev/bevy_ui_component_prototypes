@@ -1,9 +1,12 @@
 use crate::style::{
-    button::{ButtonMetrics, ButtonShape, ButtonSizeId},
+    button::{ButtonMetrics, ButtonShape},
     layout,
-    theme::Theme,
 };
-use crate::view::{KeyboardNavigable, button::ButtonVariant, focus::hidden_outline};
+use crate::view::{
+    KeyboardNavigable,
+    button::{ButtonSize, ButtonVariant},
+    focus::hidden_outline,
+};
 use bevy::{
     input_focus::tab_navigation::TabIndex, picking::hover::PickingInteraction, prelude::*,
     ui_widgets::Button,
@@ -31,37 +34,6 @@ use bevy::{
     Node = icon_button_node(&ButtonMetrics::default(), &ButtonShape::default())
 )]
 pub struct IconButton;
-
-/// Which footprint of the theme a button takes.
-#[derive(Component, Clone, Copy, Debug, Default, PartialEq)]
-pub enum ButtonSize {
-    /// The theme's base size.
-    #[default]
-    Default,
-    /// The size the theme defines under this name. A name the theme lacks falls back to the base size.
-    Named(ButtonSizeId),
-}
-
-impl From<ButtonSizeId> for ButtonSize {
-    fn from(id: ButtonSizeId) -> Self {
-        Self::Named(id)
-    }
-}
-
-impl ButtonSize {
-    pub(crate) fn resolve<'a>(&self, theme: &'a Theme) -> &'a ButtonMetrics {
-        let sizes = &theme.button_sizes;
-        match self {
-            Self::Default => &sizes.base,
-            Self::Named(id) => sizes.named.get(id).unwrap_or_else(|| {
-                warn_once!(
-                    "ButtonSize {id:?} has no entry in `Theme::button_sizes`: using the base size"
-                );
-                &sizes.base
-            }),
-        }
-    }
-}
 
 /// The layout of a button: what the size and the shape decide.
 pub(crate) fn icon_button_node(metrics: &ButtonMetrics, shape: &ButtonShape) -> Node {

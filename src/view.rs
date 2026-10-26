@@ -8,9 +8,9 @@ mod tab_order;
 mod theme_lookup;
 mod toggle_switch;
 
-pub use button::ButtonVariant;
+pub use button::{ButtonSize, ButtonVariant};
 pub use focus::{FocusIndicator, ShowsFocus};
-pub use icon_button::{ButtonSize, IconButton, IconButtonBuilder, icon_button};
+pub use icon_button::{IconButton, IconButtonBuilder, icon_button};
 pub use slider::{SliderBuilder, SliderEditing, ValueSlider, slider};
 pub use toggle_switch::{ToggleSwitch, ToggleSwitchBuilder, toggle_switch};
 

@@ -1,14 +1,15 @@
 mod content;
+mod size;
 mod surface;
 mod variant;
 
 pub(crate) use self::content::{ButtonIcon, ButtonLabel};
-pub use self::variant::ButtonVariant;
+pub use self::{size::ButtonSize, variant::ButtonVariant};
 
 use self::{content::ButtonContent, surface::ButtonSurface};
 use super::{
     focus::FocusRingTracker,
-    icon_button::{ButtonSize, icon_button_node},
+    icon_button::icon_button_node,
     style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
 };

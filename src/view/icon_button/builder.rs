@@ -1,8 +1,8 @@
-use super::{ButtonSize, IconButton};
+use super::IconButton;
 use crate::{
     style::button::ButtonMetrics,
     view::{
-        button::{ButtonIcon, ButtonLabel, ButtonVariant},
+        button::{ButtonIcon, ButtonLabel, ButtonSize, ButtonVariant},
         pass_through,
     },
 };
