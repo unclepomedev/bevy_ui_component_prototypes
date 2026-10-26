@@ -2,20 +2,22 @@
 mod style;
 mod view;
 
-pub use crate::style::{
-    button::{
-        ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
-        ButtonVariantId, FocusRing, SlicedImage,
+pub use crate::{
+    style::{
+        button::{
+            ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
+            ButtonVariantId, FocusRing, SlicedImage,
+        },
+        slider::{SliderSegments, SliderShape, SliderStyle},
+        state::{CheckedColors, StateColors},
+        switch::SwitchStyle,
+        theme::{GlobalTheme, Theme},
     },
-    slider::{SliderSegments, SliderShape, SliderStyle},
-    state::{CheckedColors, StateColors},
-    switch::SwitchStyle,
-    theme::{GlobalTheme, Theme},
-};
-pub use view::{
-    ButtonSize, ButtonVariant, FocusIndicator, IconButton, IconButtonBuilder, ShowsFocus,
-    SliderBuilder, SliderEditing, ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button,
-    slider, toggle_switch,
+    view::{
+        ButtonSize, ButtonVariant, FocusIndicator, IconButton, IconButtonBuilder, ShowsFocus,
+        SliderBuilder, SliderEditing, ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button,
+        slider, toggle_switch,
+    },
 };
 
 use crate::view::{
