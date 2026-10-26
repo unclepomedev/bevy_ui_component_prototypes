@@ -68,6 +68,11 @@ impl FocusRingTracker<'_, '_> {
     }
 }
 
+/// Returns an `Outline` without color or size.
+pub(crate) fn hidden_outline() -> Outline {
+    Outline::new(Val::Px(0.0), Val::Px(0.0), Color::NONE)
+}
+
 fn mark_visible_focus(
     focus: Option<Res<InputFocus>>,
     visible: Option<Res<InputFocusVisible>>,

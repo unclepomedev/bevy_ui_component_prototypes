@@ -3,7 +3,7 @@ use crate::style::{
     layout,
     theme::Theme,
 };
-use crate::view::{KeyboardNavigable, button::ButtonVariant};
+use crate::view::{KeyboardNavigable, button::ButtonVariant, focus::hidden_outline};
 use bevy::{
     input_focus::tab_navigation::TabIndex, picking::hover::PickingInteraction, prelude::*,
     ui_widgets::Button,
@@ -32,7 +32,6 @@ use bevy::{
 )]
 pub struct IconButton;
 
-/// Which footprint of the theme a button takes.
 /// Which footprint of the theme a button takes.
 #[derive(Component, Clone, Copy, Debug, Default, PartialEq)]
 pub enum ButtonSize {
@@ -76,10 +75,4 @@ pub(crate) fn icon_button_node(metrics: &ButtonMetrics, shape: &ButtonShape) -> 
         justify_content: JustifyContent::Center,
         ..layout::row_center()
     }
-}
-
-/// `Outline::default()` is a visible white line, so the ring starts hidden.
-/// It is toggled through its color, which avoids table moves.
-fn hidden_outline() -> Outline {
-    Outline::new(Val::Px(0.0), Val::Px(0.0), Color::NONE)
 }
