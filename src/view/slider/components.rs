@@ -1,6 +1,6 @@
 use crate::{
     style::slider::{SliderGeometry, SliderShape},
-    view::KeyboardNavigable,
+    view::{KeyboardNavigable, focus::hidden_outline},
 };
 use bevy::{
     input_focus::tab_navigation::TabIndex,
@@ -111,8 +111,4 @@ pub(crate) fn thumb_node(geometry: &SliderGeometry) -> Node {
         border_radius: BorderRadius::all(px(geometry.thumb_radius)),
         ..default()
     }
-}
-
-fn hidden_outline() -> Outline {
-    Outline::new(Val::Px(0.0), Val::Px(0.0), Color::NONE)
 }

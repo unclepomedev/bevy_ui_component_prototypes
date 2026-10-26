@@ -1,4 +1,4 @@
-use crate::view::KeyboardNavigable;
+use crate::view::{KeyboardNavigable, focus::hidden_outline};
 use accesskit::{Node as AccessKitNode, Role};
 use bevy::{
     a11y::AccessibilityNode, input_focus::tab_navigation::TabIndex,
@@ -71,9 +71,4 @@ pub(crate) fn thumb_node() -> Node {
         border_radius: BorderRadius::all(Val::Px(THUMB_SIZE / 2.0)),
         ..default()
     }
-}
-
-/// `Outline::default()` is a visible white line, so the ring starts hidden.
-fn hidden_outline() -> Outline {
-    Outline::new(Val::Px(0.0), Val::Px(0.0), Color::NONE)
 }

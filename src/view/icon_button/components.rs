@@ -1,9 +1,9 @@
-use crate::style::{
-    button::{ButtonMetrics, ButtonShape, ButtonSizeId},
-    layout,
-    theme::Theme,
+use crate::style::button::{ButtonMetrics, ButtonShape};
+use crate::view::{
+    KeyboardNavigable,
+    button::{ButtonSize, ButtonVariant, button_node},
+    focus::hidden_outline,
 };
-use crate::view::{KeyboardNavigable, button::ButtonVariant};
 use bevy::{
     input_focus::tab_navigation::TabIndex, picking::hover::PickingInteraction, prelude::*,
     ui_widgets::Button,
@@ -28,58 +28,6 @@ use bevy::{
     ButtonVariant,
     ButtonSize,
     Outline = hidden_outline(),
-    Node = icon_button_node(&ButtonMetrics::default(), &ButtonShape::default())
+    Node = button_node(&ButtonMetrics::default(), &ButtonShape::default())
 )]
 pub struct IconButton;
-
-/// Which footprint of the theme a button takes.
-/// Which footprint of the theme a button takes.
-#[derive(Component, Clone, Copy, Debug, Default, PartialEq)]
-pub enum ButtonSize {
-    /// The theme's base size.
-    #[default]
-    Default,
-    /// The size the theme defines under this name. A name the theme lacks falls back to the base size.
-    Named(ButtonSizeId),
-}
-
-impl From<ButtonSizeId> for ButtonSize {
-    fn from(id: ButtonSizeId) -> Self {
-        Self::Named(id)
-    }
-}
-
-impl ButtonSize {
-    pub(crate) fn resolve<'a>(&self, theme: &'a Theme) -> &'a ButtonMetrics {
-        let sizes = &theme.button_sizes;
-        match self {
-            Self::Default => &sizes.base,
-            Self::Named(id) => sizes.named.get(id).unwrap_or_else(|| {
-                warn_once!(
-                    "ButtonSize {id:?} has no entry in `Theme::button_sizes`: using the base size"
-                );
-                &sizes.base
-            }),
-        }
-    }
-}
-
-/// The layout of a button: what the size and the shape decide.
-pub(crate) fn icon_button_node(metrics: &ButtonMetrics, shape: &ButtonShape) -> Node {
-    Node {
-        height: metrics.height,
-        padding: metrics.padding,
-        column_gap: metrics.column_gap,
-        border: UiRect::all(Val::Px(shape.border_width)),
-        border_radius: BorderRadius::all(Val::Px(shape.radius)),
-        align_items: AlignItems::Center,
-        justify_content: JustifyContent::Center,
-        ..layout::row_center()
-    }
-}
-
-/// `Outline::default()` is a visible white line, so the ring starts hidden.
-/// It is toggled through its color, which avoids table moves.
-fn hidden_outline() -> Outline {
-    Outline::new(Val::Px(0.0), Val::Px(0.0), Color::NONE)
-}
