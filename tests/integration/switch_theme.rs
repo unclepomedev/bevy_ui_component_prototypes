@@ -159,6 +159,30 @@ fn interaction_disabled_grays_the_switch_and_removal_restores_it() {
     assert_eq!(thumb(&app, switch), style.thumb.checked.normal);
 }
 
+#[test]
+fn the_border_follows_the_state() {
+    let mut app = test_app();
+    let switch = spawn_switch(&mut app);
+    let colors = probe_theme().switch.border;
+    app.update();
+
+    for (state, expected) in [
+        (PickingInteraction::Hovered, colors.hovered),
+        (PickingInteraction::Pressed, colors.pressed),
+        (PickingInteraction::None, colors.normal),
+    ] {
+        app.world_mut().entity_mut(switch).insert(state);
+        app.update();
+        assert_eq!(border(&app, switch), BorderColor::all(expected));
+    }
+
+    app.world_mut()
+        .entity_mut(switch)
+        .insert(InteractionDisabled);
+    app.update();
+    assert_eq!(border(&app, switch), BorderColor::all(colors.disabled));
+}
+
 // ---------------------------------------------------------------------------
 // Theme resolution
 // ---------------------------------------------------------------------------
@@ -450,4 +474,8 @@ fn thumb(app: &App, switch: Entity) -> Color {
 
 fn thumb_side(app: &App, switch: Entity) -> JustifyContent {
     app.world().get::<Node>(switch).unwrap().justify_content
+}
+
+fn border(app: &App, switch: Entity) -> BorderColor {
+    *app.world().get::<BorderColor>(switch).unwrap()
 }
