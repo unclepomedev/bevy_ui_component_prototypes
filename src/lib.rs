@@ -12,6 +12,7 @@ pub use crate::{
         state::{CheckedColors, StateColors},
         switch::SwitchStyle,
         theme::{GlobalTheme, Theme},
+        toast::{ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId},
     },
     view::{
         ButtonSize, ButtonVariant, FocusIndicator, IconButton, IconButtonBuilder, ShowsFocus,

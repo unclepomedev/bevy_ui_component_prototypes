@@ -7,3 +7,4 @@ pub(crate) mod spacing;
 pub(crate) mod state;
 pub(crate) mod switch;
 pub(crate) mod theme;
+pub(crate) mod toast;

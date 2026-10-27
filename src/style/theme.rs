@@ -2,6 +2,7 @@ use super::{
     button::{ButtonSizes, ButtonStyles},
     slider::SliderStyle,
     switch::SwitchStyle,
+    toast::{ToastMetrics, ToastStyles},
 };
 use bevy::prelude::*;
 
@@ -11,6 +12,8 @@ pub struct Theme {
     pub button_sizes: ButtonSizes,
     pub switch: SwitchStyle,
     pub slider: SliderStyle,
+    pub toasts: ToastStyles,
+    pub toast: ToastMetrics,
     pub font: FontSource,
     pub font_smoothing: FontSmoothing,
 }
