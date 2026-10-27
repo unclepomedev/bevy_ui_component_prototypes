@@ -6,6 +6,7 @@ mod slider;
 mod style_targets;
 mod tab_order;
 mod theme_lookup;
+mod toast;
 mod toggle_switch;
 
 pub use button::{ButtonSize, ButtonVariant};

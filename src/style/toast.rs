@@ -87,14 +87,10 @@ pub struct ToastMetrics {
     pub font_size: FontSize,
     /// The space between two stacked toasts.
     pub row_gap: Val,
-    /// The space between the host's corner and the screen edge.
-    pub edge_margin: Val,
     /// Seconds.
     pub fade_in: f32,
     /// Seconds.
     pub fade_out: f32,
-    /// How far (px) a toast starts from its resting place and slides in from.
-    pub slide: f32,
     /// Seconds a toast stays fully visible when its builder gives no `duration`.
     pub default_duration: f32,
 }
@@ -107,10 +103,8 @@ impl Default for ToastMetrics {
             padding: UiRect::axes(SPACING_LG, SPACING_MD),
             font_size: FONT_SIZE_MD,
             row_gap: SPACING_SM,
-            edge_margin: SPACING_LG,
             fade_in: 0.25,
             fade_out: 0.4,
-            slide: 40.0,
             default_duration: 3.0,
         }
     }
@@ -158,6 +152,5 @@ mod tests {
         assert!(metrics.fade_in > 0.0);
         assert!(metrics.fade_out > 0.0);
         assert!(metrics.default_duration > 0.0);
-        assert!(metrics.slide >= 0.0);
     }
 }
