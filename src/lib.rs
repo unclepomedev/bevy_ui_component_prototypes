@@ -16,8 +16,8 @@ pub use crate::{
     },
     view::{
         ButtonSize, ButtonVariant, FocusIndicator, IconButton, IconButtonBuilder, ShowsFocus,
-        SliderBuilder, SliderEditing, ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button,
-        slider, toggle_switch,
+        SliderBuilder, SliderEditing, Toast, ToastBuilder, ToastVariant, ToggleSwitch,
+        ToggleSwitchBuilder, ValueSlider, icon_button, slider, toast, toggle_switch,
     },
 };
 
