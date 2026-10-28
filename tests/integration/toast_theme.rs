@@ -6,7 +6,7 @@
 use crate::probe::probe_theme;
 use bevy::{picking::Pickable, prelude::*};
 use bevy_ui_component_prototypes::{
-    GlobalTheme, Toast, ToastHost, ToastStack, ToastVariant, ToastVariantId,
+    GlobalTheme, Theme, Toast, ToastHost, ToastStack, ToastVariant, ToastVariantId,
     UiComponentPrototypesPlugin, toast, toast_host,
 };
 
@@ -207,6 +207,112 @@ fn a_node_inserted_later_gets_the_direction_back() {
 }
 
 // ---------------------------------------------------------------------------
+// Styling and theme resolution
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_toast_is_styled_after_one_update() {
+    let mut app = test_app();
+    let toast = spawn_toast(&mut app, "Saved");
+
+    app.update();
+
+    let style = probe_theme().toasts.base;
+    assert_eq!(bg(&app, toast), style.bg);
+    assert_eq!(border_color(&app, toast), BorderColor::all(style.border));
+    assert_eq!(label_color(&app, toast), style.fg);
+    let node = app.world().get::<Node>(toast).unwrap();
+    assert_eq!(node.border, UiRect::all(Val::Px(style.shape.border_width)));
+    assert_eq!(
+        node.border_radius,
+        BorderRadius::all(Val::Px(style.shape.radius))
+    );
+}
+
+#[test]
+fn a_named_variant_takes_its_style() {
+    let mut app = test_app();
+    let toast = spawn_success(&mut app);
+
+    app.update();
+
+    let style = probe_theme().toasts.named[&ToastVariantId::SUCCESS];
+    assert_eq!(bg(&app, toast), style.bg);
+    assert_eq!(label_color(&app, toast), style.fg);
+}
+
+#[test]
+fn a_name_the_theme_lacks_falls_back_to_the_base_style() {
+    let mut app = test_app();
+    let toast = app
+        .world_mut()
+        .spawn(toast("Saved").variant(ToastVariantId::new("gold")).build())
+        .id();
+
+    app.update();
+
+    assert_eq!(bg(&app, toast), probe_theme().toasts.base.bg);
+}
+
+#[test]
+fn changing_the_variant_of_a_toast_restyles_it() {
+    let mut app = test_app();
+    let toast = spawn_toast(&mut app, "Saved");
+    app.update();
+
+    app.world_mut()
+        .entity_mut(toast)
+        .insert(ToastVariant::Named(ToastVariantId::DANGER));
+    app.update();
+
+    let style = probe_theme().toasts.named[&ToastVariantId::DANGER];
+    assert_eq!(bg(&app, toast), style.bg);
+    assert_eq!(label_color(&app, toast), style.fg);
+}
+
+#[test]
+fn global_theme_change_updates_unscoped_toasts_but_not_scoped_ones() {
+    let mut app = test_app();
+    let unscoped = spawn_success(&mut app);
+    let panel = app.world_mut().spawn(probe_theme()).id();
+    let scoped = spawn_success_under(&mut app, panel);
+    app.update();
+
+    app.insert_resource(GlobalTheme(red_success_theme()));
+    app.update();
+
+    assert_eq!(bg(&app, unscoped), red());
+    assert_eq!(bg(&app, scoped), success_bg());
+}
+
+#[test]
+fn scoped_theme_change_updates_only_toasts_inside_the_scope() {
+    let mut app = test_app();
+    let outside = spawn_success(&mut app);
+    let panel = app.world_mut().spawn(probe_theme()).id();
+    let inside = spawn_success_under(&mut app, panel);
+    app.update();
+
+    *app.world_mut().get_mut::<Theme>(panel).unwrap() = red_success_theme();
+    app.update();
+
+    assert_eq!(bg(&app, inside), red());
+    assert_eq!(bg(&app, outside), success_bg());
+}
+
+#[test]
+fn toast_spawned_later_inside_a_scope_uses_the_scope_theme_immediately() {
+    let mut app = test_app();
+    let panel = app.world_mut().spawn(red_success_theme()).id();
+    app.update();
+
+    let late = spawn_success_under(&mut app, panel);
+    app.update();
+
+    assert_eq!(bg(&app, late), red());
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -247,4 +353,47 @@ fn label_layout(app: &App, toast: Entity) -> TextLayout {
 
 fn flex_direction(app: &App, host: Entity) -> FlexDirection {
     app.world().get::<Node>(host).unwrap().flex_direction
+}
+
+fn spawn_success(app: &mut App) -> Entity {
+    app.world_mut()
+        .spawn(toast("Done").variant(ToastVariantId::SUCCESS).build())
+        .id()
+}
+
+fn spawn_success_under(app: &mut App, parent: Entity) -> Entity {
+    app.world_mut()
+        .spawn((
+            toast("Done").variant(ToastVariantId::SUCCESS).build(),
+            ChildOf(parent),
+        ))
+        .id()
+}
+
+fn red() -> Color {
+    Color::srgb(0.9, 0.1, 0.1)
+}
+
+fn success_bg() -> Color {
+    probe_theme().toasts.named[&ToastVariantId::SUCCESS].bg
+}
+
+/// The probe theme with a red background for the success toasts.
+fn red_success_theme() -> Theme {
+    let mut theme = probe_theme();
+    theme
+        .toasts
+        .named
+        .get_mut(&ToastVariantId::SUCCESS)
+        .unwrap()
+        .bg = red();
+    theme
+}
+
+fn bg(app: &App, toast: Entity) -> Color {
+    app.world().get::<BackgroundColor>(toast).unwrap().0
+}
+
+fn border_color(app: &App, toast: Entity) -> BorderColor {
+    *app.world().get::<BorderColor>(toast).unwrap()
 }
