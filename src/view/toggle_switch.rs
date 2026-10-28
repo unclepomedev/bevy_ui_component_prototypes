@@ -12,7 +12,7 @@ use super::{
 };
 use crate::style::state::VisualState;
 use bevy::{
-    ecs::system::SystemParam,
+    ecs::{query::QueryData, system::SystemParam},
     picking::hover::PickingInteraction,
     prelude::*,
     ui::{Checked, InteractionDisabled, UiSystems},
@@ -37,37 +37,31 @@ fn sync_switch_style(
     let targets = targets.collect(lookup.needs_resync(), focus_moved);
 
     for entity in targets {
-        let Ok((
-            interaction,
-            checked,
-            disabled,
-            mut bg,
-            mut border,
-            mut outline,
-            mut node,
-            children,
-        )) = switches.get_mut(entity)
-        else {
+        let Ok(mut switch) = switches.get_mut(entity) else {
             continue;
         };
 
         let style = lookup.for_entity(entity).switch;
         let is_focused = focused == Some(entity);
-        let state = VisualState::resolve(interaction, is_focused, disabled);
-        let look = style.look(state, checked, is_focused);
+        let state = VisualState::resolve(switch.interaction, is_focused, switch.disabled);
+        let look = style.look(state, switch.checked, is_focused);
 
-        bg.set_if_neq(BackgroundColor(look.track));
-        border.set_if_neq(BorderColor::all(look.border));
-        outline.set_if_neq(Outline::new(
+        switch.bg.set_if_neq(BackgroundColor(look.track));
+        switch.border.set_if_neq(BorderColor::all(look.border));
+        switch.outline.set_if_neq(Outline::new(
             look.ring.width,
             look.ring.offset,
             look.ring.color,
         ));
-        let side = thumb_side(checked);
-        if node.justify_content != side {
-            node.justify_content = side;
+        let side = thumb_side(switch.checked);
+        if switch.node.justify_content != side {
+            switch.node.justify_content = side;
         }
-        for child in children.into_iter().flat_map(|children| children.iter()) {
+        for child in switch
+            .children
+            .into_iter()
+            .flat_map(|children| children.iter())
+        {
             if let Ok(mut thumb) = thumbs.get_mut(child) {
                 thumb.set_if_neq(BackgroundColor(look.thumb));
             }
@@ -115,18 +109,18 @@ type ChangedSwitches<'w, 's> = Query<
     ),
 >;
 
-type SwitchQuery<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static PickingInteraction,
-        Has<Checked>,
-        Has<InteractionDisabled>,
-        &'static mut BackgroundColor,
-        &'static mut BorderColor,
-        &'static mut Outline,
-        &'static mut Node,
-        Option<&'static Children>,
-    ),
-    With<ToggleSwitch>,
->;
+type SwitchQuery<'w, 's> = Query<'w, 's, SwitchRow, With<ToggleSwitch>>;
+
+/// What the sync reads from a switch and writes to it.
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct SwitchRow {
+    interaction: &'static PickingInteraction,
+    checked: Has<Checked>,
+    disabled: Has<InteractionDisabled>,
+    bg: &'static mut BackgroundColor,
+    border: &'static mut BorderColor,
+    outline: &'static mut Outline,
+    node: &'static mut Node,
+    children: Option<&'static Children>,
+}

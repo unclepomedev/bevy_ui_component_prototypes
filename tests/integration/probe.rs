@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
     CheckedColors, FocusRing, SliderShape, SliderStyle, StateColors, SwitchStyle, Theme,
+    ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId,
 };
 use std::collections::HashMap;
 
@@ -53,6 +54,24 @@ pub fn probe_theme() -> Theme {
             editing_ring: Color::srgb(0.5, 0.4, 0.4),
             editing_thumb: Color::srgb(0.5, 0.4, 0.5),
         },
+        toasts: ToastStyles {
+            base: toast_style(0.1),
+            named: HashMap::from([
+                (ToastVariantId::INFO, toast_style(0.2)),
+                (ToastVariantId::SUCCESS, toast_style(0.3)),
+                (ToastVariantId::DANGER, toast_style(0.4)),
+            ]),
+        },
+        toast: ToastMetrics {
+            min_width: Val::Px(111.0),
+            max_width: Val::Px(222.0),
+            padding: UiRect::all(Val::Px(7.0)),
+            font_size: FontSize::Px(13.0),
+            row_gap: Val::Px(9.0),
+            fade_in: 0.5,
+            fade_out: 0.25,
+            default_duration: 2.0,
+        },
         font: FontSource::monospace(),
         font_smoothing: FontSmoothing::AntiAliased,
     }
@@ -89,5 +108,18 @@ fn ring(seed: f32) -> FocusRing {
         color: Color::srgb(seed, 0.7, 0.7),
         width: Val::Px(3.0),
         offset: Val::Px(4.0),
+    }
+}
+
+/// A toast style with a distinct color for every part; `seed` tells one style from another.
+fn toast_style(seed: f32) -> ToastStyle {
+    ToastStyle {
+        bg: Color::srgb(seed, 0.1, 0.1),
+        fg: Color::srgb(seed, 0.5, 0.5),
+        border: Color::srgb(seed, 0.9, 0.9),
+        shape: ToastShape {
+            border_width: 3.0,
+            radius: 5.0,
+        },
     }
 }

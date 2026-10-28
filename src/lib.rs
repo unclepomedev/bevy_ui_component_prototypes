@@ -2,26 +2,51 @@
 mod style;
 mod view;
 
+// Theme
+pub use crate::style::{
+    state::{CheckedColors, StateColors},
+    theme::{GlobalTheme, Theme},
+};
+
+// Focus
 pub use crate::{
-    style::{
-        button::{
-            ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
-            ButtonVariantId, FocusRing, SlicedImage,
-        },
-        slider::{SliderSegments, SliderShape, SliderStyle},
-        state::{CheckedColors, StateColors},
-        switch::SwitchStyle,
-        theme::{GlobalTheme, Theme},
+    style::button::FocusRing,
+    view::{FocusIndicator, ShowsFocus},
+};
+
+// Button
+pub use crate::{
+    style::button::{
+        ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
+        ButtonVariantId, SlicedImage,
     },
+    view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button},
+};
+
+// Toggle switch
+pub use crate::{
+    style::switch::SwitchStyle,
+    view::{ToggleSwitch, ToggleSwitchBuilder, toggle_switch},
+};
+
+// Slider
+pub use crate::{
+    style::slider::{SliderSegments, SliderShape, SliderStyle},
+    view::{SliderBuilder, SliderEditing, ValueSlider, slider},
+};
+
+// Toast
+pub use crate::{
+    style::toast::{ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId},
     view::{
-        ButtonSize, ButtonVariant, FocusIndicator, IconButton, IconButtonBuilder, ShowsFocus,
-        SliderBuilder, SliderEditing, ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button,
-        slider, toggle_switch,
+        Toast, ToastBuilder, ToastHost, ToastHostBuilder, ToastStack, ToastVariant, toast,
+        toast_host,
     },
 };
 
 use crate::view::{
     ButtonStylePlugin, ShowsFocusPlugin, SliderStylePlugin, SwitchStylePlugin, TabOrderPlugin,
+    ToastPlugin,
 };
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
@@ -46,6 +71,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             SliderStylePlugin,
             TabOrderPlugin,
             ShowsFocusPlugin,
+            ToastPlugin,
         ));
     }
 
