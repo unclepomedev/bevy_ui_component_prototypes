@@ -45,7 +45,8 @@ fn the_builder_options_reach_the_components() {
     let toast = app
         .world_mut()
         .spawn(
-            toast("Done")
+            toast()
+                .text("Done")
                 .variant(ToastVariantId::SUCCESS)
                 .duration(2.5)
                 .build(),
@@ -247,12 +248,25 @@ fn a_name_the_theme_lacks_falls_back_to_the_base_style() {
     let mut app = test_app();
     let toast = app
         .world_mut()
-        .spawn(toast("Saved").variant(ToastVariantId::new("gold")).build())
+        .spawn(
+            toast()
+                .text("Saved")
+                .variant(ToastVariantId::new("gold"))
+                .build(),
+        )
         .id();
 
     app.update();
 
     assert_eq!(bg(&app, toast), probe_theme().toasts.base.bg);
+}
+
+#[test]
+fn a_toast_without_text_has_an_empty_one_to_fill_in_later() {
+    let mut app = test_app();
+    let toast = app.world_mut().spawn(toast().build()).id();
+
+    assert_eq!(text(&app, toast), "");
 }
 
 #[test]
@@ -447,7 +461,7 @@ fn the_duration_of_the_builder_wins_over_the_theme() {
     let mut app = timed_app(0.25);
     let short = app
         .world_mut()
-        .spawn(toast("Short").duration(1.0).build())
+        .spawn(toast().text("Short").duration(1.0).build())
         .id();
     let themed = spawn_toast(&mut app, "Themed");
 
@@ -480,7 +494,7 @@ fn the_theme_of_the_scope_decides_how_long_a_toast_lives() {
     let panel = app.world_mut().spawn(quick_theme()).id();
     let inside = app
         .world_mut()
-        .spawn((toast("In").build(), ChildOf(panel)))
+        .spawn((toast().text("In").build(), ChildOf(panel)))
         .id();
     let outside = spawn_toast(&mut app, "Out");
 
@@ -524,7 +538,7 @@ fn test_app() -> App {
 }
 
 fn spawn_toast(app: &mut App, text: &str) -> Entity {
-    app.world_mut().spawn(toast(text).build()).id()
+    app.world_mut().spawn(toast().text(text).build()).id()
 }
 
 fn passes_through(pickable: &Pickable) -> bool {
@@ -557,14 +571,22 @@ fn flex_direction(app: &App, host: Entity) -> FlexDirection {
 
 fn spawn_success(app: &mut App) -> Entity {
     app.world_mut()
-        .spawn(toast("Done").variant(ToastVariantId::SUCCESS).build())
+        .spawn(
+            toast()
+                .text("Done")
+                .variant(ToastVariantId::SUCCESS)
+                .build(),
+        )
         .id()
 }
 
 fn spawn_success_under(app: &mut App, parent: Entity) -> Entity {
     app.world_mut()
         .spawn((
-            toast("Done").variant(ToastVariantId::SUCCESS).build(),
+            toast()
+                .text("Done")
+                .variant(ToastVariantId::SUCCESS)
+                .build(),
             ChildOf(parent),
         ))
         .id()

@@ -11,16 +11,21 @@ pub struct ToastBuilder {
     duration: Option<f32>,
 }
 
-/// A toast with this text. The text wraps at the theme's `max_width`.
-pub fn toast(text: impl Into<String>) -> ToastBuilder {
+/// A toast. The text wraps at the theme's `max_width`.
+pub fn toast() -> ToastBuilder {
     ToastBuilder {
-        text: text.into(),
+        text: String::new(),
         variant: ToastVariant::default(),
         duration: None,
     }
 }
 
 impl ToastBuilder {
+    pub fn text(mut self, text: impl Into<String>) -> Self {
+        self.text = text.into();
+        self
+    }
+
     pub fn variant(mut self, variant: impl Into<ToastVariant>) -> Self {
         self.variant = variant.into();
         self
