@@ -2,23 +2,45 @@
 mod style;
 mod view;
 
+// Theme
+pub use crate::style::{
+    state::{CheckedColors, StateColors},
+    theme::{GlobalTheme, Theme},
+};
+
+// Focus
 pub use crate::{
-    style::{
-        button::{
-            ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
-            ButtonVariantId, FocusRing, SlicedImage,
-        },
-        slider::{SliderSegments, SliderShape, SliderStyle},
-        state::{CheckedColors, StateColors},
-        switch::SwitchStyle,
-        theme::{GlobalTheme, Theme},
-        toast::{ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId},
+    style::button::FocusRing,
+    view::{FocusIndicator, ShowsFocus},
+};
+
+// Button
+pub use crate::{
+    style::button::{
+        ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
+        ButtonVariantId, SlicedImage,
     },
+    view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button},
+};
+
+// Toggle switch
+pub use crate::{
+    style::switch::SwitchStyle,
+    view::{ToggleSwitch, ToggleSwitchBuilder, toggle_switch},
+};
+
+// Slider
+pub use crate::{
+    style::slider::{SliderSegments, SliderShape, SliderStyle},
+    view::{SliderBuilder, SliderEditing, ValueSlider, slider},
+};
+
+// Toast
+pub use crate::{
+    style::toast::{ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId},
     view::{
-        ButtonSize, ButtonVariant, FocusIndicator, IconButton, IconButtonBuilder, ShowsFocus,
-        SliderBuilder, SliderEditing, Toast, ToastBuilder, ToastHost, ToastHostBuilder, ToastStack,
-        ToastVariant, ToggleSwitch, ToggleSwitchBuilder, ValueSlider, icon_button, slider, toast,
-        toast_host, toggle_switch,
+        Toast, ToastBuilder, ToastHost, ToastHostBuilder, ToastStack, ToastVariant, toast,
+        toast_host,
     },
 };
 
