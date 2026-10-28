@@ -17,10 +17,37 @@ use bevy::{ecs::query::QueryData, prelude::*, ui::UiSystems};
 pub(crate) struct ToastPlugin;
 impl Plugin for ToastPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, advance_toasts).add_systems(
-            PostUpdate,
-            (sync_host, sync_toast_style).before(UiSystems::Prepare),
-        );
+        app.add_systems(Update, (limit_toasts, advance_toasts).chain())
+            .add_systems(
+                PostUpdate,
+                (sync_host, sync_toast_style).before(UiSystems::Prepare),
+            );
+    }
+}
+
+/// Starts the fade-out of the oldest toasts of each host that holds more than its `max`.
+fn limit_toasts(
+    lookup: ThemeLookup,
+    hosts: Query<(&ToastHost, &Children)>,
+    mut toasts: Query<&mut Toast>,
+) {
+    for (host, children) in &hosts {
+        let held: Vec<(Entity, f32)> = children
+            .iter()
+            .filter_map(|child| {
+                let toast = toasts.get(child).ok()?;
+                let start = toast
+                    .timing(&lookup.for_entity(child).toast)
+                    .fade_out_start();
+                (toast.elapsed < start).then_some((child, start))
+            })
+            .collect();
+        let excess = held.len().saturating_sub(host.max);
+        for &(child, start) in &held[..excess] {
+            if let Ok(mut toast) = toasts.get_mut(child) {
+                toast.elapsed = start;
+            }
+        }
     }
 }
 

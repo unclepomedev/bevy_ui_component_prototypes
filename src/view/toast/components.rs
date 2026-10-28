@@ -36,7 +36,7 @@ impl ToastStack {
 #[derive(Component, Clone, Copy, Debug, PartialEq)]
 #[require(Node, Pickable = pass_through())]
 pub struct ToastHost {
-    /// How many toasts the host shows at once.
+    /// How many toasts the host keeps. When there are more, the oldest ones start fading out.
     pub max: usize,
     pub stack: ToastStack,
     /// Where a new toast slides in from, relative to its resting place.
