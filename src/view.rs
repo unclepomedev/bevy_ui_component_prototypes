@@ -23,4 +23,5 @@ pub(crate) use focus::ShowsFocusPlugin;
 pub(crate) use picking::pass_through;
 pub(crate) use slider::SliderStylePlugin;
 pub(crate) use tab_order::{KeyboardNavigable, TabOrderPlugin};
+pub(crate) use toast::ToastPlugin;
 pub(crate) use toggle_switch::SwitchStylePlugin;

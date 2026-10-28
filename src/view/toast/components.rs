@@ -17,6 +17,16 @@ pub enum ToastStack {
     NewestAtTop,
 }
 
+impl ToastStack {
+    /// The last child is the newest one, so it has to be at the end of the stack that gets the newest.
+    pub(crate) fn direction(self) -> FlexDirection {
+        match self {
+            Self::NewestAtBottom => FlexDirection::Column,
+            Self::NewestAtTop => FlexDirection::ColumnReverse,
+        }
+    }
+}
+
 /// Where toasts stack up. Toasts are its children: spawn them with `ChildOf(host)`.
 ///
 /// Give the host a `Node` that places it. `align_items` of that `Node` decides how the toasts line up across the stack.

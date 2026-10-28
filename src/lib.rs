@@ -24,6 +24,7 @@ pub use crate::{
 
 use crate::view::{
     ButtonStylePlugin, ShowsFocusPlugin, SliderStylePlugin, SwitchStylePlugin, TabOrderPlugin,
+    ToastPlugin,
 };
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
@@ -48,6 +49,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             SliderStylePlugin,
             TabOrderPlugin,
             ShowsFocusPlugin,
+            ToastPlugin,
         ));
     }
 
