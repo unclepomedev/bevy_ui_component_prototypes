@@ -1,6 +1,3 @@
-// TODO: rm
-#![cfg_attr(not(test), expect(dead_code))]
-
 //! The life of a toast over time, as pure functions: no ECS, no theme lookup, no units.
 
 use crate::style::toast::ToastMetrics;

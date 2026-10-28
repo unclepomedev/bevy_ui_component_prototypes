@@ -215,7 +215,7 @@ fn a_node_inserted_later_gets_the_direction_back() {
 #[test]
 fn a_toast_is_styled_after_one_update() {
     let mut app = test_app();
-    let toast = spawn_toast(&mut app, "Saved");
+    let toast = spawn_settled_toast(&mut app, "Saved");
 
     app.update();
 
@@ -255,6 +255,7 @@ fn a_name_the_theme_lacks_falls_back_to_the_base_style() {
                 .build(),
         )
         .id();
+    settle(&mut app, toast);
 
     app.update();
 
@@ -272,7 +273,7 @@ fn a_toast_without_text_has_an_empty_one_to_fill_in_later() {
 #[test]
 fn changing_the_variant_of_a_toast_restyles_it() {
     let mut app = test_app();
-    let toast = spawn_toast(&mut app, "Saved");
+    let toast = spawn_settled_toast(&mut app, "Saved");
     app.update();
 
     app.world_mut()
@@ -526,6 +527,92 @@ fn despawning_a_toast_takes_its_text_with_it() {
     assert!(!alive(&app, text));
 }
 
+#[test]
+fn a_toast_fades_in_through_the_alpha_of_every_color() {
+    let mut app = timed_app(0.25);
+    let toast = spawn_toast(&mut app, "Saved");
+
+    // Half of the fade-in (0.5 seconds in the probe theme).
+    run(&mut app, 1);
+
+    let style = probe_theme().toasts.base;
+    assert_eq!(bg(&app, toast), style.bg.with_alpha(0.5));
+    assert_eq!(
+        border_color(&app, toast),
+        BorderColor::all(style.border.with_alpha(0.5))
+    );
+    assert_eq!(label_color(&app, toast), style.fg.with_alpha(0.5));
+}
+
+#[test]
+fn a_toast_is_invisible_before_it_starts() {
+    let mut app = timed_app(0.25);
+    let toast = spawn_toast(&mut app, "Saved");
+    set_elapsed(&mut app, toast, -0.25);
+
+    run(&mut app, 1);
+
+    assert_eq!(bg(&app, toast).alpha(), 0.0);
+    assert_eq!(label_color(&app, toast).alpha(), 0.0);
+}
+
+#[test]
+fn a_toast_fades_out_through_the_alpha_of_every_color() {
+    let mut app = timed_app(0.25);
+    let toast = spawn_toast(&mut app, "Saved");
+    // One update later it is at 2.625: half of the fade-out (0.25 seconds from 2.5).
+    set_elapsed(&mut app, toast, 2.375);
+
+    run(&mut app, 1);
+
+    let style = probe_theme().toasts.base;
+    assert_eq!(bg(&app, toast), style.bg.with_alpha(0.5));
+    assert_eq!(label_color(&app, toast), style.fg.with_alpha(0.5));
+}
+
+#[test]
+fn the_fade_keeps_the_alpha_the_theme_gives() {
+    let mut app = timed_app(0.25);
+    let mut theme = probe_theme();
+    theme.toasts.base.bg = Color::srgba(0.2, 0.3, 0.4, 0.5);
+    app.insert_resource(GlobalTheme(theme));
+    let toast = spawn_toast(&mut app, "Saved");
+
+    run(&mut app, 1);
+
+    assert_eq!(bg(&app, toast), Color::srgba(0.2, 0.3, 0.4, 0.25));
+}
+
+#[test]
+fn a_toast_slides_in_from_the_start_its_host_gives() {
+    let mut app = timed_app(0.25);
+    let host = app
+        .world_mut()
+        .spawn(toast_host().slide(Val2::percent(100, 0)).build())
+        .id();
+    let toast = app
+        .world_mut()
+        .spawn((toast().text("Saved").build(), ChildOf(host)))
+        .id();
+
+    // Halfway through the fade-in: 1/8 of the way is left (ease-out).
+    run(&mut app, 1);
+    assert_eq!(translation(&app, toast), Val2::percent(12.5, 0));
+
+    run(&mut app, 1);
+    assert_eq!(translation(&app, toast), Val2::percent(0, 0));
+}
+
+#[test]
+fn a_toast_without_a_host_stays_in_place() {
+    let mut app = timed_app(0.25);
+    let toast = spawn_toast(&mut app, "Saved");
+
+    run(&mut app, 1);
+
+    assert_eq!(translation(&app, toast), Val2::ZERO);
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -570,18 +657,21 @@ fn flex_direction(app: &App, host: Entity) -> FlexDirection {
 }
 
 fn spawn_success(app: &mut App) -> Entity {
-    app.world_mut()
+    let toast = app
+        .world_mut()
         .spawn(
             toast()
                 .text("Done")
                 .variant(ToastVariantId::SUCCESS)
                 .build(),
         )
-        .id()
+        .id();
+    settle(app, toast)
 }
 
 fn spawn_success_under(app: &mut App, parent: Entity) -> Entity {
-    app.world_mut()
+    let toast = app
+        .world_mut()
         .spawn((
             toast()
                 .text("Done")
@@ -589,7 +679,8 @@ fn spawn_success_under(app: &mut App, parent: Entity) -> Entity {
                 .build(),
             ChildOf(parent),
         ))
-        .id()
+        .id();
+    settle(app, toast)
 }
 
 fn red() -> Color {
@@ -670,4 +761,31 @@ fn quick_theme() -> Theme {
     theme.toast.fade_out = 0.0;
     theme.toast.default_duration = 0.5;
     theme
+}
+
+/// Inside the hold of the probe theme (0.5 to 2.5): fully visible.
+const HELD: f32 = 1.0;
+
+fn settle(app: &mut App, toast: Entity) -> Entity {
+    app.world_mut().entity_mut(toast).insert(Toast {
+        elapsed: HELD,
+        duration: None,
+    });
+    toast
+}
+
+fn spawn_settled_toast(app: &mut App, text: &str) -> Entity {
+    let toast = spawn_toast(app, text);
+    settle(app, toast)
+}
+
+fn set_elapsed(app: &mut App, toast: Entity, elapsed: f32) {
+    app.world_mut().entity_mut(toast).insert(Toast {
+        elapsed,
+        duration: None,
+    });
+}
+
+fn translation(app: &App, toast: Entity) -> Val2 {
+    app.world().get::<UiTransform>(toast).unwrap().translation
 }

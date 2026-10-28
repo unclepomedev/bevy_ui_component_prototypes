@@ -9,17 +9,10 @@ pub use self::{
     variant::ToastVariant,
 };
 
-use self::{
-    components::{ToastLabel, toast_node},
-    lifecycle::ToastTiming,
-};
-use super::{style_targets::pick_targets, theme_lookup::ThemeLookup};
+use self::components::{ToastLabel, toast_node};
+use super::theme_lookup::ThemeLookup;
 use crate::style::{theme::Theme, toast::ToastMetrics};
-use bevy::{
-    ecs::{query::QueryData, system::SystemParam},
-    prelude::*,
-    ui::UiSystems,
-};
+use bevy::{ecs::query::QueryData, prelude::*, ui::UiSystems};
 
 pub(crate) struct ToastPlugin;
 impl Plugin for ToastPlugin {
@@ -42,11 +35,7 @@ fn advance_toasts(
     for (entity, mut toast) in &mut toasts {
         toast.elapsed += delta;
         let metrics = &lookup.for_entity(entity).toast;
-        let duration = toast.duration.unwrap_or(metrics.default_duration);
-        if ToastTiming::new(metrics, duration)
-            .frame(toast.elapsed)
-            .finished
-        {
+        if toast.timing(metrics).frame(toast.elapsed).finished {
             commands.entity(entity).try_despawn();
         }
     }
@@ -71,33 +60,41 @@ fn sync_host(mut lookup: ThemeLookup, mut hosts: Query<(Entity, Ref<ToastHost>, 
     }
 }
 
-/// Resolves each toast's look from its theme and writes it to the toast and its text.
+/// Resolves each toast's look from its theme and its place in time, and writes it to the toast and its text.
 fn sync_toast_style(
-    mut lookup: ThemeLookup,
-    targets: ToastTargets,
-    mut toasts: Query<ToastRow, With<Toast>>,
+    lookup: ThemeLookup,
+    hosts: Query<&ToastHost>,
+    mut toasts: Query<ToastRow>,
     mut labels: Query<(&mut TextColor, &mut TextFont), With<ToastLabel>>,
 ) {
-    let targets = targets.collect(lookup.needs_resync());
-
-    for entity in targets {
-        let Ok(mut toast) = toasts.get_mut(entity) else {
-            continue;
-        };
-
-        let theme = lookup.for_entity(entity);
-        let style = *toast.variant.resolve(theme);
+    for mut row in &mut toasts {
+        let theme = lookup.for_entity(row.entity);
+        let style = *row.variant.resolve(theme);
         let metrics = theme.toast;
+        let frame = row.toast.timing(&metrics).frame(row.toast.elapsed);
+        let faded = |color: Color| color.with_alpha(color.alpha() * frame.opacity);
+        let start = row
+            .parent
+            .and_then(|parent| hosts.get(parent.parent()).ok())
+            .map_or(Val2::ZERO, |host| host.slide);
 
-        toast.bg.set_if_neq(BackgroundColor(style.bg));
-        toast.border.set_if_neq(BorderColor::all(style.border));
-        write_layout(&mut toast.node, &toast_node(&metrics, &style.shape));
-        for child in toast.children.into_iter().flat_map(|c| c.iter()) {
+        row.bg.set_if_neq(BackgroundColor(faded(style.bg)));
+        row.border.set_if_neq(BorderColor::all(faded(style.border)));
+        write_layout(&mut row.node, &toast_node(&metrics, &style.shape));
+        write_slide(&mut row.transform, start, frame.slide);
+        for child in row.children.into_iter().flat_map(|c| c.iter()) {
             if let Ok((mut color, mut font)) = labels.get_mut(child) {
-                color.set_if_neq(TextColor(style.fg));
+                color.set_if_neq(TextColor(faded(style.fg)));
                 write_font(&mut font, theme, &metrics);
             }
         }
+    }
+}
+
+fn write_slide(transform: &mut Mut<UiTransform>, start: Val2, slide: f32) {
+    let want = Val2::new(start.x * slide, start.y * slide);
+    if transform.translation != want {
+        transform.translation = want;
     }
 }
 
@@ -136,26 +133,13 @@ fn write_font(font: &mut Mut<TextFont>, theme: &Theme, metrics: &ToastMetrics) {
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct ToastRow {
+    entity: Entity,
+    toast: &'static Toast,
     variant: &'static ToastVariant,
+    parent: Option<&'static ChildOf>,
     bg: &'static mut BackgroundColor,
     border: &'static mut BorderColor,
     node: &'static mut Node,
+    transform: &'static mut UiTransform,
     children: Option<&'static Children>,
 }
-
-/// Finds the toasts whose look may have changed from the last run.
-#[derive(SystemParam)]
-struct ToastTargets<'w, 's> {
-    changed: ChangedToasts<'w, 's>,
-    all: Query<'w, 's, Entity, With<Toast>>,
-}
-
-impl ToastTargets<'_, '_> {
-    /// Every toast after a theme change, otherwise only the new ones and the ones whose variant changed.
-    fn collect(&self, resync: bool) -> Vec<Entity> {
-        pick_targets(resync, self.all.iter(), self.changed.iter(), [], [])
-    }
-}
-
-type ChangedToasts<'w, 's> =
-    Query<'w, 's, Entity, (With<Toast>, Or<(Added<Toast>, Changed<ToastVariant>)>)>;

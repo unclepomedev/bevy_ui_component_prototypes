@@ -1,4 +1,4 @@
-use super::variant::ToastVariant;
+use super::{lifecycle::ToastTiming, variant::ToastVariant};
 use crate::{
     style::toast::{ToastMetrics, ToastShape},
     view::pass_through,
@@ -69,6 +69,12 @@ pub struct Toast {
     pub elapsed: f32,
     /// Seconds the toast stays fully visible. `None` takes the theme's `default_duration`.
     pub duration: Option<f32>,
+}
+
+impl Toast {
+    pub(crate) fn timing(&self, metrics: &ToastMetrics) -> ToastTiming {
+        ToastTiming::new(metrics, self.duration.unwrap_or(metrics.default_duration))
+    }
 }
 
 /// The text inside a [`Toast`].
