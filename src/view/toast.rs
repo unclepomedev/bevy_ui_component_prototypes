@@ -9,7 +9,10 @@ pub use self::{
     variant::ToastVariant,
 };
 
-use self::components::{ToastLabel, toast_node};
+use self::{
+    components::{ToastLabel, toast_node},
+    lifecycle::ToastTiming,
+};
 use super::{style_targets::pick_targets, theme_lookup::ThemeLookup};
 use crate::style::{theme::Theme, toast::ToastMetrics};
 use bevy::{
@@ -21,10 +24,31 @@ use bevy::{
 pub(crate) struct ToastPlugin;
 impl Plugin for ToastPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.add_systems(Update, advance_toasts).add_systems(
             PostUpdate,
             (sync_host, sync_toast_style).before(UiSystems::Prepare),
         );
+    }
+}
+
+/// Moves each toast along its life, and despawns it when it is over.
+fn advance_toasts(
+    time: Res<Time<Real>>,
+    lookup: ThemeLookup,
+    mut toasts: Query<(Entity, &mut Toast)>,
+    mut commands: Commands,
+) {
+    let delta = time.delta_secs();
+    for (entity, mut toast) in &mut toasts {
+        toast.elapsed += delta;
+        let metrics = &lookup.for_entity(entity).toast;
+        let duration = toast.duration.unwrap_or(metrics.default_duration);
+        if ToastTiming::new(metrics, duration)
+            .frame(toast.elapsed)
+            .finished
+        {
+            commands.entity(entity).try_despawn();
+        }
     }
 }
 

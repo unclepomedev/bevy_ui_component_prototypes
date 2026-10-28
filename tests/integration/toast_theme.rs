@@ -4,11 +4,12 @@
 //! `examples/toast_check.rs`.
 
 use crate::probe::probe_theme;
-use bevy::{picking::Pickable, prelude::*};
+use bevy::{picking::Pickable, prelude::*, time::TimeUpdateStrategy};
 use bevy_ui_component_prototypes::{
     GlobalTheme, Theme, Toast, ToastHost, ToastStack, ToastVariant, ToastVariantId,
     UiComponentPrototypesPlugin, toast, toast_host,
 };
+use std::time::Duration;
 
 #[test]
 fn a_toast_carries_its_structure_and_starts_unseen() {
@@ -415,6 +416,103 @@ fn a_node_inserted_later_gets_the_row_gap_back() {
 }
 
 // ---------------------------------------------------------------------------
+// The life of a toast
+// ---------------------------------------------------------------------------
+
+#[test]
+fn elapsed_counts_the_seconds_since_the_toast_appeared() {
+    let mut app = timed_app(0.25);
+    let toast = spawn_toast(&mut app, "Saved");
+
+    run(&mut app, 3);
+
+    assert_eq!(app.world().get::<Toast>(toast).unwrap().elapsed, 0.75);
+}
+
+#[test]
+fn a_toast_lives_for_the_fades_and_the_duration_of_its_theme() {
+    // The probe theme: 0.5 in, 2.0 held, 0.25 out.
+    let mut app = timed_app(0.25);
+    let toast = spawn_toast(&mut app, "Saved");
+
+    run(&mut app, 10);
+    assert!(alive(&app, toast));
+
+    run(&mut app, 1);
+    assert!(!alive(&app, toast));
+}
+
+#[test]
+fn the_duration_of_the_builder_wins_over_the_theme() {
+    let mut app = timed_app(0.25);
+    let short = app
+        .world_mut()
+        .spawn(toast("Short").duration(1.0).build())
+        .id();
+    let themed = spawn_toast(&mut app, "Themed");
+
+    run(&mut app, 6);
+    assert!(alive(&app, short));
+    assert!(alive(&app, themed));
+
+    run(&mut app, 1);
+    assert!(!alive(&app, short));
+    assert!(alive(&app, themed));
+}
+
+#[test]
+fn a_toast_set_ahead_is_over_at_once() {
+    let mut app = timed_app(0.25);
+    let toast = spawn_toast(&mut app, "Saved");
+
+    app.world_mut().entity_mut(toast).insert(Toast {
+        elapsed: 100.0,
+        duration: None,
+    });
+    run(&mut app, 1);
+
+    assert!(!alive(&app, toast));
+}
+
+#[test]
+fn the_theme_of_the_scope_decides_how_long_a_toast_lives() {
+    let mut app = timed_app(0.25);
+    let panel = app.world_mut().spawn(quick_theme()).id();
+    let inside = app
+        .world_mut()
+        .spawn((toast("In").build(), ChildOf(panel)))
+        .id();
+    let outside = spawn_toast(&mut app, "Out");
+
+    run(&mut app, 2);
+
+    assert!(!alive(&app, inside));
+    assert!(alive(&app, outside));
+}
+
+#[test]
+fn a_toast_goes_on_while_the_game_time_is_paused() {
+    let mut app = timed_app(0.25);
+    app.world_mut().resource_mut::<Time<Virtual>>().pause();
+    let toast = spawn_toast(&mut app, "Saved");
+
+    run(&mut app, 11);
+
+    assert!(!alive(&app, toast));
+}
+
+#[test]
+fn despawning_a_toast_takes_its_text_with_it() {
+    let mut app = timed_app(0.25);
+    let toast = spawn_toast(&mut app, "Saved");
+    let text = label(&app, toast);
+
+    run(&mut app, 11);
+
+    assert!(!alive(&app, text));
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -520,4 +618,34 @@ fn label_font(app: &App, toast: Entity) -> TextFont {
         .get::<TextFont>(label(app, toast))
         .unwrap()
         .clone()
+}
+
+/// An app whose clock moves by `step` seconds every update.
+fn timed_app(step: f32) -> App {
+    let mut app = test_app();
+    app.insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f32(
+        step,
+    )));
+    // The first update only sets the clock; there is no delta before the second.
+    app.update();
+    app
+}
+
+fn run(app: &mut App, updates: usize) {
+    for _ in 0..updates {
+        app.update();
+    }
+}
+
+fn alive(app: &App, entity: Entity) -> bool {
+    app.world().get_entity(entity).is_ok()
+}
+
+/// The probe theme where a toast is a half second of hold and nothing else.
+fn quick_theme() -> Theme {
+    let mut theme = probe_theme();
+    theme.toast.fade_in = 0.0;
+    theme.toast.fade_out = 0.0;
+    theme.toast.default_duration = 0.5;
+    theme
 }
