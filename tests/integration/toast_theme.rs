@@ -312,6 +312,108 @@ fn toast_spawned_later_inside_a_scope_uses_the_scope_theme_immediately() {
     assert_eq!(bg(&app, late), red());
 }
 
+#[test]
+fn the_size_and_the_text_follow_the_theme() {
+    let mut app = test_app();
+    let toast = spawn_toast(&mut app, "Saved");
+
+    app.update();
+
+    let metrics = probe_theme().toast;
+    let node = app.world().get::<Node>(toast).unwrap();
+    assert_eq!(node.min_width, metrics.min_width);
+    assert_eq!(node.max_width, metrics.max_width);
+    assert_eq!(node.padding, metrics.padding);
+    let font = label_font(&app, toast);
+    assert_eq!(font.font, probe_theme().font);
+    assert_eq!(font.font_smoothing, FontSmoothing::AntiAliased);
+    assert_eq!(font.font_size, metrics.font_size);
+}
+
+#[test]
+fn a_theme_change_resizes_the_toast_and_swaps_its_font() {
+    let mut app = test_app();
+    let toast = spawn_toast(&mut app, "Saved");
+    app.update();
+
+    let mut theme = Theme {
+        font: FontSource::sans_serif(),
+        font_smoothing: FontSmoothing::None,
+        ..probe_theme()
+    };
+    theme.toast.max_width = Val::Px(321.0);
+    theme.toast.font_size = FontSize::Px(31.0);
+    app.insert_resource(GlobalTheme(theme.clone()));
+    app.update();
+
+    assert_eq!(
+        app.world().get::<Node>(toast).unwrap().max_width,
+        Val::Px(321.0)
+    );
+    let font = label_font(&app, toast);
+    assert_eq!(font.font, theme.font);
+    assert_eq!(font.font_smoothing, FontSmoothing::None);
+    assert_eq!(font.font_size, FontSize::Px(31.0));
+}
+
+#[test]
+fn a_host_takes_the_row_gap_of_its_theme() {
+    let mut app = test_app();
+    let host = app.world_mut().spawn(toast_host().build()).id();
+
+    app.update();
+
+    assert_eq!(row_gap(&app, host), probe_theme().toast.row_gap);
+}
+
+#[test]
+fn the_row_gap_follows_the_global_theme_but_not_a_scope() {
+    let mut app = test_app();
+    let unscoped = app.world_mut().spawn(toast_host().build()).id();
+    let panel = app.world_mut().spawn(probe_theme()).id();
+    let scoped = app
+        .world_mut()
+        .spawn((toast_host().build(), ChildOf(panel)))
+        .id();
+    app.update();
+
+    app.insert_resource(GlobalTheme(wide_gap_theme()));
+    app.update();
+
+    assert_eq!(row_gap(&app, unscoped), wide_gap());
+    assert_eq!(row_gap(&app, scoped), probe_theme().toast.row_gap);
+}
+
+#[test]
+fn a_scoped_theme_change_moves_the_row_gap_of_the_hosts_inside_it() {
+    let mut app = test_app();
+    let outside = app.world_mut().spawn(toast_host().build()).id();
+    let panel = app.world_mut().spawn(probe_theme()).id();
+    let inside = app
+        .world_mut()
+        .spawn((toast_host().build(), ChildOf(panel)))
+        .id();
+    app.update();
+
+    *app.world_mut().get_mut::<Theme>(panel).unwrap() = wide_gap_theme();
+    app.update();
+
+    assert_eq!(row_gap(&app, inside), wide_gap());
+    assert_eq!(row_gap(&app, outside), probe_theme().toast.row_gap);
+}
+
+#[test]
+fn a_node_inserted_later_gets_the_row_gap_back() {
+    let mut app = test_app();
+    let host = app.world_mut().spawn(toast_host().build()).id();
+    app.update();
+
+    app.world_mut().entity_mut(host).insert(Node::default());
+    app.update();
+
+    assert_eq!(row_gap(&app, host), probe_theme().toast.row_gap);
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -396,4 +498,26 @@ fn bg(app: &App, toast: Entity) -> Color {
 
 fn border_color(app: &App, toast: Entity) -> BorderColor {
     *app.world().get::<BorderColor>(toast).unwrap()
+}
+
+fn row_gap(app: &App, host: Entity) -> Val {
+    app.world().get::<Node>(host).unwrap().row_gap
+}
+
+fn wide_gap() -> Val {
+    Val::Px(31.0)
+}
+
+/// The probe theme with another gap between the toasts.
+fn wide_gap_theme() -> Theme {
+    let mut theme = probe_theme();
+    theme.toast.row_gap = wide_gap();
+    theme
+}
+
+fn label_font(app: &App, toast: Entity) -> TextFont {
+    app.world()
+        .get::<TextFont>(label(app, toast))
+        .unwrap()
+        .clone()
 }

@@ -29,8 +29,8 @@ impl ToastStack {
 
 /// Where toasts stack up. Toasts are its children: spawn them with `ChildOf(host)`.
 ///
-/// Give the host a `Node` that places it. `align_items` of that `Node` decides how the toasts line up across the stack.
-/// The `flex_direction` of the `Node` is written by the library, so do not set it yourself.
+/// Give the host a `Node` that places it. `align_items` of that `Node` decides how the toasts line up
+/// across the stack. Do not set `flex_direction` or `row_gap` of that `Node`: the library writes them.
 ///
 /// The host and its toasts let the pointer through.
 #[derive(Component, Clone, Copy, Debug, PartialEq)]

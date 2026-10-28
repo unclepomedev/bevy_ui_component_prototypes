@@ -9,9 +9,9 @@ pub use self::{
     variant::ToastVariant,
 };
 
-use self::components::ToastLabel;
+use self::components::{ToastLabel, toast_node};
 use super::{style_targets::pick_targets, theme_lookup::ThemeLookup};
-use crate::style::toast::ToastShape;
+use crate::style::{theme::Theme, toast::ToastMetrics};
 use bevy::{
     ecs::{query::QueryData, system::SystemParam},
     prelude::*,
@@ -23,31 +23,36 @@ impl Plugin for ToastPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             PostUpdate,
-            (sync_host_direction, sync_toast_style).before(UiSystems::Prepare),
+            (sync_host, sync_toast_style).before(UiSystems::Prepare),
         );
     }
 }
 
-/// Writes the stacking direction of each host from its `stack`. The `Node` of the host is the app's,
-/// and an app that inserts one later does not know about this, so a changed `Node` is checked too.
-fn sync_host_direction(mut hosts: ChangedHosts) {
-    for (host, mut node) in &mut hosts {
-        let want = host.stack.direction();
-        if node.flex_direction != want {
-            node.flex_direction = want;
+/// Writes the stacking direction and the gap of each host.
+fn sync_host(mut lookup: ThemeLookup, mut hosts: Query<(Entity, Ref<ToastHost>, &mut Node)>) {
+    let resync = lookup.needs_resync();
+
+    for (entity, host, mut node) in &mut hosts {
+        if !resync && !host.is_changed() && !node.is_changed() {
+            continue;
+        }
+        let direction = host.stack.direction();
+        if node.flex_direction != direction {
+            node.flex_direction = direction;
+        }
+        let gap = lookup.for_entity(entity).toast.row_gap;
+        if node.row_gap != gap {
+            node.row_gap = gap;
         }
     }
 }
-
-type ChangedHosts<'w, 's> =
-    Query<'w, 's, (&'static ToastHost, &'static mut Node), Or<(Changed<ToastHost>, Changed<Node>)>>;
 
 /// Resolves each toast's look from its theme and writes it to the toast and its text.
 fn sync_toast_style(
     mut lookup: ThemeLookup,
     targets: ToastTargets,
     mut toasts: Query<ToastRow, With<Toast>>,
-    mut labels: Query<&mut TextColor, With<ToastLabel>>,
+    mut labels: Query<(&mut TextColor, &mut TextFont), With<ToastLabel>>,
 ) {
     let targets = targets.collect(lookup.needs_resync());
 
@@ -56,28 +61,50 @@ fn sync_toast_style(
             continue;
         };
 
-        let style = *toast.variant.resolve(lookup.for_entity(entity));
+        let theme = lookup.for_entity(entity);
+        let style = *toast.variant.resolve(theme);
+        let metrics = theme.toast;
 
         toast.bg.set_if_neq(BackgroundColor(style.bg));
         toast.border.set_if_neq(BorderColor::all(style.border));
-        write_shape(&mut toast.node, &style.shape);
+        write_layout(&mut toast.node, &toast_node(&metrics, &style.shape));
         for child in toast.children.into_iter().flat_map(|c| c.iter()) {
-            if let Ok(mut color) = labels.get_mut(child) {
+            if let Ok((mut color, mut font)) = labels.get_mut(child) {
                 color.set_if_neq(TextColor(style.fg));
+                write_font(&mut font, theme, &metrics);
             }
         }
     }
 }
 
-/// Writes the border and the corners, only where they changed.
-fn write_shape(node: &mut Mut<Node>, shape: &ToastShape) {
-    let border = UiRect::all(Val::Px(shape.border_width));
-    if node.border != border {
-        node.border = border;
+/// Writes the size, the border, and the corners, only where they changed.
+fn write_layout(node: &mut Mut<Node>, want: &Node) {
+    if node.min_width != want.min_width {
+        node.min_width = want.min_width;
     }
-    let radius = BorderRadius::all(Val::Px(shape.radius));
-    if node.border_radius != radius {
-        node.border_radius = radius;
+    if node.max_width != want.max_width {
+        node.max_width = want.max_width;
+    }
+    if node.padding != want.padding {
+        node.padding = want.padding;
+    }
+    if node.border != want.border {
+        node.border = want.border;
+    }
+    if node.border_radius != want.border_radius {
+        node.border_radius = want.border_radius;
+    }
+}
+
+fn write_font(font: &mut Mut<TextFont>, theme: &Theme, metrics: &ToastMetrics) {
+    if font.font != theme.font {
+        font.font = theme.font.clone();
+    }
+    if font.font_smoothing != theme.font_smoothing {
+        font.font_smoothing = theme.font_smoothing;
+    }
+    if font.font_size != metrics.font_size {
+        font.font_size = metrics.font_size;
     }
 }
 
