@@ -13,7 +13,9 @@ pub use button::{ButtonSize, ButtonVariant};
 pub use focus::{FocusIndicator, ShowsFocus};
 pub use icon_button::{IconButton, IconButtonBuilder, icon_button};
 pub use slider::{SliderBuilder, SliderEditing, ValueSlider, slider};
-pub use toast::{Toast, ToastBuilder, ToastVariant, toast};
+pub use toast::{
+    Toast, ToastBuilder, ToastHost, ToastHostBuilder, ToastStack, ToastVariant, toast, toast_host,
+};
 pub use toggle_switch::{ToggleSwitch, ToggleSwitchBuilder, toggle_switch};
 
 pub(crate) use button::ButtonStylePlugin;

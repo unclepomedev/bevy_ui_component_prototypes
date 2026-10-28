@@ -1,5 +1,5 @@
 use super::{
-    components::{Toast, ToastLabel},
+    components::{Toast, ToastHost, ToastLabel, ToastStack},
     variant::ToastVariant,
 };
 use crate::{style::toast::ToastMetrics, view::pass_through};
@@ -52,5 +52,37 @@ impl ToastBuilder {
                 pass_through(),
             )],
         )
+    }
+}
+
+pub struct ToastHostBuilder {
+    host: ToastHost,
+}
+
+/// A host with the defaults of `ToastHost`. Add a `Node` to place it.
+pub fn toast_host() -> ToastHostBuilder {
+    ToastHostBuilder {
+        host: ToastHost::default(),
+    }
+}
+
+impl ToastHostBuilder {
+    pub fn max(mut self, max: usize) -> Self {
+        self.host.max = max;
+        self
+    }
+
+    pub fn stack(mut self, stack: ToastStack) -> Self {
+        self.host.stack = stack;
+        self
+    }
+
+    pub fn slide(mut self, slide: Val2) -> Self {
+        self.host.slide = slide;
+        self
+    }
+
+    pub fn build(self) -> impl Bundle {
+        self.host
     }
 }

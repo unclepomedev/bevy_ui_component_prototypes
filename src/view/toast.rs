@@ -4,7 +4,7 @@ mod lifecycle;
 mod variant;
 
 pub use self::{
-    builder::{ToastBuilder, toast},
-    components::Toast,
+    builder::{ToastBuilder, ToastHostBuilder, toast, toast_host},
+    components::{Toast, ToastHost, ToastStack},
     variant::ToastVariant,
 };
