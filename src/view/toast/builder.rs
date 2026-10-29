@@ -3,12 +3,18 @@ use super::{
     variant::ToastVariant,
 };
 use crate::{style::toast::ToastMetrics, view::pass_through};
-use bevy::prelude::*;
+use bevy::{
+    ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
+    prelude::*,
+};
+
+type Extra = Box<dyn FnOnce(&mut EntityWorldMut) + Send + Sync>;
 
 pub struct ToastBuilder {
     text: String,
     variant: ToastVariant,
     duration: Option<f32>,
+    label_extras: Vec<Extra>,
 }
 
 /// A toast. The text wraps at the theme's `max_width`.
@@ -17,6 +23,7 @@ pub fn toast() -> ToastBuilder {
         text: String::new(),
         variant: ToastVariant::default(),
         duration: None,
+        label_extras: Vec::new(),
     }
 }
 
@@ -37,25 +44,45 @@ impl ToastBuilder {
         self
     }
 
+    /// Adds `bundle` to the text entity. Can be called more than once.
+    pub fn label_bundle(mut self, bundle: impl Bundle) -> Self {
+        self.label_extras.push(Box::new(move |label| {
+            label.insert(bundle);
+        }));
+        self
+    }
+
     pub fn build(self) -> impl Bundle {
-        let metrics = ToastMetrics::default();
+        let Self {
+            text,
+            variant,
+            duration,
+            label_extras,
+        } = self;
+        let font_size = ToastMetrics::default().font_size;
+
         (
             Toast {
                 elapsed: 0.0,
-                duration: self.duration,
+                duration,
             },
-            self.variant,
-            children![(
-                ToastLabel,
-                Text::new(self.text),
-                TextFont {
-                    font_size: metrics.font_size,
-                    ..default()
-                },
-                // Unseen until the first style sync.
-                TextColor(Color::NONE),
-                pass_through(),
-            )],
+            variant,
+            Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
+                let mut label = parent.spawn((
+                    ToastLabel,
+                    Text::new(text),
+                    TextFont {
+                        font_size,
+                        ..default()
+                    },
+                    // Unseen until the first style sync.
+                    TextColor(Color::NONE),
+                    pass_through(),
+                ));
+                for extra in label_extras {
+                    extra(&mut label);
+                }
+            })),
         )
     }
 }
