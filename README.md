@@ -1,16 +1,9 @@
 # bevy_ui_component_prototypes
 
-## Setup
+Boilerplate for UI components in Bevy games: themed widgets built on top of `bevy_ui` and `bevy_ui_widgets`.
 
-```rust
-app.add_plugins((DefaultPlugins, TabNavigationPlugin, UiComponentPrototypesPlugin));
-```
+The API is changing a lot at this stage. Expect breaking changes in every release.
 
-`UiComponentPrototypesPlugin` provides theming only. It does not add `UiWidgetsPlugins`.
-Add the plugins for the behavior you use yourself:
+## License
 
-- `ButtonPlugin` (included in `DefaultPlugins`): button activation
-- `InputDispatchPlugin` (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
-- `TabNavigationPlugin`: Tab-key focus navigation
-
-Buttons emit `bevy::ui_widgets::Activate`. For Tab navigation, place them under a `TabGroup` ([example](examples/button_check.rs)).
+MIT or Apache-2.0
