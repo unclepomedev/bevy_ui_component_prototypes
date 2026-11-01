@@ -3,7 +3,10 @@
 //!
 //! The real screen is covered by `examples/progress_check.rs`.
 
-use crate::probe::probe_theme;
+use crate::{
+    gradient::{painted_blocks, stops},
+    probe::probe_theme,
+};
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, picking::Pickable, prelude::*};
 use bevy_ui_component_prototypes::{
@@ -275,7 +278,7 @@ fn a_custom_shape_reaches_the_bar_and_its_fill() {
 }
 
 // ---------------------------------------------------------------------------
-// Blocks
+// Segments
 // ---------------------------------------------------------------------------
 
 #[test]
@@ -471,19 +474,4 @@ fn fill_width(app: &App, bar: Entity) -> Val {
 
 fn node(app: &App, entity: Entity) -> Node {
     app.world().get::<Node>(entity).unwrap().clone()
-}
-
-/// The stops of the part's only gradient; empty when it has none.
-fn stops(app: &App, part: Entity) -> Vec<ColorStop> {
-    let gradient = app.world().get::<BackgroundGradient>(part).unwrap();
-    match gradient.0.first() {
-        Some(Gradient::Linear(linear)) => linear.stops.clone(),
-        Some(other) => panic!("not a linear gradient: {other:?}"),
-        None => Vec::new(),
-    }
-}
-
-/// How many blocks `stops` paints with `color` (each block is a pair of stops of that color).
-fn painted_blocks(stops: &[ColorStop], color: Color) -> usize {
-    stops.iter().filter(|stop| stop.color == color).count() / 2
 }

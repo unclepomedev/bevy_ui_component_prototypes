@@ -1,3 +1,4 @@
+mod bar_paint;
 mod button;
 mod choice;
 mod focus;

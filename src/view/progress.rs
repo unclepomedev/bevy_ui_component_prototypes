@@ -9,13 +9,13 @@ pub use self::{
 };
 
 use self::components::{ProgressFill, fill_node, progress_node};
-use super::{style_targets::pick_targets, theme_lookup::ThemeLookup};
-use crate::style::progress::{ProgressGeometry, ProgressStyle};
-use bevy::{
-    ecs::query::QueryData,
-    prelude::*,
-    ui::{ColorStop, LinearGradient, UiSystems},
+use super::{
+    bar_paint::{paint_fill, paint_rail},
+    style_targets::pick_targets,
+    theme_lookup::ThemeLookup,
 };
+use crate::style::progress::{ProgressGeometry, ProgressStyle};
+use bevy::{ecs::query::QueryData, prelude::*, ui::UiSystems};
 
 pub(crate) struct ProgressStylePlugin;
 impl Plugin for ProgressStylePlugin {
@@ -90,10 +90,10 @@ fn write_bar(bar: &mut BarRowItem, style: &ProgressStyle, geometry: &ProgressGeo
     if bar.node.border_radius != want.border_radius {
         bar.node.border_radius = want.border_radius;
     }
-    paint(
+    paint_rail(
         &mut bar.bg,
-        &mut bar.gradient,
-        geometry.segments.map(|s| s.stops(s.count, style.rail)),
+        Some(&mut bar.gradient),
+        geometry.segments,
         style.rail,
     );
 }
@@ -114,47 +114,15 @@ fn write_fill(
         if fill.node.border_radius != want.border_radius {
             fill.node.border_radius = want.border_radius;
         }
-        // A segmented fill spans the whole bar and lights blocks; a solid one grows.
-        let width = match geometry.segments {
-            Some(s) => {
-                paint(
-                    &mut fill.bg,
-                    &mut fill.gradient,
-                    Some(s.stops(s.lit(share), style.fill)),
-                    style.fill,
-                );
-                Val::Percent(100.0)
-            }
-            None => {
-                paint(&mut fill.bg, &mut fill.gradient, None, style.fill);
-                Val::Percent(share * 100.0)
-            }
-        };
+        let width = paint_fill(
+            &mut fill.bg,
+            Some(&mut fill.gradient),
+            geometry.segments,
+            share,
+            style.fill,
+        );
         if fill.node.width != width {
             fill.node.width = width;
-        }
-    }
-}
-
-fn paint(
-    bg: &mut Mut<BackgroundColor>,
-    gradient: &mut Mut<BackgroundGradient>,
-    stops: Option<Vec<ColorStop>>,
-    color: Color,
-) {
-    match stops {
-        Some(stops) => {
-            bg.set_if_neq(BackgroundColor(Color::NONE));
-            let want = vec![LinearGradient::to_right(stops).into()];
-            if gradient.0 != want {
-                gradient.0 = want;
-            }
-        }
-        None => {
-            bg.set_if_neq(BackgroundColor(color));
-            if !gradient.0.is_empty() {
-                gradient.0.clear();
-            }
         }
     }
 }

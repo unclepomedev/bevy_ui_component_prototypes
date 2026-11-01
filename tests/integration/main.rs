@@ -1,6 +1,7 @@
 //! Make integration tests a single binary.
 
 mod button_theme;
+mod gradient;
 mod probe;
 mod progress_theme;
 mod shows_focus;

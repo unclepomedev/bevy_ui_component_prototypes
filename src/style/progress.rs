@@ -1,6 +1,6 @@
 use super::{
+    bar::{BarSegments, corner_radius},
     color::{AFFIRM_NORMAL, BG_NORMAL, DANGER_NORMAL, PRIMARY_NORMAL},
-    slider::BarSegments,
 };
 use bevy::prelude::*;
 use std::collections::HashMap;
@@ -37,9 +37,8 @@ impl ProgressShape {
     pub(crate) fn geometry(&self) -> ProgressGeometry {
         ProgressGeometry {
             height: self.height,
-            radius: if self.rounded { self.height / 2.0 } else { 0.0 },
-            // Fewer than two blocks is just a plain bar.
-            segments: self.segments.filter(|s| s.count >= 2),
+            radius: corner_radius(self.height, self.rounded),
+            segments: BarSegments::usable(self.segments),
         }
     }
 }

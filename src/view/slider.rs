@@ -8,6 +8,7 @@ pub use self::{
 
 use self::components::{SliderPart, fill_node, rail_node, slider_node, thumb_node, travel_node};
 use super::{
+    bar_paint::{paint_fill, paint_rail},
     focus::FocusRingTracker,
     style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
@@ -20,7 +21,7 @@ use bevy::{
     ecs::{query::QueryData, system::SystemParam},
     picking::hover::Hovered,
     prelude::*,
-    ui::{ColorStop, Gradient, InteractionDisabled, LinearGradient, Pressed, UiSystems},
+    ui::{InteractionDisabled, Pressed, UiSystems},
     ui_widgets::{SliderDragState, SliderRange, SliderValue},
 };
 
@@ -120,7 +121,7 @@ fn write_parts(
         match part.kind {
             SliderPart::Rail => write_rail(&mut part, look, geometry),
             SliderPart::Travel => write_travel(&mut part, geometry),
-            SliderPart::Fill => write_fill(&mut part, look, geometry, share, position),
+            SliderPart::Fill => write_fill(&mut part, look, geometry, share),
             SliderPart::Thumb => write_thumb(&mut part, look, geometry, position),
         }
     }
@@ -128,13 +129,12 @@ fn write_parts(
 
 fn write_rail(part: &mut PartRowItem, look: &SliderLook, geometry: &SliderGeometry) {
     write_bar(&mut part.node, &rail_node(geometry));
-    match geometry.segments {
-        Some(segments) => {
-            let stops = segments.stops(segments.count, look.rail);
-            paint_blocks(part, stops);
-        }
-        None => paint_solid(part, look.rail),
-    }
+    paint_rail(
+        &mut part.bg,
+        part.gradient.as_mut(),
+        geometry.segments,
+        look.rail,
+    );
 }
 
 fn write_travel(part: &mut PartRowItem, geometry: &SliderGeometry) {
@@ -144,25 +144,15 @@ fn write_travel(part: &mut PartRowItem, geometry: &SliderGeometry) {
     }
 }
 
-fn write_fill(
-    part: &mut PartRowItem,
-    look: &SliderLook,
-    geometry: &SliderGeometry,
-    share: f32,
-    position: Val,
-) {
+fn write_fill(part: &mut PartRowItem, look: &SliderLook, geometry: &SliderGeometry, share: f32) {
     write_bar(&mut part.node, &fill_node(geometry));
-    // A segmented fill spans the whole bar and lights its blocks; a solid one grows.
-    let width = match geometry.segments {
-        Some(segments) => {
-            paint_blocks(part, segments.stops(segments.lit(share), look.fill));
-            Val::Percent(100.0)
-        }
-        None => {
-            paint_solid(part, look.fill);
-            position
-        }
-    };
+    let width = paint_fill(
+        &mut part.bg,
+        part.gradient.as_mut(),
+        geometry.segments,
+        share,
+        look.fill,
+    );
     if part.node.width != width {
         part.node.width = width;
     }
@@ -194,29 +184,6 @@ struct PartRow {
     node: &'static mut Node,
     // Only the rail and the fill carry one.
     gradient: Option<&'static mut BackgroundGradient>,
-}
-
-/// One color over the whole part.
-fn paint_solid(part: &mut PartRowItem, color: Color) {
-    part.bg.set_if_neq(BackgroundColor(color));
-    set_gradient(&mut part.gradient, Vec::new());
-}
-
-/// Blocks given as gradient stops; the plain background stays out of the way.
-fn paint_blocks(part: &mut PartRowItem, stops: Vec<ColorStop>) {
-    part.bg.set_if_neq(BackgroundColor(Color::NONE));
-    set_gradient(
-        &mut part.gradient,
-        vec![LinearGradient::to_right(stops).into()],
-    );
-}
-
-fn set_gradient(gradient: &mut Option<Mut<BackgroundGradient>>, want: Vec<Gradient>) {
-    if let Some(gradient) = gradient
-        && gradient.0 != want
-    {
-        gradient.0 = want;
-    }
 }
 
 fn write_bar(node: &mut Mut<Node>, want: &Node) {

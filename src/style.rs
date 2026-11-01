@@ -1,3 +1,4 @@
+pub(crate) mod bar;
 pub(crate) mod button;
 pub(crate) mod color;
 pub(crate) mod font_size;

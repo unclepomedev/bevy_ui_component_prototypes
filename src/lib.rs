@@ -34,9 +34,12 @@ pub use crate::{
 
 // Slider
 pub use crate::{
-    style::slider::{BarSegments, SliderShape, SliderStyle},
+    style::slider::{SliderShape, SliderStyle},
     view::{SliderBuilder, SliderEditing, ValueSlider, slider},
 };
+
+// Bar segments
+pub use crate::style::bar::BarSegments;
 
 // Progress bar
 pub use crate::{
