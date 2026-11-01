@@ -5,8 +5,9 @@ use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
     CheckedColors, FocusRing, ProgressShape, ProgressStyle, ProgressStyles, ProgressVariantId,
-    SliderShape, SliderStyle, StateColors, SwitchStyle, Theme, ToastMetrics, ToastShape,
-    ToastStyle, ToastStyles, ToastVariantId,
+    SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle, SliderShape, SliderStyle,
+    StateColors, SwitchStyle, Theme, ToastMetrics, ToastShape, ToastStyle, ToastStyles,
+    ToastVariantId,
 };
 use std::collections::HashMap;
 
@@ -61,6 +62,39 @@ pub fn probe_theme() -> Theme {
                 (ProgressVariantId::PRIMARY, progress_style(0.2)),
                 (ProgressVariantId::DANGER, progress_style(0.3)),
             ]),
+        },
+        select: SelectStyle {
+            trigger: button_style(0.6),
+            popup: SelectPopupStyle {
+                bg: Color::srgb(0.6, 0.1, 0.1),
+                border: Color::srgb(0.6, 0.9, 0.9),
+                shape: SelectShape {
+                    border_width: 4.0,
+                    radius: 6.0,
+                },
+            },
+            option_bg: CheckedColors {
+                unchecked: tones(0.6, 0.1),
+                checked: tones(0.6, 0.2),
+            },
+            option_fg: CheckedColors {
+                unchecked: tones(0.6, 0.3),
+                checked: tones(0.6, 0.4),
+            },
+        },
+        select_metrics: SelectMetrics {
+            trigger: ButtonMetrics {
+                height: Val::Px(61.0),
+                padding: UiRect::all(Val::Px(4.0)),
+                column_gap: Val::Px(5.0),
+                font_size: FontSize::Px(15.0),
+                icon_size: 16.0,
+            },
+            option_height: Val::Px(37.0),
+            option_padding: UiRect::all(Val::Px(6.0)),
+            popup_padding: UiRect::all(Val::Px(3.0)),
+            popup_gap: 7.0,
+            popup_z_index: 42,
         },
         toasts: ToastStyles {
             base: toast_style(0.1),

@@ -50,6 +50,12 @@ pub use crate::{
     },
 };
 
+// Select
+pub use crate::{
+    style::select::{SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle},
+    view::{Select, SelectBuilder, SelectKey, SelectedIndex, SelectedOption, select},
+};
+
 // Toast
 pub use crate::{
     style::toast::{ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId},
@@ -60,13 +66,16 @@ pub use crate::{
 };
 
 use crate::view::{
-    ButtonStylePlugin, ProgressStylePlugin, ShowsFocusPlugin, SliderStylePlugin, SwitchStylePlugin,
-    TabOrderPlugin, ToastPlugin,
+    ButtonStylePlugin, ProgressStylePlugin, SelectStylePlugin, ShowsFocusPlugin, SliderStylePlugin,
+    SwitchStylePlugin, TabOrderPlugin, ToastPlugin,
 };
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
     prelude::*,
-    ui_widgets::{ButtonPlugin, CheckboxPlugin, SliderPlugin},
+    ui_widgets::{
+        ButtonPlugin, CheckboxPlugin, ListBoxPlugin, MenuPlugin, SliderPlugin,
+        popover::PopoverPlugin,
+    },
 };
 
 /// Theming for the widgets in this crate.
@@ -75,6 +84,9 @@ use bevy::{
 /// - [`ButtonPlugin`] (included in `DefaultPlugins`): button activation
 /// - [`CheckboxPlugin`] (included in `DefaultPlugins`): toggle switch changes
 /// - [`SliderPlugin`] (included in `DefaultPlugins`): slider changes
+/// - [`ListBoxPlugin`] (included in `DefaultPlugins`): the list of a select
+/// - [`MenuPlugin`] (included in `DefaultPlugins`): opening, closing and the focus of a select
+/// - [`PopoverPlugin`] (included in `DefaultPlugins`): where the popup of a select goes
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
 pub struct UiComponentPrototypesPlugin;
@@ -88,6 +100,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             ShowsFocusPlugin,
             ToastPlugin,
             ProgressStylePlugin,
+            SelectStylePlugin,
         ));
     }
 
@@ -96,6 +109,9 @@ impl Plugin for UiComponentPrototypesPlugin {
             ("ButtonPlugin", app.is_plugin_added::<ButtonPlugin>()),
             ("CheckboxPlugin", app.is_plugin_added::<CheckboxPlugin>()),
             ("SliderPlugin", app.is_plugin_added::<SliderPlugin>()),
+            ("ListBoxPlugin", app.is_plugin_added::<ListBoxPlugin>()),
+            ("MenuPlugin", app.is_plugin_added::<MenuPlugin>()),
+            ("PopoverPlugin", app.is_plugin_added::<PopoverPlugin>()),
             (
                 "InputDispatchPlugin",
                 app.is_plugin_added::<InputDispatchPlugin>(),

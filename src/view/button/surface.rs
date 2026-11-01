@@ -4,14 +4,14 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 /// Draws or removes the image surface of a button.
 #[derive(SystemParam)]
-pub(super) struct ButtonSurface<'w, 's> {
+pub(crate) struct ButtonSurface<'w, 's> {
     commands: Commands<'w, 's>,
     images: Query<'w, 's, &'static mut ImageNode, Without<ButtonIcon>>,
 }
 
 impl ButtonSurface<'_, '_> {
     /// `ImageNode` exists only while the style has a surface, because a default one paints a white box.
-    pub(super) fn apply(&mut self, button: Entity, surface: Option<&SlicedImage>, tint: Color) {
+    pub(crate) fn apply(&mut self, button: Entity, surface: Option<&SlicedImage>, tint: Color) {
         match (surface, self.images.get_mut(button)) {
             (Some(surface), Ok(mut node)) => {
                 if node.color != tint {
