@@ -88,6 +88,52 @@ fn without_a_value_the_bar_starts_at_the_range_start() {
 }
 
 // ---------------------------------------------------------------------------
+// Accessibility
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_screen_reader_gets_the_value_and_the_ends_after_one_update() {
+    let mut app = test_app();
+    let bar = app
+        .world_mut()
+        .spawn(progress_bar().range(10.0, 30.0).value(15.0).build())
+        .id();
+
+    app.update();
+
+    assert_eq!(numbers(&app, bar), (Some(10.0), Some(30.0), Some(15.0)));
+}
+
+#[test]
+fn the_numbers_follow_the_value_and_the_range() {
+    let mut app = test_app();
+    let bar = spawn_bar(&mut app);
+    app.update();
+
+    app.world_mut().entity_mut(bar).insert(ProgressValue(0.25));
+    app.update();
+    assert_eq!(numbers(&app, bar), (Some(0.0), Some(1.0), Some(0.25)));
+
+    app.world_mut().entity_mut(bar).insert(ProgressRange {
+        start: 0.0,
+        end: 2.0,
+    });
+    app.update();
+    assert_eq!(numbers(&app, bar), (Some(0.0), Some(2.0), Some(0.25)));
+}
+
+#[test]
+fn the_role_survives_the_numbers() {
+    let mut app = test_app();
+    let bar = spawn_bar(&mut app);
+
+    app.update();
+
+    let node = app.world().get::<AccessibilityNode>(bar).unwrap();
+    assert_eq!(node.role(), Role::ProgressIndicator);
+}
+
+// ---------------------------------------------------------------------------
 // Initial styling and the position of the fill
 // ---------------------------------------------------------------------------
 
@@ -474,4 +520,13 @@ fn fill_width(app: &App, bar: Entity) -> Val {
 
 fn node(app: &App, entity: Entity) -> Node {
     app.world().get::<Node>(entity).unwrap().clone()
+}
+
+fn numbers(app: &App, bar: Entity) -> (Option<f64>, Option<f64>, Option<f64>) {
+    let node = app.world().get::<AccessibilityNode>(bar).unwrap();
+    (
+        node.min_numeric_value(),
+        node.max_numeric_value(),
+        node.numeric_value(),
+    )
 }
