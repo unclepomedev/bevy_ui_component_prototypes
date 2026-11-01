@@ -327,6 +327,41 @@ fn a_value_that_is_not_an_option_shows_the_placeholder() {
 }
 
 #[test]
+fn a_row_of_another_select_is_not_a_choice_of_this_one() {
+    let mut app = app_that_logs_requests();
+    let first = spawn_fruit(&mut app);
+    let second = spawn_fruit(&mut app);
+    let first_trigger = trigger(&app, first);
+    let first_list = list(&app, first);
+    let foreign_row = rows(&app, second)[1];
+    menu_event(&mut app, first_trigger, MenuAction::Toggle);
+
+    report_row(&mut app, first_list, foreign_row);
+
+    assert!(app.world().resource::<Requests>().0.is_empty());
+    assert_eq!(visibility(&app, popup(&app, first)), Visibility::Inherited);
+}
+
+#[test]
+fn a_reselect_of_a_row_of_another_select_does_not_close_this_one() {
+    let mut app = test_app();
+    let first = spawn_fruit(&mut app);
+    let second = spawn_fruit(&mut app);
+    let first_trigger = trigger(&app, first);
+    let first_list = list(&app, first);
+    let foreign_row = rows(&app, second)[0];
+    menu_event(&mut app, first_trigger, MenuAction::Toggle);
+
+    app.world_mut().trigger(ReselectListRow {
+        source: first_list,
+        row: foreign_row,
+    });
+    app.update();
+
+    assert_eq!(visibility(&app, popup(&app, first)), Visibility::Inherited);
+}
+
+#[test]
 fn a_preselected_option_is_a_selected_option_like_any_other() {
     let mut app = test_app();
     let root = spawn_preselected(&mut app, Fruit::Banana);

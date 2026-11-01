@@ -27,6 +27,12 @@ fn on_list_change(
     if !lists.contains(change.source) {
         return;
     }
+    if !parents
+        .get(change.value)
+        .is_ok_and(|parent| parent.parent() == change.source)
+    {
+        return;
+    }
     let Ok(row) = rows.get(change.value) else {
         return;
     };
@@ -49,6 +55,12 @@ fn on_reselect(
     mut commands: Commands,
 ) {
     if !lists.contains(reselect.source) {
+        return;
+    }
+    if !parents
+        .get(reselect.row)
+        .is_ok_and(|parent| parent.parent() == reselect.source)
+    {
         return;
     }
     if let Some(select) = select_above(reselect.source, &parents, &selects) {
