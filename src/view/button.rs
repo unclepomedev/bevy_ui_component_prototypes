@@ -4,13 +4,14 @@ mod size;
 mod surface;
 mod variant;
 
-pub(crate) use self::{
-    content::{ButtonIcon, ButtonLabel},
-    layout::button_node,
-};
 pub use self::{size::ButtonSize, variant::ButtonVariant};
 
-use self::{content::ButtonContent, surface::ButtonSurface};
+pub(crate) use self::{
+    content::{ButtonContent, ButtonIcon, ButtonLabel},
+    layout::{button_node, write_button_layout},
+    surface::ButtonSurface,
+};
+
 use super::{
     focus::FocusRingTracker,
     style_targets::{drain_removed, pick_targets},
@@ -57,31 +58,12 @@ fn sync_button_style(
 
         write_node(&look, &mut button);
         if let (Some(metrics), Some(node)) = (metrics, button.node.as_mut()) {
-            write_layout(node, &button_node(metrics, &style.shape));
+            write_button_layout(node, &button_node(metrics, &style.shape));
         }
         parts
             .surface
             .apply(entity, style.surface.as_ref(), look.tint);
         parts.content.apply(entity, look.fg, metrics, theme);
-    }
-}
-
-/// Writes the size and the shape, only where they changed.
-fn write_layout(node: &mut Mut<Node>, want: &Node) {
-    if node.height != want.height {
-        node.height = want.height;
-    }
-    if node.padding != want.padding {
-        node.padding = want.padding;
-    }
-    if node.column_gap != want.column_gap {
-        node.column_gap = want.column_gap;
-    }
-    if node.border != want.border {
-        node.border = want.border;
-    }
-    if node.border_radius != want.border_radius {
-        node.border_radius = want.border_radius;
     }
 }
 

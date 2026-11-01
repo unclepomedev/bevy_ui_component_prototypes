@@ -17,3 +17,22 @@ pub(crate) fn button_node(metrics: &ButtonMetrics, shape: &ButtonShape) -> Node 
         ..layout::row_center()
     }
 }
+
+/// Writes what `button_node` decides, only where it changed.
+pub(crate) fn write_button_layout(node: &mut Mut<Node>, want: &Node) {
+    if node.height != want.height {
+        node.height = want.height;
+    }
+    if node.padding != want.padding {
+        node.padding = want.padding;
+    }
+    if node.column_gap != want.column_gap {
+        node.column_gap = want.column_gap;
+    }
+    if node.border != want.border {
+        node.border = want.border;
+    }
+    if node.border_radius != want.border_radius {
+        node.border_radius = want.border_radius;
+    }
+}

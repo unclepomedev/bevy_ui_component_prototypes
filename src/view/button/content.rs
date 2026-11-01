@@ -7,7 +7,7 @@ pub(crate) struct ButtonLabel;
 pub(crate) struct ButtonIcon;
 
 #[derive(SystemParam)]
-pub(super) struct ButtonContent<'w, 's> {
+pub(crate) struct ButtonContent<'w, 's> {
     children: Query<'w, 's, &'static Children>,
     labels: Query<'w, 's, (&'static mut TextColor, &'static mut TextFont), With<ButtonLabel>>,
     icons: Query<'w, 's, (&'static mut ImageNode, &'static mut Node), With<ButtonIcon>>,
@@ -16,7 +16,7 @@ pub(super) struct ButtonContent<'w, 's> {
 impl ButtonContent<'_, '_> {
     /// Applies the foreground color, the theme font and the size to the button's descendants.
     /// Without `metrics`, the sizes are left as they are.
-    pub(super) fn apply(
+    pub(crate) fn apply(
         &mut self,
         root: Entity,
         fg: Color,
