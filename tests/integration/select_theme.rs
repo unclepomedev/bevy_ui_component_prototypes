@@ -326,6 +326,55 @@ fn a_value_that_is_not_an_option_shows_the_placeholder() {
     assert_eq!(shown_text(&app, root), Some("Pick one".to_string()));
 }
 
+#[test]
+fn a_preselected_option_is_a_selected_option_like_any_other() {
+    let mut app = test_app();
+    let root = spawn_preselected(&mut app, Fruit::Banana);
+
+    assert_eq!(
+        app.world().get::<SelectedOption<Fruit>>(root),
+        Some(&SelectedOption {
+            value: Fruit::Banana
+        })
+    );
+    assert_eq!(index(&app, root), Some(1));
+}
+
+#[test]
+fn a_preselected_select_can_be_cleared_by_removing_the_value() {
+    let mut app = test_app();
+    let root = spawn_preselected(&mut app, Fruit::Banana);
+    app.update();
+
+    app.world_mut()
+        .entity_mut(root)
+        .remove::<SelectedOption<Fruit>>();
+    app.update();
+
+    assert_eq!(index(&app, root), None);
+    assert_eq!(shown_text(&app, root), Some("Pick one".to_string()));
+}
+
+#[test]
+fn a_preselected_value_that_is_not_an_option_chooses_nothing() {
+    let mut app = test_app();
+    let root = app
+        .world_mut()
+        .spawn(
+            select::<Fruit>()
+                .placeholder(text("Pick one"))
+                .option(Fruit::Apple, text("Apple"))
+                .selected(Fruit::Cherry)
+                .build(),
+        )
+        .id();
+    app.update();
+
+    assert!(app.world().get::<SelectedOption<Fruit>>(root).is_none());
+    assert_eq!(index(&app, root), None);
+    assert_eq!(shown_text(&app, root), Some("Pick one".to_string()));
+}
+
 // ---------------------------------------------------------------------------
 // Styling
 // ---------------------------------------------------------------------------
@@ -1225,6 +1274,22 @@ fn fruit_select() -> impl Bundle {
 
 fn spawn_fruit(app: &mut App) -> Entity {
     app.world_mut().spawn(fruit_select()).id()
+}
+
+fn spawn_preselected(app: &mut App, value: Fruit) -> Entity {
+    app.world_mut()
+        .spawn(
+            select::<Fruit>()
+                .placeholder(text("Pick one"))
+                .options([
+                    (Fruit::Apple, text("Apple")),
+                    (Fruit::Banana, text("Banana")),
+                    (Fruit::Cherry, text("Cherry")),
+                ])
+                .selected(value)
+                .build(),
+        )
+        .id()
 }
 
 fn spawn_fruit_under(app: &mut App, parent: Entity) -> Entity {

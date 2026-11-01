@@ -79,6 +79,32 @@ pub(crate) struct SelectRequest {
     pub(crate) emit: EmitChoice,
 }
 
+/// What the builder was given as the initial choice. It becomes a [`SelectedOption`] when the select is
+/// spawned, and goes away then.
+#[derive(Component)]
+#[component(on_add = choose_initial_option::<V>)]
+pub(crate) struct InitialOption<V: SelectKey> {
+    pub(crate) value: Option<V>,
+}
+
+fn choose_initial_option<V: SelectKey>(mut world: DeferredWorld, context: HookContext) {
+    let entity = context.entity;
+    let value = world
+        .get::<InitialOption<V>>(entity)
+        .and_then(|initial| initial.value.clone())
+        .filter(|value| {
+            world
+                .get::<SelectOptions<V>>(entity)
+                .is_some_and(|select| select.values.contains(value))
+        });
+    let mut commands = world.commands();
+    let mut select = commands.entity(entity);
+    select.try_remove::<InitialOption<V>>();
+    if let Some(value) = value {
+        select.try_insert(SelectedOption { value });
+    }
+}
+
 fn index_from_value<V: SelectKey>(mut world: DeferredWorld, context: HookContext) {
     let entity = context.entity;
     let Some(selected) = world.get::<SelectedOption<V>>(entity) else {

@@ -1,6 +1,6 @@
 use super::components::{
-    LabelSpawner, Select, SelectArrow, SelectContent, SelectKey, SelectLabels, SelectList,
-    SelectOptions, SelectPopup, SelectRequest, SelectRow, SelectTrigger, SelectedIndex, arrow_node,
+    InitialOption, LabelSpawner, Select, SelectArrow, SelectContent, SelectKey, SelectLabels,
+    SelectList, SelectOptions, SelectPopup, SelectRequest, SelectRow, SelectTrigger, arrow_node,
     arrow_transform, content_node,
 };
 use crate::view::{button::ButtonLabel, pass_through};
@@ -87,12 +87,11 @@ impl<V: SelectKey> SelectBuilder<V> {
             placeholder,
             selected,
         } = self;
-        let index = selected.and_then(|wanted| values.iter().position(|value| *value == wanted));
         let option_labels = labels.clone();
         let request = choice_request(values.clone());
         (
             Select,
-            SelectedIndex { index },
+            InitialOption { value: selected },
             SelectOptions { values },
             request,
             SelectLabels {
