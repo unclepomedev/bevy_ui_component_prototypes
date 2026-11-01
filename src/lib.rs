@@ -3,9 +3,12 @@ mod style;
 mod view;
 
 // Theme
-pub use crate::style::{
-    state::{CheckedColors, StateColors},
-    theme::{GlobalTheme, Theme},
+pub use crate::{
+    style::{
+        state::{CheckedColors, StateColors},
+        theme::{GlobalTheme, Theme},
+    },
+    view::Choice,
 };
 
 // Focus

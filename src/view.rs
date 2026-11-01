@@ -1,4 +1,5 @@
 mod button;
+mod choice;
 mod focus;
 mod icon_button;
 mod picking;
@@ -10,6 +11,7 @@ mod toast;
 mod toggle_switch;
 
 pub use button::{ButtonSize, ButtonVariant};
+pub use choice::Choice;
 pub use focus::{FocusIndicator, ShowsFocus};
 pub use icon_button::{IconButton, IconButtonBuilder, icon_button};
 pub use slider::{SliderBuilder, SliderEditing, ValueSlider, slider};
