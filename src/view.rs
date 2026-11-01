@@ -1,8 +1,10 @@
+mod bar_paint;
 mod button;
 mod choice;
 mod focus;
 mod icon_button;
 mod picking;
+mod progress;
 mod slider;
 mod style_targets;
 mod tab_order;
@@ -14,6 +16,9 @@ pub use button::{ButtonSize, ButtonVariant};
 pub use choice::Choice;
 pub use focus::{FocusIndicator, ShowsFocus};
 pub use icon_button::{IconButton, IconButtonBuilder, icon_button};
+pub use progress::{
+    ProgressBar, ProgressBarBuilder, ProgressRange, ProgressValue, ProgressVariant, progress_bar,
+};
 pub use slider::{SliderBuilder, SliderEditing, ValueSlider, slider};
 pub use toast::{
     Toast, ToastBuilder, ToastHost, ToastHostBuilder, ToastStack, ToastVariant, toast, toast_host,
@@ -23,6 +28,7 @@ pub use toggle_switch::{ToggleSwitch, ToggleSwitchBuilder, toggle_switch};
 pub(crate) use button::ButtonStylePlugin;
 pub(crate) use focus::ShowsFocusPlugin;
 pub(crate) use picking::pass_through;
+pub(crate) use progress::ProgressStylePlugin;
 pub(crate) use slider::SliderStylePlugin;
 pub(crate) use tab_order::{KeyboardNavigable, TabOrderPlugin};
 pub(crate) use toast::ToastPlugin;

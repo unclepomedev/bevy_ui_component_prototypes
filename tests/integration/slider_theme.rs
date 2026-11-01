@@ -3,7 +3,10 @@
 //!
 //! Real pointer picking, layout, and dragging are covered by `examples/slider_check.rs`.
 
-use crate::probe::probe_theme;
+use crate::{
+    gradient::{painted_blocks, stops},
+    probe::probe_theme,
+};
 use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
@@ -17,7 +20,7 @@ use bevy::{
     },
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SliderEditing, SliderSegments, SliderShape, StateColors, Theme,
+    BarSegments, GlobalTheme, SliderEditing, SliderShape, StateColors, Theme,
     UiComponentPrototypesPlugin, slider,
 };
 
@@ -764,7 +767,7 @@ fn blocks_theme() -> Theme {
     let mut theme = probe_theme();
     theme.slider.shape = SliderShape {
         rounded: false,
-        segments: Some(SliderSegments {
+        segments: Some(BarSegments {
             count: 10,
             gap: 0.2,
         }),
@@ -844,19 +847,4 @@ fn thumb_part(app: &App, slider: Entity) -> Entity {
 
 fn travel_part(app: &App, slider: Entity) -> Entity {
     app.world().get::<Children>(slider).unwrap()[1]
-}
-
-/// The stops of the part's only gradient; empty when it has none.
-fn stops(app: &App, part: Entity) -> Vec<ColorStop> {
-    let gradient = app.world().get::<BackgroundGradient>(part).unwrap();
-    match gradient.0.first() {
-        Some(Gradient::Linear(linear)) => linear.stops.clone(),
-        Some(other) => panic!("not a linear gradient: {other:?}"),
-        None => Vec::new(),
-    }
-}
-
-/// How many blocks `stops` paints with `color` (each block is a pair of stops of that color).
-fn painted_blocks(stops: &[ColorStop], color: Color) -> usize {
-    stops.iter().filter(|stop| stop.color == color).count() / 2
 }

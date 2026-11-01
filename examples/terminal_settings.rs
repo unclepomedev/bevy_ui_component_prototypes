@@ -6,7 +6,7 @@
 //!   - A green-on-black theme: ghost buttons (no background, no border, no ring) made only from `Theme`
 //!     colors and the system monospace font. The selected language is a `Primary` button and the others
 //!     are `Neutral`, so the app changes the variant to move the selection.
-//!   - The crate's slider, shaped by `SliderShape` into ten square blocks (`SliderSegments`). The brackets
+//!   - The crate's slider, shaped by `SliderShape` into ten square blocks. The brackets
 //!     are plain text next to it. The app rounds the requested value to a notch of 10 and writes the `NN%` text itself.
 //!   - `[ON]` is a ghost button whose label the app rewrites.
 //!   - Focus is shown by a `>` marker, not by a ring: the marker follows the crate's `ShowsFocus`. Up / Down
@@ -33,8 +33,8 @@ use bevy::{
     ui_widgets::{Activate, SliderValue, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant,
-    ButtonVariantId, FocusRing, GlobalTheme, ShowsFocus, SliderSegments, SliderShape, SliderStyle,
+    BarSegments, ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
+    ButtonVariant, ButtonVariantId, FocusRing, GlobalTheme, ShowsFocus, SliderShape, SliderStyle,
     StateColors, Theme, UiComponentPrototypesPlugin, icon_button, slider,
 };
 use std::collections::HashMap;
@@ -111,7 +111,7 @@ fn terminal_theme() -> Theme {
             shape: SliderShape {
                 rail_height: 18.0,
                 rounded: false,
-                segments: Some(SliderSegments {
+                segments: Some(BarSegments {
                     count: 10,
                     gap: 0.2,
                 }),

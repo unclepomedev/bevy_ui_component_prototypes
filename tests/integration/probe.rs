@@ -4,8 +4,9 @@
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
-    CheckedColors, FocusRing, SliderShape, SliderStyle, StateColors, SwitchStyle, Theme,
-    ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId,
+    CheckedColors, FocusRing, ProgressShape, ProgressStyle, ProgressStyles, ProgressVariantId,
+    SliderShape, SliderStyle, StateColors, SwitchStyle, Theme, ToastMetrics, ToastShape,
+    ToastStyle, ToastStyles, ToastVariantId,
 };
 use std::collections::HashMap;
 
@@ -53,6 +54,13 @@ pub fn probe_theme() -> Theme {
             focus_ring: ring(0.5),
             editing_ring: Color::srgb(0.5, 0.4, 0.4),
             editing_thumb: Color::srgb(0.5, 0.4, 0.5),
+        },
+        progress: ProgressStyles {
+            base: progress_style(0.1),
+            named: HashMap::from([
+                (ProgressVariantId::PRIMARY, progress_style(0.2)),
+                (ProgressVariantId::DANGER, progress_style(0.3)),
+            ]),
         },
         toasts: ToastStyles {
             base: toast_style(0.1),
@@ -120,6 +128,19 @@ fn toast_style(seed: f32) -> ToastStyle {
         shape: ToastShape {
             border_width: 3.0,
             radius: 5.0,
+        },
+    }
+}
+
+/// A progress style with its own colors and a height that is not the default (12); `seed` tells one style from another.
+fn progress_style(seed: f32) -> ProgressStyle {
+    ProgressStyle {
+        rail: Color::srgb(seed, 0.1, 0.1),
+        fill: Color::srgb(seed, 0.5, 0.5),
+        shape: ProgressShape {
+            height: 9.0,
+            rounded: true,
+            segments: None,
         },
     }
 }
