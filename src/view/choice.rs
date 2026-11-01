@@ -2,9 +2,7 @@ use bevy::prelude::*;
 use std::{collections::HashMap, fmt::Debug, hash::Hash};
 
 /// Which entry of a theme a widget takes: the base one, or the one defined under a name.
-///
 /// Each widget names its own `Id` type, so an id of one widget cannot be given to another.
-/// Use the aliases (`ButtonVariant`, `ButtonSize`, `ToastVariant`).
 #[derive(Component, Clone, Copy, Debug, PartialEq, Default)]
 pub enum Choice<Id: Send + Sync + 'static> {
     #[default]
