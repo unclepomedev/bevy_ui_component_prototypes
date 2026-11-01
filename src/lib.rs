@@ -34,8 +34,17 @@ pub use crate::{
 
 // Slider
 pub use crate::{
-    style::slider::{SliderSegments, SliderShape, SliderStyle},
+    style::slider::{BarSegments, SliderShape, SliderStyle},
     view::{SliderBuilder, SliderEditing, ValueSlider, slider},
+};
+
+// Progress bar
+pub use crate::{
+    style::progress::{ProgressShape, ProgressStyle, ProgressStyles, ProgressVariantId},
+    view::{
+        ProgressBar, ProgressBarBuilder, ProgressRange, ProgressValue, ProgressVariant,
+        progress_bar,
+    },
 };
 
 // Toast
@@ -48,8 +57,8 @@ pub use crate::{
 };
 
 use crate::view::{
-    ButtonStylePlugin, ShowsFocusPlugin, SliderStylePlugin, SwitchStylePlugin, TabOrderPlugin,
-    ToastPlugin,
+    ButtonStylePlugin, ProgressStylePlugin, ShowsFocusPlugin, SliderStylePlugin, SwitchStylePlugin,
+    TabOrderPlugin, ToastPlugin,
 };
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
@@ -75,6 +84,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             TabOrderPlugin,
             ShowsFocusPlugin,
             ToastPlugin,
+            ProgressStylePlugin,
         ));
     }
 

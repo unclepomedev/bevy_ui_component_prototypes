@@ -1,5 +1,6 @@
 use super::{
     button::{ButtonSizes, ButtonStyles},
+    progress::ProgressStyles,
     slider::SliderStyle,
     switch::SwitchStyle,
     toast::{ToastMetrics, ToastStyles},
@@ -12,6 +13,7 @@ pub struct Theme {
     pub button_sizes: ButtonSizes,
     pub switch: SwitchStyle,
     pub slider: SliderStyle,
+    pub progress: ProgressStyles,
     pub toasts: ToastStyles,
     pub toast: ToastMetrics,
     pub font: FontSource,

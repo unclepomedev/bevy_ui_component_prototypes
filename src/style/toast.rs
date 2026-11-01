@@ -22,8 +22,7 @@ impl Default for ToastShape {
     }
 }
 
-/// Colors and shape of one kind of toast. A toast is not interactive, so each color is a single value.
-/// The alpha of a color is kept: the fade multiplies it.
+/// Colors and shape of one kind of toast. The alpha of a color is kept: the fade multiplies it.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ToastStyle {
     pub bg: Color,

@@ -17,7 +17,7 @@ use bevy::{
     },
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SliderEditing, SliderSegments, SliderShape, StateColors, Theme,
+    BarSegments, GlobalTheme, SliderEditing, SliderShape, StateColors, Theme,
     UiComponentPrototypesPlugin, slider,
 };
 
@@ -764,7 +764,7 @@ fn blocks_theme() -> Theme {
     let mut theme = probe_theme();
     theme.slider.shape = SliderShape {
         rounded: false,
-        segments: Some(SliderSegments {
+        segments: Some(BarSegments {
             count: 10,
             gap: 0.2,
         }),
