@@ -8,8 +8,8 @@
 //! What to verify:
 //!   1. "Auto" fills from empty to full in four seconds and starts over. The fill ends exactly at the value.
 //!   2. "Manual": [Up] / [Down] move the value by 10%. Holding either end does not overflow the rail.
-//!   3. "HP" (0..=100): [D] takes 10 off, [H] gives 10 back. At 30% and below the bar turns red
-//!      (this example swaps the variant), and above it, it is green again. The text on the left shows the number.
+//!   3. "HP" (0..=100): [D] takes 10 off, [H] gives 10 back. Below 30% the bar turns red
+//!      (this example swaps the variant), and from 30% up it is green again. The text on the left shows the number.
 //!   4. "Blocks" is a ten-block bar from its panel's own `Theme` (square, thicker). It follows "Auto",
 //!      and a block lights once the value has reached its end.
 //!   5. [T] swaps the global theme (the default variant gets an orange fill and a dark rail).
