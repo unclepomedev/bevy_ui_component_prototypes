@@ -51,7 +51,7 @@ pub struct SelectedIndex {
 /// The chosen option, by value. Insert it on a [`Select`] built with the same `V`; removing it shows the placeholder.
 /// A value that is not one of the options shows the placeholder too.
 #[derive(Component, Clone, Debug, PartialEq)]
-#[component(on_insert = index_from_value::<V>, on_remove = clear_index)]
+#[component(immutable, on_insert = index_from_value::<V>, on_remove = clear_index)]
 pub struct SelectedOption<V: SelectKey> {
     pub value: V,
 }
