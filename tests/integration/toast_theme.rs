@@ -3,7 +3,10 @@
 //! Colors, sizes and the theme come with the style sync; the slide and the real screen are covered by
 //! `examples/toast_check.rs`.
 
-use crate::{probe::probe_theme, support::test_app};
+use crate::{
+    probe::probe_theme,
+    support::{bg, border_color, red, test_app},
+};
 use bevy::{picking::Pickable, prelude::*, time::TimeUpdateStrategy};
 use bevy_ui_component_prototypes::{
     GlobalTheme, Theme, Toast, ToastHost, ToastStack, ToastVariant, ToastVariantId, toast,
@@ -821,10 +824,6 @@ fn spawn_success_under(app: &mut App, parent: Entity) -> Entity {
     settle(app, toast)
 }
 
-fn red() -> Color {
-    Color::srgb(0.9, 0.1, 0.1)
-}
-
 fn success_bg() -> Color {
     probe_theme().toasts.named[&ToastVariantId::SUCCESS].bg
 }
@@ -839,14 +838,6 @@ fn red_success_theme() -> Theme {
         .unwrap()
         .bg = red();
     theme
-}
-
-fn bg(app: &App, toast: Entity) -> Color {
-    app.world().get::<BackgroundColor>(toast).unwrap().0
-}
-
-fn border_color(app: &App, toast: Entity) -> BorderColor {
-    *app.world().get::<BorderColor>(toast).unwrap()
 }
 
 fn row_gap(app: &App, host: Entity) -> Val {

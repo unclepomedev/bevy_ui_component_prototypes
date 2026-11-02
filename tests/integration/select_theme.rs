@@ -2,7 +2,10 @@
 //! the popup and its rows, opening and closing, and theme resolution.
 //! The pointer and the keys are covered by `examples/select_check.rs`.
 
-use crate::{probe::probe_theme, support::test_app};
+use crate::{
+    probe::probe_theme,
+    support::{bg, outline, red, test_app},
+};
 use accesskit::{HasPopup, NodeId, Role};
 use bevy::{
     a11y::AccessibilityNode,
@@ -1725,10 +1728,6 @@ fn spawn_fruit_under(app: &mut App, parent: Entity) -> Entity {
         .id()
 }
 
-fn red() -> Color {
-    Color::srgb(0.9, 0.1, 0.1)
-}
-
 /// The probe theme with a red trigger.
 fn red_trigger_theme() -> Theme {
     let mut theme = probe_theme();
@@ -1949,14 +1948,6 @@ fn trigger_name(app: &App, root: Entity) -> Option<String> {
 
 fn index(app: &App, root: Entity) -> Option<usize> {
     app.world().get::<SelectedIndex>(root).unwrap().index
-}
-
-fn bg(app: &App, entity: Entity) -> Color {
-    app.world().get::<BackgroundColor>(entity).unwrap().0
-}
-
-fn outline(app: &App, entity: Entity) -> Outline {
-    *app.world().get::<Outline>(entity).unwrap()
 }
 
 fn label_color(app: &App, label: Entity) -> Color {

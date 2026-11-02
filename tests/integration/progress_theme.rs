@@ -6,7 +6,7 @@
 use crate::{
     gradient::{painted_blocks, stops},
     probe::probe_theme,
-    support::test_app,
+    support::{node, red, test_app},
 };
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, picking::Pickable, prelude::*};
@@ -471,10 +471,6 @@ fn passes_through(pickable: &Pickable) -> bool {
     !pickable.should_block_lower && !pickable.is_hoverable
 }
 
-fn red() -> Color {
-    Color::srgb(0.9, 0.1, 0.1)
-}
-
 /// The probe theme with a red fill for the base style.
 fn red_fill_theme() -> Theme {
     let mut theme = probe_theme();
@@ -510,10 +506,6 @@ fn fill(app: &App, bar: Entity) -> Color {
 
 fn fill_width(app: &App, bar: Entity) -> Val {
     node(app, fill_part(app, bar)).width
-}
-
-fn node(app: &App, entity: Entity) -> Node {
-    app.world().get::<Node>(entity).unwrap().clone()
 }
 
 fn numbers(app: &App, bar: Entity) -> (Option<f64>, Option<f64>, Option<f64>) {

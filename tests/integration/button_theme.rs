@@ -2,7 +2,10 @@
 //!
 //! Real pointer picking, layout, and text shaping are not covered by `examples/button_check.rs`.
 
-use crate::{probe::probe_theme, support::test_app};
+use crate::{
+    probe::probe_theme,
+    support::{bg, border_color, node, outline, test_app},
+};
 use bevy::{
     a11y::AccessibilityNode,
     asset::uuid_handle,
@@ -876,10 +879,6 @@ fn focus(app: &mut App, button: Entity, visible: bool) {
     app.insert_resource(InputFocusVisible(visible));
 }
 
-fn outline(app: &App, button: Entity) -> Outline {
-    *app.world().get::<Outline>(button).unwrap()
-}
-
 fn spawn_bundle() -> impl Bundle {
     icon_button()
         .label("button")
@@ -898,14 +897,6 @@ fn navigate(app: &mut App, from: Entity, action: NavAction) -> Entity {
         })
         .unwrap()
         .expect("tab navigation finds a target")
-}
-
-fn bg(app: &App, button: Entity) -> Color {
-    app.world().get::<BackgroundColor>(button).unwrap().0
-}
-
-fn border_color(app: &App, button: Entity) -> BorderColor {
-    *app.world().get::<BorderColor>(button).unwrap()
 }
 
 fn label_color(app: &App, button: Entity) -> Color {
@@ -982,10 +973,6 @@ fn spawn_sized(app: &mut App, size: impl Into<ButtonSize>) -> Entity {
                 .build(),
         )
         .id()
-}
-
-fn node(app: &App, button: Entity) -> Node {
-    app.world().get::<Node>(button).unwrap().clone()
 }
 
 /// The `ROW` size of `roomy_theme`: every field differs from the probe theme's base size.

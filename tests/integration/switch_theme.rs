@@ -3,7 +3,10 @@
 //!
 //! Real pointer picking, layout and the sliding look are covered by `examples/toggle_check.rs`.
 
-use crate::{probe::probe_theme, support::test_app};
+use crate::{
+    probe::probe_theme,
+    support::{outline, red, test_app},
+};
 use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
@@ -426,10 +429,6 @@ fn spawn_switch_checked_under(app: &mut App, parent: Entity) -> Entity {
         .id()
 }
 
-fn red() -> Color {
-    Color::srgb(0.9, 0.1, 0.1)
-}
-
 /// The probe theme with a red checked track.
 fn red_on_theme() -> Theme {
     let mut theme = probe_theme();
@@ -440,10 +439,6 @@ fn red_on_theme() -> Theme {
 fn focus(app: &mut App, switch: Entity, visible: bool) {
     app.insert_resource(InputFocus::from_entity(switch));
     app.insert_resource(InputFocusVisible(visible));
-}
-
-fn outline(app: &App, switch: Entity) -> Outline {
-    *app.world().get::<Outline>(switch).unwrap()
 }
 
 fn tab_index(app: &App, switch: Entity) -> i32 {

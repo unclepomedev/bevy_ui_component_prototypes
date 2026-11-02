@@ -12,3 +12,24 @@ pub fn test_app() -> App {
     app.insert_resource(GlobalTheme(probe_theme()));
     app
 }
+
+/// A red that no theme has by default: a test that sees it knows the value came from the test.
+pub fn red() -> Color {
+    Color::srgb(0.9, 0.1, 0.1)
+}
+
+pub fn bg(app: &App, entity: Entity) -> Color {
+    app.world().get::<BackgroundColor>(entity).unwrap().0
+}
+
+pub fn outline(app: &App, entity: Entity) -> Outline {
+    *app.world().get::<Outline>(entity).unwrap()
+}
+
+pub fn border_color(app: &App, entity: Entity) -> BorderColor {
+    *app.world().get::<BorderColor>(entity).unwrap()
+}
+
+pub fn node(app: &App, entity: Entity) -> Node {
+    app.world().get::<Node>(entity).unwrap().clone()
+}

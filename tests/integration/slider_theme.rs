@@ -6,7 +6,7 @@
 use crate::{
     gradient::{painted_blocks, stops},
     probe::probe_theme,
-    support::test_app,
+    support::{node, outline, red, test_app},
 };
 use accesskit::Role;
 use bevy::{
@@ -726,10 +726,6 @@ fn spawn_slider_under(app: &mut App, parent: Entity) -> Entity {
         .id()
 }
 
-fn red() -> Color {
-    Color::srgb(0.9, 0.1, 0.1)
-}
-
 /// The probe theme with a red fill.
 fn red_fill_theme() -> Theme {
     let mut theme = probe_theme();
@@ -774,10 +770,6 @@ fn focus(app: &mut App, slider: Entity, visible: bool) {
     app.insert_resource(InputFocusVisible(visible));
 }
 
-fn outline(app: &App, slider: Entity) -> Outline {
-    *app.world().get::<Outline>(slider).unwrap()
-}
-
 fn tab_index(app: &App, slider: Entity) -> i32 {
     app.world().get::<TabIndex>(slider).unwrap().0
 }
@@ -813,10 +805,6 @@ fn fill_width(app: &App, slider: Entity) -> Val {
 
 fn thumb_left(app: &App, slider: Entity) -> Val {
     app.world().get::<Node>(parts(app, slider).2).unwrap().left
-}
-
-fn node(app: &App, entity: Entity) -> Node {
-    app.world().get::<Node>(entity).unwrap().clone()
 }
 
 fn px(val: Val) -> f32 {
