@@ -1,8 +1,8 @@
 //! Tests of The rows of the popup.
 
 use super::{
-    label_color, list, menu_event, point_at, row_label, rows, spawn_fruit, spawn_fruit_under,
-    trigger,
+    label_color, list, menu_event, point_at, pointer_moves_over, row_label, rows, spawn_fruit,
+    spawn_fruit_under, trigger,
 };
 use crate::{
     probe::probe_theme,
@@ -149,7 +149,7 @@ fn the_pointer_over_a_row_of_an_open_list_colors_it_as_the_highlighted_one() {
     let style = probe_theme().select;
     menu_event(&mut app, trigger, MenuAction::Toggle);
 
-    point_at(&mut app, rows[1], PickingInteraction::Hovered);
+    pointer_moves_over(&mut app, rows[1]);
 
     assert_eq!(bg(&app, rows[1]), style.option_bg.unselected.highlighted);
     assert_eq!(

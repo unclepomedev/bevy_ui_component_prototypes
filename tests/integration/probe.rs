@@ -81,6 +81,8 @@ pub fn probe_theme() -> Theme {
                 unselected: option_tones(0.6, 0.3),
                 selected: option_tones(0.6, 0.4),
             },
+            scroll_track: Color::srgb(0.6, 0.5, 0.1),
+            scroll_thumb: Color::srgb(0.6, 0.5, 0.2),
         },
         select_metrics: SelectMetrics {
             trigger: ButtonMetrics {
@@ -96,6 +98,7 @@ pub fn probe_theme() -> Theme {
             popup_gap: 7.0,
             popup_z_index: 42,
             max_visible_options: 2,
+            scroll_indicator_width: 5.0,
         },
         toasts: ToastStyles {
             base: toast_style(0.1),

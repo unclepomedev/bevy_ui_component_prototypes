@@ -1,7 +1,7 @@
 use super::components::{
     InitialOption, LabelSpawner, Select, SelectArrow, SelectContent, SelectKey, SelectLabels,
-    SelectList, SelectOptions, SelectPopup, SelectRequest, SelectRow, SelectTrigger, arrow_node,
-    arrow_transform, content_node,
+    SelectList, SelectOptions, SelectPopup, SelectRequest, SelectRow, SelectScrollThumb,
+    SelectScrollTrack, SelectTrigger, arrow_node, arrow_transform, content_node,
 };
 use crate::view::{button::ButtonLabel, pass_through};
 use bevy::{
@@ -157,6 +157,9 @@ fn spawn_popup(parent: &mut RelatedSpawner<ChildOf>, labels: &[LabelSpawner], di
                 }
                 row.with_children(|row| spawn_option_label(row, spawn_label));
             }
+        });
+        popup.spawn(SelectScrollTrack).with_children(|track| {
+            track.spawn(SelectScrollThumb);
         });
     });
 }

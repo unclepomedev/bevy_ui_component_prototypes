@@ -20,10 +20,12 @@
 //!      focus goes back to the box. The ring is there after the keys, and not after a click.
 //!   8. Choose the option that is already chosen: the list closes and nothing changes.
 //!   9. Move the pointer over the rows of an open list: the highlight follows it, one row at a time. The arrow keys
-//!      move the same highlight, and Enter chooses the highlighted row.
+//!      move the same highlight, and Enter chooses the highlighted row. Rest the pointer on the list and press the
+//!      arrow keys: the highlight does not jump back to the pointer when the rows scroll under it.
 //!  10. "Many options" has 20 options and the list shows 8 of them: the wheel scrolls it, and the arrow keys,
-//!      Home and End bring the highlighted row into view. The list does not scroll to the chosen option when it
-//!      opens yet.
+//!      Home and End bring the highlighted row into view. The list opens at the chosen option, or at its top when
+//!      nothing is chosen: choose Option 15, scroll up with the wheel, close the list and open it again.
+//!      A thin bar at the right edge of the list shows where it is: it is not there for the lists that fit.
 //!  11. "Disabled" is gray, does not react to the pointer or to Enter, and Tab skips it.
 //!  12. "Some disabled" has Banana disabled: its row is gray and has no highlight, and clicking it or pressing
 //!      Enter on it does nothing: the list stays open. The arrow keys still stop on it.
@@ -39,7 +41,8 @@ use bevy::{
     ui_widgets::ValueChange,
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SelectKey, SelectedOption, Theme, UiComponentPrototypesPlugin, select,
+    GlobalTheme, SelectBuilder, SelectKey, SelectedOption, Theme, UiComponentPrototypesPlugin,
+    select,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -86,8 +89,49 @@ fn main() {
         .run();
 }
 
-fn label(text: &'static str) -> impl Bundle + Clone {
+fn label(text: &'static str) -> Text {
     Text::new(text)
+}
+
+fn fruit_options() -> [(Fruit, Text); 3] {
+    Fruit::ALL.map(|fruit| (fruit, label(fruit.name())))
+}
+
+/// The select that most rows start from. The rows add what they show of the API to it.
+fn fruits() -> SelectBuilder<Fruit> {
+    select()
+        .placeholder(label("Pick a fruit"))
+        .options(fruit_options())
+}
+
+/// The options come from an iterator, which `.options(...)` takes as it is.
+fn from_an_iterator() -> impl Bundle {
+    select::<Fruit>()
+        .placeholder(label("Nothing yet"))
+        .options(
+            Fruit::ALL
+                .into_iter()
+                .map(|fruit| (fruit, label(fruit.name()))),
+        )
+        .build()
+}
+
+/// More options than the list shows: it scrolls.
+fn many_options() -> impl Bundle {
+    select::<u32>()
+        .placeholder(label("Pick a number"))
+        .options((1..=20).map(|n| (n, Text::new(format!("Option {n}")))))
+        .build()
+}
+
+/// An option can be disabled one by one with `.option_disabled(...)`, or all at once like here.
+fn some_disabled() -> impl Bundle {
+    select::<Fruit>()
+        .placeholder(label("Pick a fruit"))
+        .options_with_disabled(
+            Fruit::ALL.map(|fruit| (fruit, label(fruit.name()), fruit == Fruit::Banana)),
+        )
+        .build()
 }
 
 fn setup(mut commands: Commands) {
@@ -107,72 +151,23 @@ fn setup(mut commands: Commands) {
             TabGroup::default(),
         ))
         .with_children(|root| {
-            spawn_row(
-                root,
-                "Fruit",
-                (
-                    select::<Fruit>()
-                        .placeholder(label("Pick a fruit"))
-                        .options(Fruit::ALL.map(|fruit| (fruit, label(fruit.name()))))
-                        .build(),
-                    Driven,
-                ),
-            );
+            spawn_row(root, "Fruit", (fruits().build(), Driven));
             spawn_row(
                 root,
                 "Preselected",
-                select::<Fruit>()
-                    .placeholder(label("Pick a fruit"))
-                    .options(Fruit::ALL.map(|fruit| (fruit, label(fruit.name()))))
-                    .selected(Fruit::Banana)
-                    .build(),
+                fruits().selected(Fruit::Banana).build(),
             );
-            spawn_row(
-                root,
-                "From an iterator",
-                (
-                    select::<Fruit>()
-                        .placeholder(label("Nothing yet"))
-                        .options(
-                            Fruit::ALL
-                                .into_iter()
-                                .map(|fruit| (fruit, label(fruit.name()))),
-                        )
-                        .build(),
-                    Driven,
-                ),
-            );
-            spawn_row(
-                root,
-                "Many options",
-                select::<u32>()
-                    .placeholder(label("Pick a number"))
-                    .options((1..=20).map(|n| (n, Text::new(format!("Option {n}")))))
-                    .build(),
-            );
+            spawn_row(root, "From an iterator", (from_an_iterator(), Driven));
+            spawn_row(root, "Many options", many_options());
             spawn_row(
                 root,
                 "Disabled",
                 (
-                    select::<Fruit>()
-                        .placeholder(label("Pick a fruit"))
-                        .options(Fruit::ALL.map(|fruit| (fruit, label(fruit.name()))))
-                        .selected(Fruit::Cherry)
-                        .build(),
+                    fruits().selected(Fruit::Cherry).build(),
                     InteractionDisabled,
                 ),
             );
-            spawn_row(
-                root,
-                "Some disabled",
-                select::<Fruit>()
-                    .placeholder(label("Pick a fruit"))
-                    .options_with_disabled(
-                        Fruit::ALL
-                            .map(|fruit| (fruit, label(fruit.name()), fruit == Fruit::Banana)),
-                    )
-                    .build(),
-            );
+            spawn_row(root, "Some disabled", some_disabled());
             spawn_scoped_panel(root);
             root.spawn((
                 Text::new(
@@ -237,13 +232,7 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
                 ..default()
             })
             .with_children(|slot| {
-                slot.spawn(
-                    select::<Fruit>()
-                        .placeholder(label("Pick a fruit"))
-                        .options(Fruit::ALL.map(|fruit| (fruit, label(fruit.name()))))
-                        .selected(Fruit::Apple)
-                        .build(),
-                );
+                slot.spawn(fruits().selected(Fruit::Apple).build());
             });
         });
     });

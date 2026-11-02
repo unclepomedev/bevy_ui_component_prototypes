@@ -34,7 +34,7 @@ fn the_popup_is_a_hidden_menu_popup_next_to_the_trigger() {
     let popup = popup(&app, root);
     assert!(world.get::<MenuPopup>(popup).is_some());
     assert_eq!(world.get::<Visibility>(popup), Some(&Visibility::Hidden));
-    assert_eq!(world.get::<Children>(popup).map(|c| c.len()), Some(1));
+    assert_eq!(world.get::<Children>(popup).map(|c| c.len()), Some(2));
 }
 
 #[test]
