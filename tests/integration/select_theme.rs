@@ -713,6 +713,7 @@ fn the_name_given_to_the_select_is_the_name_of_the_trigger() {
     let root = named_fruit(&mut app);
     app.update();
     assert_eq!(trigger_name(&app, root), Some("Fruit".to_string()));
+    assert!(app.world().get::<AccessibilityNode>(root).is_none());
 }
 
 #[test]
@@ -738,6 +739,7 @@ fn a_name_that_is_changed_changes_the_name_of_the_trigger() {
         .insert(AccessibleLabel::new("Berry"));
     app.update();
     assert_eq!(trigger_name(&app, root), Some("Berry".to_string()));
+    assert!(app.world().get::<AccessibilityNode>(root).is_none());
 }
 
 #[test]
