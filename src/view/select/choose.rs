@@ -1,9 +1,10 @@
 use super::{
     components::{Select, SelectList, SelectRequest, SelectRow},
-    open::OptionCommitted,
+    open::CloseList,
 };
 use bevy::{
     prelude::*,
+    ui::InteractionDisabled,
     ui_widgets::{ReselectListRow, ValueChange},
 };
 
@@ -18,7 +19,7 @@ impl Plugin for SelectChoosePlugin {
 fn on_list_change(
     change: On<ValueChange<Entity>>,
     lists: Query<(), With<SelectList>>,
-    rows: Query<&SelectRow>,
+    rows: Query<(&SelectRow, Has<InteractionDisabled>)>,
     parents: Query<&ChildOf>,
     selects: Query<(), With<Select>>,
     requests: Query<&SelectRequest>,
@@ -33,7 +34,8 @@ fn on_list_change(
     {
         return;
     }
-    let Ok(row) = rows.get(change.value) else {
+    // A disabled option is not a choice, however the list was asked.
+    let Ok((row, false)) = rows.get(change.value) else {
         return;
     };
     let Some(select) = select_above(change.source, &parents, &selects) else {
@@ -43,7 +45,7 @@ fn on_list_change(
         return;
     };
     (request.emit)(&mut commands, select, row.index);
-    commands.trigger(OptionCommitted { select });
+    commands.trigger(CloseList { select });
 }
 
 /// The chosen option was chosen again: nothing changes, and the list is done.
@@ -64,7 +66,7 @@ fn on_reselect(
         return;
     }
     if let Some(select) = select_above(reselect.source, &parents, &selects) {
-        commands.trigger(OptionCommitted { select });
+        commands.trigger(CloseList { select });
     }
 }
 

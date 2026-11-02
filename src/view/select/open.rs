@@ -3,6 +3,7 @@ use bevy::{
     ecs::system::SystemParam,
     input_focus::{FocusCause, InputFocus, InputFocusVisible, tab_navigation::NavAction},
     prelude::*,
+    ui::InteractionDisabled,
     ui_widgets::{MenuAction, MenuEvent, MenuFocusState},
 };
 
@@ -10,9 +11,10 @@ use bevy::{
 #[derive(Component, Clone, Copy, Default)]
 pub(super) struct SelectOpen;
 
-/// An option of the list was chosen, or the chosen one was chosen again: the list has done its job.
+/// Closes the list of a select and gives the focus back to its trigger, leaving the focus indicator as it is.
+/// It is sent after an option was chosen (or the chosen one was chosen again), and when the select is disabled.
 #[derive(EntityEvent, Clone, Copy, Debug)]
-pub(super) struct OptionCommitted {
+pub(super) struct CloseList {
     #[event_target]
     pub(super) select: Entity,
 }
@@ -20,8 +22,7 @@ pub(super) struct OptionCommitted {
 pub(super) struct SelectOpenPlugin;
 impl Plugin for SelectOpenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(on_menu_event)
-            .add_observer(on_option_committed);
+        app.add_observer(on_menu_event).add_observer(on_close_list);
     }
 }
 
@@ -29,7 +30,7 @@ impl Plugin for SelectOpenPlugin {
 /// as they travel up; the select is where they stop.
 fn on_menu_event(
     mut event: On<MenuEvent>,
-    selects: Query<Has<SelectOpen>, With<Select>>,
+    selects: Query<(Has<SelectOpen>, Has<InteractionDisabled>), With<Select>>,
     children: Query<&Children>,
     popups: Query<(), With<SelectPopup>>,
     triggers: Query<(), With<SelectTrigger>>,
@@ -37,7 +38,7 @@ fn on_menu_event(
     mut commands: Commands,
 ) {
     let select = event.event_target();
-    let Ok(open) = selects.get(select) else {
+    let Ok((open, disabled)) = selects.get(select) else {
         return;
     };
     event.propagate(false);
@@ -46,6 +47,7 @@ fn on_menu_event(
     };
 
     match event.action {
+        MenuAction::Open(_) | MenuAction::Toggle if disabled => {}
         MenuAction::Open(nav) if !open => open_popup(&mut commands, select, popup, nav),
         MenuAction::Toggle if !open => open_popup(&mut commands, select, popup, NavAction::First),
         MenuAction::Toggle | MenuAction::CloseAll if open => {
@@ -60,10 +62,10 @@ fn on_menu_event(
     }
 }
 
-/// Closes the list after a choice and gives the focus back to the trigger, leaving the focus indicator as it is:
+/// Closes the list and gives the focus back to the trigger, leaving the focus indicator as it is:
 /// it is shown if the keys were used, and hidden if the pointer was.
-fn on_option_committed(
-    commit: On<OptionCommitted>,
+fn on_close_list(
+    close: On<CloseList>,
     selects: Query<Has<SelectOpen>, With<Select>>,
     children: Query<&Children>,
     popups: Query<(), With<SelectPopup>>,
@@ -71,9 +73,8 @@ fn on_option_committed(
     mut focus: FocusReturn,
     mut commands: Commands,
 ) {
-    let select = commit.select;
-    // A choice made while the list is closed (by the app, for instance) has nothing to close, and the focus
-    // is not ours to move.
+    let select = close.select;
+    // A list that is not open has nothing to close, and the focus is not ours to move.
     if !selects.get(select).is_ok_and(|open| open) {
         return;
     }

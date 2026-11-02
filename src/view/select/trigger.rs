@@ -72,7 +72,7 @@ pub(super) fn refresh_select_label(
 }
 
 /// Resolves each trigger's look from its theme and state and writes it to the trigger and its content.
-fn sync_select_style(
+pub(super) fn sync_select_style(
     mut lookup: ThemeLookup,
     mut ring: FocusRingTracker,
     mut targets: SelectTargets,
@@ -122,7 +122,7 @@ fn sync_select_style(
 /// What the sync reads from a trigger and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
-struct TriggerRow {
+pub(super) struct TriggerRow {
     interaction: &'static PickingInteraction,
     disabled: Has<InteractionDisabled>,
     bg: &'static mut BackgroundColor,
@@ -133,14 +133,14 @@ struct TriggerRow {
 
 /// What the sync writes besides the trigger node itself.
 #[derive(SystemParam)]
-struct SelectParts<'w, 's> {
+pub(super) struct SelectParts<'w, 's> {
     content: ButtonContent<'w, 's>,
     surface: ButtonSurface<'w, 's>,
 }
 
 /// Finds the triggers whose look may have changed from the last run.
 #[derive(SystemParam)]
-struct SelectTargets<'w, 's> {
+pub(super) struct SelectTargets<'w, 's> {
     changed: ChangedTriggers<'w, 's>,
     all: Query<'w, 's, Entity, With<SelectTrigger>>,
     triggers: Query<'w, 's, (), With<SelectTrigger>>,
