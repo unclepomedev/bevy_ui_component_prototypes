@@ -4,10 +4,10 @@
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
-    CheckedColors, FocusRing, ProgressShape, ProgressStyle, ProgressStyles, ProgressVariantId,
-    SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle, SliderShape, SliderStyle,
-    StateColors, SwitchStyle, Theme, ToastMetrics, ToastShape, ToastStyle, ToastStyles,
-    ToastVariantId,
+    CheckedColors, FocusRing, OptionColors, ProgressShape, ProgressStyle, ProgressStyles,
+    ProgressVariantId, SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle, SelectionColors,
+    SliderShape, SliderStyle, StateColors, SwitchStyle, Theme, ToastMetrics, ToastShape,
+    ToastStyle, ToastStyles, ToastVariantId,
 };
 use std::collections::HashMap;
 
@@ -73,13 +73,13 @@ pub fn probe_theme() -> Theme {
                     radius: 6.0,
                 },
             },
-            option_bg: CheckedColors {
-                unchecked: tones(0.6, 0.1),
-                checked: tones(0.6, 0.2),
+            option_bg: SelectionColors {
+                unselected: option_tones(0.6, 0.1),
+                selected: option_tones(0.6, 0.2),
             },
-            option_fg: CheckedColors {
-                unchecked: tones(0.6, 0.3),
-                checked: tones(0.6, 0.4),
+            option_fg: SelectionColors {
+                unselected: option_tones(0.6, 0.3),
+                selected: option_tones(0.6, 0.4),
             },
         },
         select_metrics: SelectMetrics {
@@ -143,6 +143,16 @@ fn tones(seed: f32, part: f32) -> StateColors {
         pressed: Color::srgb(seed, part, 0.3),
         disabled: Color::srgb(seed, part, 0.4),
         focused: Color::srgb(seed, part, 0.5),
+    }
+}
+
+/// The colors of an option row, none of them equal to another; `seed` and `part` tell one set from another.
+fn option_tones(seed: f32, part: f32) -> OptionColors {
+    OptionColors {
+        normal: Color::srgb(seed, part, 0.1),
+        pressed: Color::srgb(seed, part, 0.3),
+        disabled: Color::srgb(seed, part, 0.4),
+        highlighted: Color::srgb(seed, part, 0.5),
     }
 }
 

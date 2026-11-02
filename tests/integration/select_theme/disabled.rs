@@ -148,8 +148,8 @@ fn a_disabled_row_stays_gray_where_the_highlight_is() {
     app.update();
 
     let style = probe_theme().select;
-    assert_eq!(bg(&app, rows[1]), style.option_bg.unchecked.disabled);
-    assert_eq!(bg(&app, rows[0]), style.option_bg.unchecked.normal);
+    assert_eq!(bg(&app, rows[1]), style.option_bg.unselected.disabled);
+    assert_eq!(bg(&app, rows[0]), style.option_bg.unselected.normal);
 }
 
 #[test]

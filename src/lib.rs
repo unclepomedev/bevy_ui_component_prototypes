@@ -52,7 +52,9 @@ pub use crate::{
 
 // Select
 pub use crate::{
-    style::select::{SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle},
+    style::select::{
+        OptionColors, SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle, SelectionColors,
+    },
     view::{Select, SelectBuilder, SelectKey, SelectedIndex, SelectedOption, select},
 };
 
