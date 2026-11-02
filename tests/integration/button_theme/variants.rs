@@ -1,7 +1,9 @@
 //! Tests of variants.
 
-use crate::probe::probe_theme;
-use crate::support::{bg, test_app};
+use crate::{
+    probe::probe_theme,
+    support::{bg, test_app},
+};
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     ButtonStyle, ButtonVariant, ButtonVariantId, GlobalTheme, StateColors, Theme, icon_button,

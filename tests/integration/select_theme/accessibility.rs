@@ -6,9 +6,7 @@ use super::{
 };
 use crate::support::test_app;
 use accesskit::{HasPopup, NodeId, Role};
-use bevy::a11y::AccessibilityNode;
-use bevy::prelude::*;
-use bevy::ui_widgets::MenuAction;
+use bevy::{a11y::AccessibilityNode, prelude::*, ui_widgets::MenuAction};
 use bevy_ui_component_prototypes::{SelectedIndex, SelectedOption, select};
 
 fn named_fruit(app: &mut App) -> Entity {

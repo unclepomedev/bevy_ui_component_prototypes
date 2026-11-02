@@ -1,8 +1,10 @@
 //! Tests of size and shape.
 
 use super::{primary, primary_mut};
-use crate::probe::probe_theme;
-use crate::support::{node, test_app};
+use crate::{
+    probe::probe_theme,
+    support::{node, test_app},
+};
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonVariantId, GlobalTheme,

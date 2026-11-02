@@ -5,9 +5,11 @@ use super::{
     report_row, rows, selected_rows, spawn_fruit, spawn_fruit_under, trigger, visibility,
 };
 use crate::support::test_app;
-use bevy::input_focus::{InputFocus, InputFocusVisible};
-use bevy::prelude::*;
-use bevy::ui_widgets::{MenuAction, MenuFocusState, ReselectListRow};
+use bevy::{
+    input_focus::{InputFocus, InputFocusVisible},
+    prelude::*,
+    ui_widgets::{MenuAction, MenuFocusState, ReselectListRow},
+};
 
 #[test]
 fn a_row_the_list_reports_becomes_one_request_for_its_value() {

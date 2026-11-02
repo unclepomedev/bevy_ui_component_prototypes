@@ -2,11 +2,15 @@
 
 use super::{spawn_primary, spawn_primary_under};
 use crate::support::{tab_index, test_app};
-use bevy::input_focus::InputFocus;
-use bevy::input_focus::tab_navigation::{NavAction, TabGroup, TabIndex, TabNavigation};
-use bevy::ui::InteractionDisabled;
-use bevy::ui::auto_directional_navigation::AutoDirectionalNavigation;
-use bevy::{ecs::system::RunSystemOnce, prelude::*};
+use bevy::{
+    ecs::system::RunSystemOnce,
+    input_focus::{
+        InputFocus,
+        tab_navigation::{NavAction, TabGroup, TabIndex, TabNavigation},
+    },
+    prelude::*,
+    ui::{InteractionDisabled, auto_directional_navigation::AutoDirectionalNavigation},
+};
 use bevy_ui_component_prototypes::{ButtonVariantId, icon_button};
 
 #[test]

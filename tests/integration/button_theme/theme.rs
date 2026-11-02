@@ -1,13 +1,16 @@
 //! Tests of theme resolution.
 
 use super::{label_font, primary, spawn_primary, spawn_primary_under};
-use crate::probe::probe_theme;
-use crate::support::{bg, test_app};
-use bevy::asset::uuid_handle;
-use bevy::picking::hover::PickingInteraction;
-use bevy::prelude::*;
-use bevy::ui::widget::NodeImageMode;
-use bevy::ui::{InteractionDisabled, VisualBox};
+use crate::{
+    probe::probe_theme,
+    support::{bg, test_app},
+};
+use bevy::{
+    asset::uuid_handle,
+    picking::hover::PickingInteraction,
+    prelude::*,
+    ui::{InteractionDisabled, VisualBox, widget::NodeImageMode},
+};
 use bevy_ui_component_prototypes::{ButtonVariantId, GlobalTheme, SlicedImage, Theme};
 
 // [T] swap the global theme

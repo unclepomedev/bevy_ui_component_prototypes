@@ -2,9 +2,11 @@
 
 use super::{Fruit, Marker, list, popup, row_label, rows, spawn_fruit, trigger};
 use crate::support::{outline, test_app};
-use bevy::input_focus::tab_navigation::TabIndex;
-use bevy::prelude::*;
-use bevy::ui_widgets::{ListBox, ListItem, MenuButton, MenuPopup};
+use bevy::{
+    input_focus::tab_navigation::TabIndex,
+    prelude::*,
+    ui_widgets::{ListBox, ListItem, MenuButton, MenuPopup},
+};
 use bevy_ui_component_prototypes::{Select, select};
 
 #[test]

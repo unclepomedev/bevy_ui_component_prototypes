@@ -2,10 +2,12 @@
 
 use super::{list, menu_event, point_at, rows, spawn_fruit, trigger};
 use crate::support::test_app;
-use bevy::picking::hover::PickingInteraction;
-use bevy::prelude::*;
-use bevy::ui::InteractionDisabled;
-use bevy::ui_widgets::{ActiveDescendant, MenuAction};
+use bevy::{
+    picking::hover::PickingInteraction,
+    prelude::*,
+    ui::InteractionDisabled,
+    ui_widgets::{ActiveDescendant, MenuAction},
+};
 
 #[test]
 fn the_row_the_pointer_comes_to_becomes_the_highlighted_one() {

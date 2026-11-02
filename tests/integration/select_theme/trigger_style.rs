@@ -1,12 +1,16 @@
 //! Tests of Styling.
 
 use super::{label_color, shown, spawn_fruit, trigger};
-use crate::probe::probe_theme;
-use crate::support::{bg, outline, test_app};
-use bevy::input_focus::{InputFocus, InputFocusVisible};
-use bevy::picking::hover::PickingInteraction;
-use bevy::prelude::*;
-use bevy::ui::InteractionDisabled;
+use crate::{
+    probe::probe_theme,
+    support::{bg, outline, test_app},
+};
+use bevy::{
+    input_focus::{InputFocus, InputFocusVisible},
+    picking::hover::PickingInteraction,
+    prelude::*,
+    ui::InteractionDisabled,
+};
 use bevy_ui_component_prototypes::SelectedIndex;
 
 #[test]

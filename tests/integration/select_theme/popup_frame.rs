@@ -1,10 +1,14 @@
 //! Tests of The frame of the popup.
 
 use super::{popup, spawn_fruit, spawn_fruit_under};
-use crate::probe::probe_theme;
-use crate::support::{bg, red, test_app};
-use bevy::prelude::*;
-use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverSide};
+use crate::{
+    probe::probe_theme,
+    support::{bg, red, test_app},
+};
+use bevy::{
+    prelude::*,
+    ui_widgets::popover::{Popover, PopoverAlign, PopoverSide},
+};
 use bevy_ui_component_prototypes::{GlobalTheme, Theme};
 
 #[test]

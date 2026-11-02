@@ -4,14 +4,20 @@ use super::{
     Fruit, Requests, app_that_logs_requests, fruit_select, list, menu_event, popup, report_row,
     rows, spawn_fruit, text, trigger, trigger_node, visibility,
 };
-use crate::probe::probe_theme;
-use crate::support::{bg, test_app};
-use bevy::a11y::AccessibilityNode;
-use bevy::input_focus::InputFocus;
-use bevy::input_focus::tab_navigation::{NavAction, TabIndex};
-use bevy::prelude::*;
-use bevy::ui::InteractionDisabled;
-use bevy::ui_widgets::{ActiveDescendant, MenuAction};
+use crate::{
+    probe::probe_theme,
+    support::{bg, test_app},
+};
+use bevy::{
+    a11y::AccessibilityNode,
+    input_focus::{
+        InputFocus,
+        tab_navigation::{NavAction, TabIndex},
+    },
+    prelude::*,
+    ui::InteractionDisabled,
+    ui_widgets::{ActiveDescendant, MenuAction},
+};
 use bevy_ui_component_prototypes::select;
 
 #[test]

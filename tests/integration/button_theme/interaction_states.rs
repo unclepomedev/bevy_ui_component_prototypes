@@ -1,11 +1,11 @@
 //! Tests of interaction states.
 
 use super::{label_color, primary, primary_mut, spawn_primary};
-use crate::probe::probe_theme;
-use crate::support::{bg, border_color, test_app};
-use bevy::picking::hover::PickingInteraction;
-use bevy::prelude::*;
-use bevy::ui::InteractionDisabled;
+use crate::{
+    probe::probe_theme,
+    support::{bg, border_color, test_app},
+};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui::InteractionDisabled};
 use bevy_ui_component_prototypes::{GlobalTheme, StateColors};
 
 #[test]

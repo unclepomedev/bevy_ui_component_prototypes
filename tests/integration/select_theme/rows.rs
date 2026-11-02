@@ -4,12 +4,16 @@ use super::{
     label_color, list, menu_event, point_at, row_label, rows, spawn_fruit, spawn_fruit_under,
     trigger,
 };
-use crate::probe::probe_theme;
-use crate::support::{bg, red, test_app};
-use bevy::picking::hover::PickingInteraction;
-use bevy::prelude::*;
-use bevy::ui::InteractionDisabled;
-use bevy::ui_widgets::{ActiveDescendant, MenuAction, ScrollArea};
+use crate::{
+    probe::probe_theme,
+    support::{bg, red, test_app},
+};
+use bevy::{
+    picking::hover::PickingInteraction,
+    prelude::*,
+    ui::InteractionDisabled,
+    ui_widgets::{ActiveDescendant, MenuAction, ScrollArea},
+};
 use bevy_ui_component_prototypes::{GlobalTheme, SelectedIndex, Theme};
 
 #[test]

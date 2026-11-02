@@ -1,13 +1,14 @@
 //! Tests of behavior wiring.
 
 use super::{label_font, spawn_primary};
-use crate::probe::probe_theme;
-use crate::support::{outline, test_app};
-use bevy::a11y::AccessibilityNode;
-use bevy::input_focus::tab_navigation::TabIndex;
-use bevy::picking::hover::PickingInteraction;
-use bevy::prelude::*;
-use bevy::ui_widgets::Button;
+use crate::{
+    probe::probe_theme,
+    support::{outline, test_app},
+};
+use bevy::{
+    a11y::AccessibilityNode, input_focus::tab_navigation::TabIndex,
+    picking::hover::PickingInteraction, prelude::*, ui_widgets::Button,
+};
 use bevy_ui_component_prototypes::{ButtonVariantId, icon_button};
 
 #[test]

@@ -1,11 +1,11 @@
 //! Tests of initial styling.
 
 use super::primary;
-use crate::probe::probe_theme;
-use crate::support::{bg, test_app};
-use bevy::picking::hover::PickingInteraction;
-use bevy::prelude::*;
-use bevy::ui_widgets::Button;
+use crate::{
+    probe::probe_theme,
+    support::{bg, test_app},
+};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 use bevy_ui_component_prototypes::{ButtonVariant, ButtonVariantId};
 
 #[test]

@@ -4,10 +4,11 @@ use super::{
     focus_state, list, menu_event, popup, spawn_fruit, spawn_fruit_under, trigger, visibility,
 };
 use crate::support::test_app;
-use bevy::input_focus::tab_navigation::NavAction;
-use bevy::input_focus::{InputFocus, InputFocusVisible};
-use bevy::prelude::*;
-use bevy::ui_widgets::{MenuAction, MenuEvent, MenuFocusState};
+use bevy::{
+    input_focus::{InputFocus, InputFocusVisible, tab_navigation::NavAction},
+    prelude::*,
+    ui_widgets::{MenuAction, MenuEvent, MenuFocusState},
+};
 
 #[test]
 fn toggling_opens_the_popup_and_toggling_again_closes_it() {

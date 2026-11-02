@@ -5,8 +5,10 @@ use super::{
     report_row, rows, shown, spawn_fruit, spawn_preselected, text, trigger, visibility,
 };
 use crate::support::test_app;
-use bevy::prelude::*;
-use bevy::ui_widgets::{MenuAction, ReselectListRow};
+use bevy::{
+    prelude::*,
+    ui_widgets::{MenuAction, ReselectListRow},
+};
 use bevy_ui_component_prototypes::{SelectedIndex, SelectedOption, select};
 
 #[test]
