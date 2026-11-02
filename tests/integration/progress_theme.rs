@@ -6,12 +6,13 @@
 use crate::{
     gradient::{painted_blocks, stops},
     probe::probe_theme,
+    support::{node, passes_through, red, test_app},
 };
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, picking::Pickable, prelude::*};
 use bevy_ui_component_prototypes::{
     BarSegments, GlobalTheme, ProgressRange, ProgressShape, ProgressValue, ProgressVariant,
-    ProgressVariantId, Theme, UiComponentPrototypesPlugin, progress_bar,
+    ProgressVariantId, Theme, progress_bar,
 };
 
 // ---------------------------------------------------------------------------
@@ -456,13 +457,6 @@ fn a_bar_spawned_later_inside_a_scope_uses_the_scope_theme_immediately() {
 // Helpers
 // ---------------------------------------------------------------------------
 
-fn test_app() -> App {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
-    app.insert_resource(GlobalTheme(probe_theme()));
-    app
-}
-
 fn spawn_bar(app: &mut App) -> Entity {
     app.world_mut().spawn(progress_bar().build()).id()
 }
@@ -471,14 +465,6 @@ fn spawn_bar_under(app: &mut App, parent: Entity) -> Entity {
     app.world_mut()
         .spawn((progress_bar().build(), ChildOf(parent)))
         .id()
-}
-
-fn passes_through(pickable: &Pickable) -> bool {
-    !pickable.should_block_lower && !pickable.is_hoverable
-}
-
-fn red() -> Color {
-    Color::srgb(0.9, 0.1, 0.1)
 }
 
 /// The probe theme with a red fill for the base style.
@@ -516,10 +502,6 @@ fn fill(app: &App, bar: Entity) -> Color {
 
 fn fill_width(app: &App, bar: Entity) -> Val {
     node(app, fill_part(app, bar)).width
-}
-
-fn node(app: &App, entity: Entity) -> Node {
-    app.world().get::<Node>(entity).unwrap().clone()
 }
 
 fn numbers(app: &App, bar: Entity) -> (Option<f64>, Option<f64>, Option<f64>) {

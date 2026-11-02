@@ -1,5 +1,6 @@
 //! Behavior tests for `ShowsFocus`: the marker that tells which widget holds the visible focus indicator.
 
+use crate::support::focus;
 use bevy::{
     input_focus::{InputFocus, InputFocusVisible},
     prelude::*,
@@ -194,11 +195,6 @@ fn spawn_button(app: &mut App) -> Entity {
     app.world_mut()
         .spawn(icon_button().label("button").build())
         .id()
-}
-
-fn focus(app: &mut App, entity: Entity, visible: bool) {
-    app.insert_resource(InputFocus::from_entity(entity));
-    app.insert_resource(InputFocusVisible(visible));
 }
 
 fn marked(app: &App, entity: Entity) -> bool {

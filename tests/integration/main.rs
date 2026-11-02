@@ -7,5 +7,6 @@ mod progress_theme;
 mod select_theme;
 mod shows_focus;
 mod slider_theme;
+mod support;
 mod switch_theme;
 mod toast_theme;

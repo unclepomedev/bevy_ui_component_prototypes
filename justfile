@@ -22,6 +22,7 @@ check:
     cargo clippy --workspace --all-targets --all-features -- -D warnings
     cargo test --workspace --all-features --lib --tests
     cargo check --examples
+    RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 c: check
 
 dep:

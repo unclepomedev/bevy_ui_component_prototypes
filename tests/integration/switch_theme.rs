@@ -3,19 +3,20 @@
 //!
 //! Real pointer picking, layout and the sliding look are covered by `examples/toggle_check.rs`.
 
-use crate::probe::probe_theme;
+use crate::{
+    probe::probe_theme,
+    support::{focus, outline, red, tab_index, test_app},
+};
 use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
-    input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex},
+    input_focus::tab_navigation::TabIndex,
     picking::hover::PickingInteraction,
     prelude::*,
     ui::{Checked, InteractionDisabled},
     ui_widgets::{Checkbox, CheckboxPlugin, SetChecked, ValueChange},
 };
-use bevy_ui_component_prototypes::{
-    GlobalTheme, StateColors, Theme, ToggleSwitch, UiComponentPrototypesPlugin, toggle_switch,
-};
+use bevy_ui_component_prototypes::{GlobalTheme, StateColors, Theme, ToggleSwitch, toggle_switch};
 
 // ---------------------------------------------------------------------------
 // Behavior wiring
@@ -412,13 +413,6 @@ fn the_app_applying_the_request_flips_the_look() {
 // Helpers
 // ---------------------------------------------------------------------------
 
-fn test_app() -> App {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
-    app.insert_resource(GlobalTheme(probe_theme()));
-    app
-}
-
 fn spawn_switch(app: &mut App) -> Entity {
     app.world_mut().spawn(toggle_switch().build()).id()
 }
@@ -435,28 +429,11 @@ fn spawn_switch_checked_under(app: &mut App, parent: Entity) -> Entity {
         .id()
 }
 
-fn red() -> Color {
-    Color::srgb(0.9, 0.1, 0.1)
-}
-
 /// The probe theme with a red checked track.
 fn red_on_theme() -> Theme {
     let mut theme = probe_theme();
     theme.switch.track.checked = StateColors::uniform(red());
     theme
-}
-
-fn focus(app: &mut App, switch: Entity, visible: bool) {
-    app.insert_resource(InputFocus::from_entity(switch));
-    app.insert_resource(InputFocusVisible(visible));
-}
-
-fn outline(app: &App, switch: Entity) -> Outline {
-    *app.world().get::<Outline>(switch).unwrap()
-}
-
-fn tab_index(app: &App, switch: Entity) -> i32 {
-    app.world().get::<TabIndex>(switch).unwrap().0
 }
 
 fn track(app: &App, switch: Entity) -> Color {
