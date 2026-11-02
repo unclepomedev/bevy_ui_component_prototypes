@@ -32,14 +32,14 @@ impl Plugin for SelectTriggerStylePlugin {
 }
 
 #[derive(QueryData)]
-struct LabelRow {
+pub(super) struct LabelRow {
     entity: Entity,
     chosen: &'static SelectedIndex,
     labels: &'static SelectLabels,
 }
 
 /// Shows the label of the chosen option, or the placeholder, in the trigger.
-fn refresh_select_label(
+pub(super) fn refresh_select_label(
     selects: Query<LabelRow, (With<Select>, Changed<SelectedIndex>)>,
     children: Query<&Children>,
     slots: Query<(), With<SelectContent>>,

@@ -1626,6 +1626,120 @@ fn shown_text(app: &App, root: Entity) -> Option<String> {
     shown(app, root).map(|label| app.world().get::<Text>(label).unwrap().0.clone())
 }
 
+#[test]
+fn the_placeholder_is_read_while_nothing_is_chosen() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    app.update();
+
+    let node = trigger_node(&app, root);
+    assert_eq!(node.placeholder(), Some("Pick one"));
+    assert_eq!(node.value(), None);
+}
+
+#[test]
+fn the_chosen_option_is_the_value_of_the_trigger() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    app.world_mut().entity_mut(root).insert(SelectedOption {
+        value: Fruit::Banana,
+    });
+    app.update();
+    let node = trigger_node(&app, root);
+    assert_eq!(node.value(), Some("Banana"));
+    assert_eq!(node.placeholder(), None);
+
+    app.world_mut()
+        .entity_mut(root)
+        .remove::<SelectedOption<Fruit>>();
+    app.update();
+    let node = trigger_node(&app, root);
+    assert_eq!(node.value(), None);
+    assert_eq!(node.placeholder(), Some("Pick one"));
+}
+
+#[test]
+fn a_text_that_changes_changes_what_is_read() {
+    let mut app = test_app();
+    let root = spawn_preselected(&mut app, Fruit::Banana);
+    app.update();
+
+    let label = shown(&app, root).unwrap();
+    app.world_mut().get_mut::<Text>(label).unwrap().0 = "Berry".to_string();
+    app.update();
+
+    assert_eq!(trigger_node(&app, root).value(), Some("Berry"));
+}
+
+#[test]
+fn a_position_past_the_last_option_is_read_as_the_placeholder() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    app.world_mut()
+        .entity_mut(root)
+        .insert(SelectedIndex { index: Some(9) });
+    app.update();
+
+    let node = trigger_node(&app, root);
+    assert_eq!(node.value(), None);
+    assert_eq!(node.placeholder(), Some("Pick one"));
+}
+
+#[test]
+fn the_rows_are_named_by_the_text_of_their_labels() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    app.update();
+
+    let names: Vec<Option<String>> = rows(&app, root)
+        .iter()
+        .map(|row| {
+            app.world()
+                .get::<AccessibilityNode>(*row)
+                .unwrap()
+                .label()
+                .map(str::to_owned)
+        })
+        .collect();
+    assert_eq!(
+        names,
+        [
+            Some("Apple".to_string()),
+            Some("Banana".to_string()),
+            Some("Cherry".to_string())
+        ]
+    );
+}
+
+#[test]
+fn a_label_without_a_text_is_not_read() {
+    let mut app = test_app();
+    let root = app
+        .world_mut()
+        .spawn(
+            select::<Fruit>()
+                .option(Fruit::Apple, Marker(1))
+                .selected(Fruit::Apple)
+                .build(),
+        )
+        .id();
+
+    app.update();
+
+    assert_eq!(trigger_node(&app, root).value(), None);
+    let row = rows(&app, root)[0];
+    assert_eq!(
+        app.world().get::<AccessibilityNode>(row).unwrap().label(),
+        None
+    );
+}
+
 fn popup_node(app: &App, root: Entity) -> &AccessibilityNode {
     app.world()
         .get::<AccessibilityNode>(popup(app, root))

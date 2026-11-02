@@ -53,6 +53,7 @@ fn choice_request<V: SelectKey>(values: Vec<V>) -> SelectRequest {
 impl<V: SelectKey> SelectBuilder<V> {
     /// Adds one option. The labels of different options may be of different types.
     /// The label is spawned again every time the option is shown, which is why it has to be `Clone`.
+    /// A screen reader reads the `Text` of the label; a label without one is not read.
     pub fn option<L: Bundle + Clone>(mut self, value: V, label: L) -> Self {
         self.values.push(value);
         self.labels.push(spawner(label));
@@ -67,7 +68,7 @@ impl<V: SelectKey> SelectBuilder<V> {
         self
     }
 
-    /// Shown while nothing is chosen.
+    /// Shown while nothing is chosen. A screen reader reads its `Text` too.
     pub fn placeholder<L: Bundle + Clone>(mut self, label: L) -> Self {
         self.placeholder = Some(spawner(label));
         self

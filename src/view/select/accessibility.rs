@@ -1,8 +1,12 @@
 use super::{
-    components::{Select, SelectList, SelectPopup, SelectTrigger},
+    components::{
+        Select, SelectContent, SelectLabels, SelectList, SelectPopup, SelectRow, SelectTrigger,
+        SelectedIndex,
+    },
     open::SelectOpen,
+    trigger::refresh_select_label,
 };
-use crate::view::style_targets::drain_removed;
+use crate::view::{button::ButtonLabel, style_targets::drain_removed};
 use accesskit::NodeId;
 use bevy::{a11y::AccessibilityNode, prelude::*};
 
@@ -11,7 +15,12 @@ impl Plugin for SelectAccessibilityPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             PostUpdate,
-            (forward_label, link_trigger_to_list, sync_open_state),
+            (
+                forward_label,
+                link_trigger_to_list,
+                sync_open_state,
+                sync_names.after(refresh_select_label),
+            ),
         );
     }
 }
@@ -112,5 +121,69 @@ fn set_open(triggers: &mut TriggerNodes, popups: &mut PopupNodes, children: &Chi
                 node.set_hidden();
             }
         }
+    }
+}
+
+/// What a screen reader reads of the options is the text of their labels: the name of each row, and the value
+/// of the trigger (its placeholder while nothing is chosen). A label without a `Text` is not read.
+fn sync_names(
+    selects: Query<(Entity, &Children, &SelectedIndex, &SelectLabels), With<Select>>,
+    descendants: Query<&Children>,
+    contents: Query<(), With<SelectContent>>,
+    rows: Query<Option<&AccessibleLabel>, With<SelectRow>>,
+    texts: Query<&Text, With<ButtonLabel>>,
+    mut triggers: TriggerNodes,
+    mut commands: Commands,
+) {
+    let text_under = |parent: Entity| {
+        let children = descendants.get(parent).ok()?;
+        children
+            .iter()
+            .find_map(|child| texts.get(child).ok())
+            .map(|text| text.0.as_str())
+    };
+
+    for (select, children, chosen, labels) in &selects {
+        let shown = descendants
+            .iter_descendants(select)
+            .find(|entity| contents.contains(*entity))
+            .and_then(text_under);
+        let is_chosen = chosen
+            .index
+            .is_some_and(|index| index < labels.options.len());
+        for child in children.iter() {
+            if let Ok(mut node) = triggers.get_mut(child) {
+                write_trigger_text(&mut node, shown, is_chosen);
+                break;
+            }
+        }
+
+        for row in descendants.iter_descendants(select) {
+            let Ok(current) = rows.get(row) else {
+                continue;
+            };
+            let Some(name) = text_under(row) else {
+                continue;
+            };
+            if current.is_none_or(|label| label.0 != name) {
+                commands.entity(row).try_insert(AccessibleLabel::new(name));
+            }
+        }
+    }
+}
+
+/// The text of the shown label is the value of the trigger when an option is chosen, and its placeholder
+/// when not. Writes only what differs.
+fn write_trigger_text(node: &mut Mut<AccessibilityNode>, shown: Option<&str>, chosen: bool) {
+    let (value, placeholder) = if chosen { (shown, None) } else { (None, shown) };
+    match value {
+        Some(value) if node.value() != Some(value) => node.set_value(value),
+        None if node.value().is_some() => node.clear_value(),
+        _ => {}
+    }
+    match placeholder {
+        Some(text) if node.placeholder() != Some(text) => node.set_placeholder(text),
+        None if node.placeholder().is_some() => node.clear_placeholder(),
+        _ => {}
     }
 }
