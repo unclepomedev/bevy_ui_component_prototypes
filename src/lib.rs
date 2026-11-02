@@ -73,7 +73,7 @@ use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
     prelude::*,
     ui_widgets::{
-        ButtonPlugin, CheckboxPlugin, ListBoxPlugin, MenuPlugin, SliderPlugin,
+        ButtonPlugin, CheckboxPlugin, ListBoxPlugin, MenuPlugin, ScrollAreaPlugin, SliderPlugin,
         popover::PopoverPlugin,
     },
 };
@@ -87,6 +87,7 @@ use bevy::{
 /// - [`ListBoxPlugin`] (included in `DefaultPlugins`): the list of a select
 /// - [`MenuPlugin`] (included in `DefaultPlugins`): opening, closing and the focus of a select
 /// - [`PopoverPlugin`] (included in `DefaultPlugins`): where the popup of a select goes
+/// - [`ScrollAreaPlugin`] (included in `DefaultPlugins`): scrolling the list of a select
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
 pub struct UiComponentPrototypesPlugin;
@@ -112,6 +113,10 @@ impl Plugin for UiComponentPrototypesPlugin {
             ("ListBoxPlugin", app.is_plugin_added::<ListBoxPlugin>()),
             ("MenuPlugin", app.is_plugin_added::<MenuPlugin>()),
             ("PopoverPlugin", app.is_plugin_added::<PopoverPlugin>()),
+            (
+                "ScrollAreaPlugin",
+                app.is_plugin_added::<ScrollAreaPlugin>(),
+            ),
             (
                 "InputDispatchPlugin",
                 app.is_plugin_added::<InputDispatchPlugin>(),

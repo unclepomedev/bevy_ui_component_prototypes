@@ -13,7 +13,7 @@ use bevy::{
     ui::{InteractionDisabled, Selected},
     ui_widgets::{
         ActiveDescendant, ListBox, ListItem, MenuAction, MenuButton, MenuEvent, MenuFocusState,
-        MenuPopup, ReselectListRow, ValueChange,
+        MenuPopup, ReselectListRow, ScrollArea, ValueChange,
         popover::{Popover, PopoverAlign, PopoverSide},
     },
 };
@@ -701,6 +701,60 @@ fn the_popup_is_as_wide_as_the_select_at_least() {
 // ---------------------------------------------------------------------------
 
 #[test]
+fn the_list_shows_as_many_rows_as_the_theme_says_and_scrolls_beyond() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    let list = list(&app, root);
+    assert!(app.world().get::<ScrollArea>(list).is_some());
+    let node = app.world().get::<Node>(list).unwrap();
+    assert_eq!(node.overflow, Overflow::scroll_y());
+    assert_eq!(node.max_height, Val::Px(37.0 * 2.0));
+}
+
+#[test]
+fn a_theme_change_changes_how_many_rows_the_list_shows() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    let mut theme = probe_theme();
+    theme.select_metrics.option_height = 10.0;
+    theme.select_metrics.max_visible_options = 5;
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+
+    let node = app.world().get::<Node>(list(&app, root)).unwrap();
+    assert_eq!(node.max_height, Val::Px(50.0));
+}
+
+#[test]
+fn a_list_shows_at_least_one_row() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    let mut theme = probe_theme();
+    theme.select_metrics.max_visible_options = 0;
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+
+    let node = app.world().get::<Node>(list(&app, root)).unwrap();
+    assert_eq!(node.max_height, Val::Px(37.0));
+}
+
+#[test]
+fn the_rows_do_not_shrink_when_the_list_is_shorter_than_all_of_them() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    for row in rows(&app, root) {
+        assert_eq!(app.world().get::<Node>(row).unwrap().flex_shrink, 0.0);
+    }
+}
+
+#[test]
 fn the_rows_and_their_labels_are_styled_after_one_update() {
     let mut app = test_app();
     let root = spawn_fruit(&mut app);
@@ -712,7 +766,7 @@ fn the_rows_and_their_labels_are_styled_after_one_update() {
     let row = rows(&app, root)[0];
     assert_eq!(bg(&app, row), style.option_bg.unchecked.normal);
     let node = app.world().get::<Node>(row).unwrap();
-    assert_eq!(node.height, metrics.option_height);
+    assert_eq!(node.height, Val::Px(metrics.option_height));
     assert_eq!(node.padding, metrics.option_padding);
 
     let label = row_label(&app, row);
@@ -867,7 +921,7 @@ fn a_theme_change_resizes_the_rows_and_their_text() {
     app.update();
 
     let mut theme = probe_theme();
-    theme.select_metrics.option_height = Val::Px(51.0);
+    theme.select_metrics.option_height = 51.0;
     theme.select_metrics.trigger.font_size = FontSize::Px(52.0);
     app.insert_resource(GlobalTheme(theme));
     app.update();

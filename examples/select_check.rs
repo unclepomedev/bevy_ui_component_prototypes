@@ -21,6 +21,9 @@
 //!   8. Choose the option that is already chosen: the list closes and nothing changes.
 //!   9. Move the pointer over the rows of an open list: the highlight follows it, one row at a time. The arrow keys
 //!      move the same highlight, and Enter chooses the highlighted row.
+//!  10. "Many options" has 20 options and the list shows 8 of them: the wheel scrolls it, and the arrow keys,
+//!      Home and End bring the highlighted row into view. The list does not scroll to the chosen option when it
+//!      opens yet.
 //!
 //! The open lists are drawn in front of the rows below because the theme says where they are in the stacking
 //! order: see `theme_for`.
@@ -32,7 +35,7 @@ use bevy::{
     ui_widgets::ValueChange,
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SelectedOption, Theme, UiComponentPrototypesPlugin, select,
+    GlobalTheme, SelectKey, SelectedOption, Theme, UiComponentPrototypesPlugin, select,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -74,7 +77,8 @@ fn main() {
                 swap_global_theme.run_if(input_just_pressed(KeyCode::KeyT)),
             ),
         )
-        .add_observer(on_choice)
+        .add_observer(on_choice::<Fruit>)
+        .add_observer(on_choice::<u32>)
         .run();
 }
 
@@ -133,6 +137,14 @@ fn setup(mut commands: Commands) {
                         .build(),
                     Driven,
                 ),
+            );
+            spawn_row(
+                root,
+                "Many options",
+                select::<u32>()
+                    .placeholder(label("Pick a number"))
+                    .options((1..=20).map(|n| (n, Text::new(format!("Option {n}")))))
+                    .build(),
             );
             spawn_scoped_panel(root);
             root.spawn((
@@ -210,10 +222,10 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
     });
 }
 
-/// The app's policy: apply what the select asks for.
-fn on_choice(change: On<ValueChange<Fruit>>, mut commands: Commands) {
+/// The app's policy: apply what the select asks for. One observer for each type of option values.
+fn on_choice<V: SelectKey>(change: On<ValueChange<V>>, mut commands: Commands) {
     commands.entity(change.source).insert(SelectedOption {
-        value: change.value,
+        value: change.value.clone(),
     });
 }
 

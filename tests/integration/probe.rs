@@ -90,11 +90,12 @@ pub fn probe_theme() -> Theme {
                 font_size: FontSize::Px(15.0),
                 icon_size: 16.0,
             },
-            option_height: Val::Px(37.0),
+            option_height: 37.0,
             option_padding: UiRect::all(Val::Px(6.0)),
             popup_padding: UiRect::all(Val::Px(3.0)),
             popup_gap: 7.0,
             popup_z_index: 42,
+            max_visible_options: 2,
         },
         toasts: ToastStyles {
             base: toast_style(0.1),
