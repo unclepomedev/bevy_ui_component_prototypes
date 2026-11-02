@@ -6,6 +6,7 @@ mod disabled;
 mod highlight;
 mod open;
 mod popup;
+mod scroll;
 mod trigger;
 
 pub use self::{
@@ -16,7 +17,7 @@ pub use self::{
 use self::{
     accessibility::SelectAccessibilityPlugin, choose::SelectChoosePlugin,
     disabled::SelectDisabledPlugin, highlight::SelectHighlightPlugin, open::SelectOpenPlugin,
-    popup::SelectPopupStylePlugin, trigger::SelectTriggerStylePlugin,
+    popup::SelectPopupStylePlugin, scroll::SelectScrollPlugin, trigger::SelectTriggerStylePlugin,
 };
 use bevy::prelude::*;
 
@@ -31,6 +32,7 @@ impl Plugin for SelectStylePlugin {
             SelectHighlightPlugin,
             SelectAccessibilityPlugin,
             SelectDisabledPlugin,
+            SelectScrollPlugin,
         ));
     }
 }

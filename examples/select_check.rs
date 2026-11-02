@@ -22,8 +22,8 @@
 //!   9. Move the pointer over the rows of an open list: the highlight follows it, one row at a time. The arrow keys
 //!      move the same highlight, and Enter chooses the highlighted row.
 //!  10. "Many options" has 20 options and the list shows 8 of them: the wheel scrolls it, and the arrow keys,
-//!      Home and End bring the highlighted row into view. A known limitation: the list opens at the scroll
-//!      position it was left at, not at the chosen option.
+//!      Home and End bring the highlighted row into view. The list opens at the chosen option, or at its top when
+//!      nothing is chosen: choose Option 15, scroll up with the wheel, close the list and open it again.
 //!  11. "Disabled" is gray, does not react to the pointer or to Enter, and Tab skips it.
 //!  12. "Some disabled" has Banana disabled: its row is gray and has no highlight, and clicking it or pressing
 //!      Enter on it does nothing: the list stays open. The arrow keys still stop on it.
