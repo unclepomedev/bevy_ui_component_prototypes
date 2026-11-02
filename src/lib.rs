@@ -1,75 +1,50 @@
 #![warn(unreachable_pub)]
-mod style;
-mod view;
+mod button;
+mod common;
+mod progress;
+mod select;
+mod slider;
+mod theme;
+mod toast;
+mod toggle_switch;
 
-// Theme
 pub use crate::{
-    style::{
+    button::{
+        ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonSizes, ButtonStyle,
+        ButtonStyles, ButtonVariant, ButtonVariantId, IconButton, IconButtonBuilder, SlicedImage,
+        icon_button,
+    },
+    common::{
+        bar::BarSegments,
+        choice::Choice,
+        focus::{FocusIndicator, FocusRing, ShowsFocus},
         state::{CheckedColors, StateColors},
-        theme::{GlobalTheme, Theme},
     },
-    view::Choice,
-};
-
-// Focus
-pub use crate::{
-    style::button::FocusRing,
-    view::{FocusIndicator, ShowsFocus},
-};
-
-// Button
-pub use crate::{
-    style::button::{
-        ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
-        ButtonVariantId, SlicedImage,
+    progress::{
+        ProgressBar, ProgressBarBuilder, ProgressRange, ProgressShape, ProgressStyle,
+        ProgressStyles, ProgressValue, ProgressVariant, ProgressVariantId, progress_bar,
     },
-    view::{ButtonSize, ButtonVariant, IconButton, IconButtonBuilder, icon_button},
-};
-
-// Toggle switch
-pub use crate::{
-    style::switch::SwitchStyle,
-    view::{ToggleSwitch, ToggleSwitchBuilder, toggle_switch},
-};
-
-// Slider
-pub use crate::{
-    style::slider::{SliderShape, SliderStyle},
-    view::{SliderBuilder, SliderEditing, ValueSlider, slider},
-};
-
-// Bar segments
-pub use crate::style::bar::BarSegments;
-
-// Progress bar
-pub use crate::{
-    style::progress::{ProgressShape, ProgressStyle, ProgressStyles, ProgressVariantId},
-    view::{
-        ProgressBar, ProgressBarBuilder, ProgressRange, ProgressValue, ProgressVariant,
-        progress_bar,
+    select::{
+        OptionColors, Select, SelectBuilder, SelectKey, SelectMetrics, SelectPopupStyle,
+        SelectShape, SelectStyle, SelectedIndex, SelectedOption, SelectionColors, select,
     },
-};
-
-// Select
-pub use crate::{
-    style::select::{
-        OptionColors, SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle, SelectionColors,
+    slider::{SliderBuilder, SliderEditing, SliderShape, SliderStyle, ValueSlider, slider},
+    theme::{GlobalTheme, Theme},
+    toast::{
+        Toast, ToastBuilder, ToastHost, ToastHostBuilder, ToastMetrics, ToastShape, ToastStack,
+        ToastStyle, ToastStyles, ToastVariant, ToastVariantId, toast, toast_host,
     },
-    view::{Select, SelectBuilder, SelectKey, SelectedIndex, SelectedOption, select},
+    toggle_switch::{SwitchStyle, ToggleSwitch, ToggleSwitchBuilder, toggle_switch},
 };
 
-// Toast
-pub use crate::{
-    style::toast::{ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId},
-    view::{
-        Toast, ToastBuilder, ToastHost, ToastHostBuilder, ToastStack, ToastVariant, toast,
-        toast_host,
-    },
-};
-
-use crate::view::{
-    ButtonStylePlugin, ProgressStylePlugin, SelectStylePlugin, ShowsFocusPlugin, SliderStylePlugin,
-    SwitchStylePlugin, TabOrderPlugin, ToastPlugin,
+use crate::{
+    button::ButtonStylePlugin,
+    common::{focus::ShowsFocusPlugin, tab_order::TabOrderPlugin},
+    progress::ProgressStylePlugin,
+    select::SelectStylePlugin,
+    slider::SliderStylePlugin,
+    toast::ToastPlugin,
+    toggle_switch::SwitchStylePlugin,
 };
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
