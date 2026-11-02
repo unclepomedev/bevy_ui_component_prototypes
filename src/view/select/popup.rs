@@ -3,7 +3,7 @@ use super::components::{
     popup_placement, row_node,
 };
 use crate::{
-    style::state::VisualState,
+    style::select::OptionState,
     view::{
         button::{ButtonContent, ButtonIcon},
         style_targets::{drain_removed, pick_targets},
@@ -149,9 +149,8 @@ fn sync_select_rows(
             .get(row.parent.parent())
             .is_ok_and(|active| active.0 == Some(entity));
         // The row under the pointer is the highlighted one already, so the pointer adds only the press.
-        let state = VisualState::from_flags(
+        let state = OptionState::resolve(
             *row.interaction == PickingInteraction::Pressed,
-            false,
             highlighted,
             row.disabled,
         );

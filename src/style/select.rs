@@ -4,7 +4,6 @@ use super::{
         AFFIRM_HOVERED, AFFIRM_NORMAL, AFFIRM_PRESSED, BG_HOVERED, BG_NORMAL, BG_PRESSED, BORDER,
         DISABLED, TEXT_MAIN, TEXT_MUTED,
     },
-    state::{CheckedColors, StateColors, VisualState},
 };
 use bevy::prelude::*;
 
@@ -38,37 +37,86 @@ pub struct SelectStyle {
     /// The closed select is drawn like a button, so a ghost or a sliced `surface` works as it does there.
     pub trigger: ButtonStyle,
     pub popup: SelectPopupStyle,
-    /// Background of an option row: `checked` is the selected option. The row under the pointer is the
-    /// highlighted one, and it takes `focused`; a row does not use `hovered`.
-    pub option_bg: CheckedColors,
+    /// Background of an option row, by whether it is the chosen option and by its state.
+    pub option_bg: SelectionColors,
     /// Text color of an option row, chosen the same way as `option_bg`.
-    pub option_fg: CheckedColors,
+    pub option_fg: SelectionColors,
+}
+
+/// The colors of an option row in each state it can be in. There is no hovered state: the row under the pointer
+/// is the highlighted one.
+#[derive(Clone, Copy, Debug)]
+pub struct OptionColors {
+    pub normal: Color,
+    /// The row that holds the highlight: the one under the pointer, or the one the keys are on.
+    pub highlighted: Color,
+    pub pressed: Color,
+    pub disabled: Color,
+}
+
+/// The colors of an option row, for the options that are not chosen and for the one that is.
+#[derive(Clone, Copy, Debug)]
+pub struct SelectionColors {
+    pub unselected: OptionColors,
+    pub selected: OptionColors,
+}
+
+/// Which colors an option row shows.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum OptionState {
+    Normal,
+    Highlighted,
+    Pressed,
+    Disabled,
+}
+
+impl OptionState {
+    /// Precedence: disabled > pressed > highlighted > normal.
+    pub(crate) fn resolve(pressed: bool, highlighted: bool, disabled: bool) -> Self {
+        if disabled {
+            Self::Disabled
+        } else if pressed {
+            Self::Pressed
+        } else if highlighted {
+            Self::Highlighted
+        } else {
+            Self::Normal
+        }
+    }
+}
+
+impl OptionColors {
+    pub(crate) fn pick(&self, state: OptionState) -> Color {
+        match state {
+            OptionState::Normal => self.normal,
+            OptionState::Highlighted => self.highlighted,
+            OptionState::Pressed => self.pressed,
+            OptionState::Disabled => self.disabled,
+        }
+    }
 }
 
 impl Default for SelectStyle {
     fn default() -> Self {
-        let bg = CheckedColors {
-            unchecked: StateColors {
+        let bg = SelectionColors {
+            unselected: OptionColors {
                 normal: Color::NONE,
-                hovered: BG_HOVERED,
+                highlighted: BG_HOVERED,
                 pressed: BG_PRESSED,
                 disabled: Color::NONE,
-                focused: BG_HOVERED,
             },
-            checked: StateColors {
+            selected: OptionColors {
                 normal: AFFIRM_NORMAL,
-                hovered: AFFIRM_HOVERED,
+                highlighted: AFFIRM_HOVERED,
                 pressed: AFFIRM_PRESSED,
                 disabled: DISABLED,
-                focused: AFFIRM_HOVERED,
             },
         };
-        let fg = StateColors {
+        let fg = OptionColors {
             normal: TEXT_MAIN,
-            hovered: TEXT_MAIN,
+            highlighted: TEXT_MAIN,
             pressed: TEXT_MAIN,
             disabled: TEXT_MUTED,
-            focused: TEXT_MAIN,
         };
         Self {
             trigger: ButtonStyles::default().base,
@@ -78,9 +126,9 @@ impl Default for SelectStyle {
                 shape: SelectShape::default(),
             },
             option_bg: bg,
-            option_fg: CheckedColors {
-                unchecked: fg,
-                checked: fg,
+            option_fg: SelectionColors {
+                unselected: fg,
+                selected: fg,
             },
         }
     }
@@ -95,10 +143,18 @@ pub(crate) struct SelectOptionLook {
 
 impl SelectStyle {
     /// `selected` is whether the row is the selected option.
-    pub(crate) fn option_look(&self, state: VisualState, selected: bool) -> SelectOptionLook {
+    pub(crate) fn option_look(&self, state: OptionState, selected: bool) -> SelectOptionLook {
+        let pick = |colors: &SelectionColors| {
+            let colors = if selected {
+                &colors.selected
+            } else {
+                &colors.unselected
+            };
+            colors.pick(state)
+        };
         SelectOptionLook {
-            bg: self.option_bg.pick(selected, state),
-            fg: self.option_fg.pick(selected, state),
+            bg: pick(&self.option_bg),
+            fg: pick(&self.option_fg),
         }
     }
 }
@@ -156,32 +212,41 @@ mod tests {
     #[test]
     fn the_selected_row_is_told_apart_from_the_others_by_default() {
         let style = SelectStyle::default();
-        let selected = style.option_look(VisualState::Normal, true);
-        let other = style.option_look(VisualState::Normal, false);
+        let selected = style.option_look(OptionState::Normal, true);
+        let other = style.option_look(OptionState::Normal, false);
         assert_ne!(selected.bg, other.bg);
     }
 
     #[test]
-    fn a_row_follows_the_visual_state_and_the_selection() {
+    fn a_row_follows_its_state_and_the_selection() {
         let style = SelectStyle::default();
-        let look = style.option_look(VisualState::Hovered, true);
-        assert_eq!(look.bg, style.option_bg.checked.hovered);
-        assert_eq!(look.fg, style.option_fg.checked.hovered);
-        let look = style.option_look(VisualState::Pressed, false);
-        assert_eq!(look.bg, style.option_bg.unchecked.pressed);
+        let look = style.option_look(OptionState::Highlighted, true);
+        assert_eq!(look.bg, style.option_bg.selected.highlighted);
+        assert_eq!(look.fg, style.option_fg.selected.highlighted);
+        let look = style.option_look(OptionState::Pressed, false);
+        assert_eq!(look.bg, style.option_bg.unselected.pressed);
     }
 
     #[test]
-    fn an_unselected_row_is_transparent_until_it_is_hovered() {
+    fn an_unselected_row_is_transparent_until_it_is_highlighted() {
         let style = SelectStyle::default();
         assert_eq!(
-            style.option_look(VisualState::Normal, false).bg,
+            style.option_look(OptionState::Normal, false).bg,
             Color::NONE
         );
         assert_ne!(
-            style.option_look(VisualState::Hovered, false).bg,
+            style.option_look(OptionState::Highlighted, false).bg,
             Color::NONE
         );
+    }
+
+    #[test]
+    fn a_row_state_resolves_by_precedence() {
+        use OptionState::*;
+        assert_eq!(OptionState::resolve(true, true, true), Disabled);
+        assert_eq!(OptionState::resolve(true, true, false), Pressed);
+        assert_eq!(OptionState::resolve(false, true, false), Highlighted);
+        assert_eq!(OptionState::resolve(false, false, false), Normal);
     }
 
     #[test]
