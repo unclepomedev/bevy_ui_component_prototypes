@@ -3,7 +3,7 @@
 //!
 //! Real pointer picking, layout and the sliding look are covered by `examples/toggle_check.rs`.
 
-use crate::probe::probe_theme;
+use crate::{probe::probe_theme, support::test_app};
 use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
@@ -13,9 +13,7 @@ use bevy::{
     ui::{Checked, InteractionDisabled},
     ui_widgets::{Checkbox, CheckboxPlugin, SetChecked, ValueChange},
 };
-use bevy_ui_component_prototypes::{
-    GlobalTheme, StateColors, Theme, ToggleSwitch, UiComponentPrototypesPlugin, toggle_switch,
-};
+use bevy_ui_component_prototypes::{GlobalTheme, StateColors, Theme, ToggleSwitch, toggle_switch};
 
 // ---------------------------------------------------------------------------
 // Behavior wiring
@@ -411,13 +409,6 @@ fn the_app_applying_the_request_flips_the_look() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-fn test_app() -> App {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
-    app.insert_resource(GlobalTheme(probe_theme()));
-    app
-}
 
 fn spawn_switch(app: &mut App) -> Entity {
     app.world_mut().spawn(toggle_switch().build()).id()

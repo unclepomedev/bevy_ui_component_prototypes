@@ -2,7 +2,7 @@
 //!
 //! Real pointer picking, layout, and text shaping are not covered by `examples/button_check.rs`.
 
-use crate::probe::probe_theme;
+use crate::{probe::probe_theme, support::test_app};
 use bevy::{
     a11y::AccessibilityNode,
     asset::uuid_handle,
@@ -21,8 +21,7 @@ use bevy::{
 };
 use bevy_ui_component_prototypes::{
     ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonStyle, ButtonVariant,
-    ButtonVariantId, FocusIndicator, GlobalTheme, SlicedImage, StateColors, Theme,
-    UiComponentPrototypesPlugin, icon_button,
+    ButtonVariantId, FocusIndicator, GlobalTheme, SlicedImage, StateColors, Theme, icon_button,
 };
 
 // ---------------------------------------------------------------------------
@@ -836,13 +835,6 @@ fn re_enabling_does_not_add_directional_navigation() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-fn test_app() -> App {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
-    app.insert_resource(GlobalTheme(probe_theme()));
-    app
-}
 
 /// The probe theme with its Primary/Affirmative palettes exchanged and another font.
 fn swapped_theme() -> Theme {

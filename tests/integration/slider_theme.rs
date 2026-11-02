@@ -6,6 +6,7 @@
 use crate::{
     gradient::{painted_blocks, stops},
     probe::probe_theme,
+    support::test_app,
 };
 use accesskit::Role;
 use bevy::{
@@ -20,8 +21,7 @@ use bevy::{
     },
 };
 use bevy_ui_component_prototypes::{
-    BarSegments, GlobalTheme, SliderEditing, SliderShape, StateColors, Theme,
-    UiComponentPrototypesPlugin, slider,
+    BarSegments, GlobalTheme, SliderEditing, SliderShape, StateColors, Theme, slider,
 };
 
 // ---------------------------------------------------------------------------
@@ -715,13 +715,6 @@ fn the_app_applying_the_request_moves_the_parts() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-fn test_app() -> App {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
-    app.insert_resource(GlobalTheme(probe_theme()));
-    app
-}
 
 fn spawn_slider(app: &mut App) -> Entity {
     app.world_mut().spawn(slider().build()).id()

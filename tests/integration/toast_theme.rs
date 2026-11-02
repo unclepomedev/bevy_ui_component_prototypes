@@ -3,11 +3,11 @@
 //! Colors, sizes and the theme come with the style sync; the slide and the real screen are covered by
 //! `examples/toast_check.rs`.
 
-use crate::probe::probe_theme;
+use crate::{probe::probe_theme, support::test_app};
 use bevy::{picking::Pickable, prelude::*, time::TimeUpdateStrategy};
 use bevy_ui_component_prototypes::{
-    GlobalTheme, Theme, Toast, ToastHost, ToastStack, ToastVariant, ToastVariantId,
-    UiComponentPrototypesPlugin, toast, toast_host,
+    GlobalTheme, Theme, Toast, ToastHost, ToastStack, ToastVariant, ToastVariantId, toast,
+    toast_host,
 };
 use std::time::Duration;
 
@@ -761,13 +761,6 @@ fn children_of_the_host_that_are_not_toasts_are_left_alone() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-fn test_app() -> App {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
-    app.insert_resource(GlobalTheme(probe_theme()));
-    app
-}
 
 fn spawn_toast(app: &mut App, text: &str) -> Entity {
     app.world_mut().spawn(toast().text(text).build()).id()

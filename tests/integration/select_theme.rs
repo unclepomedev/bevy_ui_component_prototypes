@@ -2,7 +2,7 @@
 //! the popup and its rows, opening and closing, and theme resolution.
 //! The pointer and the keys are covered by `examples/select_check.rs`.
 
-use crate::probe::probe_theme;
+use crate::{probe::probe_theme, support::test_app};
 use accesskit::{HasPopup, NodeId, Role};
 use bevy::{
     a11y::AccessibilityNode,
@@ -20,7 +20,7 @@ use bevy::{
     },
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, Select, SelectedIndex, SelectedOption, Theme, UiComponentPrototypesPlugin, select,
+    GlobalTheme, Select, SelectedIndex, SelectedOption, Theme, select,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -1669,13 +1669,6 @@ fn a_theme_change_swaps_the_font_of_the_label() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-fn test_app() -> App {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
-    app.insert_resource(GlobalTheme(probe_theme()));
-    app
-}
 
 fn text(name: &'static str) -> impl Bundle + Clone {
     Text::new(name)

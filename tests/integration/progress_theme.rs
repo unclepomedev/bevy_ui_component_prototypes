@@ -6,12 +6,13 @@
 use crate::{
     gradient::{painted_blocks, stops},
     probe::probe_theme,
+    support::test_app,
 };
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, picking::Pickable, prelude::*};
 use bevy_ui_component_prototypes::{
     BarSegments, GlobalTheme, ProgressRange, ProgressShape, ProgressValue, ProgressVariant,
-    ProgressVariantId, Theme, UiComponentPrototypesPlugin, progress_bar,
+    ProgressVariantId, Theme, progress_bar,
 };
 
 // ---------------------------------------------------------------------------
@@ -455,13 +456,6 @@ fn a_bar_spawned_later_inside_a_scope_uses_the_scope_theme_immediately() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-fn test_app() -> App {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, UiComponentPrototypesPlugin));
-    app.insert_resource(GlobalTheme(probe_theme()));
-    app
-}
 
 fn spawn_bar(app: &mut App) -> Entity {
     app.world_mut().spawn(progress_bar().build()).id()
