@@ -36,6 +36,9 @@ pub(crate) type LabelSpawner = Arc<dyn Fn(&mut EntityWorldMut) + Send + Sync>;
 /// the list emits `ValueChange<V>` (`V` is the type of the option values) with this entity as `source`,
 /// and the app applies it by inserting [`SelectedOption`] (or [`SelectedIndex`]) on this entity.
 ///
+/// Text placed next to the select is not associated with it: give the select a name for screen readers
+/// with `AccessibleLabel` on this entity.
+///
 /// The width follows the parent layout (`100%`).
 #[derive(Component)]
 #[require(SelectedIndex, Node = select_node())]

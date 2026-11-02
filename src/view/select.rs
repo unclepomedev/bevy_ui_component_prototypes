@@ -1,3 +1,4 @@
+mod accessibility;
 mod builder;
 mod choose;
 mod components;
@@ -12,8 +13,9 @@ pub use self::{
 };
 
 use self::{
-    choose::SelectChoosePlugin, highlight::SelectHighlightPlugin, open::SelectOpenPlugin,
-    popup::SelectPopupStylePlugin, trigger::SelectTriggerStylePlugin,
+    accessibility::SelectAccessibilityPlugin, choose::SelectChoosePlugin,
+    highlight::SelectHighlightPlugin, open::SelectOpenPlugin, popup::SelectPopupStylePlugin,
+    trigger::SelectTriggerStylePlugin,
 };
 use bevy::prelude::*;
 
@@ -26,6 +28,7 @@ impl Plugin for SelectStylePlugin {
             SelectOpenPlugin,
             SelectChoosePlugin,
             SelectHighlightPlugin,
+            SelectAccessibilityPlugin,
         ));
     }
 }

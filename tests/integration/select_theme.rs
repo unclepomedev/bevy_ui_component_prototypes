@@ -4,6 +4,7 @@
 
 use crate::probe::probe_theme;
 use bevy::{
+    a11y::AccessibilityNode,
     input_focus::{
         InputFocus, InputFocusVisible,
         tab_navigation::{NavAction, TabIndex},
@@ -694,6 +695,71 @@ fn the_popup_is_as_wide_as_the_select_at_least() {
         app.world().get::<Node>(popup).unwrap().min_width,
         Val::Percent(100.0)
     );
+}
+
+// ---------------------------------------------------------------------------
+// The name for screen readers
+// ---------------------------------------------------------------------------
+
+fn named_fruit(app: &mut App) -> Entity {
+    app.world_mut()
+        .spawn((fruit_select(), AccessibleLabel::new("Fruit")))
+        .id()
+}
+
+#[test]
+fn the_name_given_to_the_select_is_the_name_of_the_trigger() {
+    let mut app = test_app();
+    let root = named_fruit(&mut app);
+    app.update();
+    assert_eq!(trigger_name(&app, root), Some("Fruit".to_string()));
+}
+
+#[test]
+fn a_select_without_a_name_has_a_trigger_without_one() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+    assert_eq!(trigger_name(&app, root), None);
+    assert!(
+        app.world()
+            .get::<AccessibleLabel>(trigger(&app, root))
+            .is_none()
+    );
+}
+
+#[test]
+fn a_name_that_is_changed_changes_the_name_of_the_trigger() {
+    let mut app = test_app();
+    let root = named_fruit(&mut app);
+    app.update();
+    app.world_mut()
+        .entity_mut(root)
+        .insert(AccessibleLabel::new("Berry"));
+    app.update();
+    assert_eq!(trigger_name(&app, root), Some("Berry".to_string()));
+}
+
+#[test]
+fn a_name_that_is_added_later_reaches_the_trigger() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+    app.world_mut()
+        .entity_mut(root)
+        .insert(AccessibleLabel::new("Fruit"));
+    app.update();
+    assert_eq!(trigger_name(&app, root), Some("Fruit".to_string()));
+}
+
+#[test]
+fn a_name_that_is_removed_goes_from_the_trigger_too() {
+    let mut app = test_app();
+    let root = named_fruit(&mut app);
+    app.update();
+    app.world_mut().entity_mut(root).remove::<AccessibleLabel>();
+    app.update();
+    assert_eq!(trigger_name(&app, root), None);
 }
 
 // ---------------------------------------------------------------------------
@@ -1473,6 +1539,14 @@ fn shown(app: &App, root: Entity) -> Option<Entity> {
 
 fn shown_text(app: &App, root: Entity) -> Option<String> {
     shown(app, root).map(|label| app.world().get::<Text>(label).unwrap().0.clone())
+}
+
+fn trigger_name(app: &App, root: Entity) -> Option<String> {
+    app.world()
+        .get::<AccessibilityNode>(trigger(app, root))
+        .unwrap()
+        .label()
+        .map(str::to_owned)
 }
 
 fn index(app: &App, root: Entity) -> Option<usize> {
