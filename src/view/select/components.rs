@@ -41,6 +41,8 @@ pub(crate) type LabelSpawner = Arc<dyn Fn(&mut EntityWorldMut) + Send + Sync>;
 /// Text placed next to the select is not associated with it: give the select a name for screen readers
 /// with `AccessibleLabel` on this entity.
 ///
+/// Insert `InteractionDisabled` on this entity to disable the select.
+///
 /// The width follows the parent layout (`100%`).
 #[derive(Component)]
 #[require(SelectedIndex, Node = select_node())]

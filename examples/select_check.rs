@@ -24,6 +24,9 @@
 //!  10. "Many options" has 20 options and the list shows 8 of them: the wheel scrolls it, and the arrow keys,
 //!      Home and End bring the highlighted row into view. The list does not scroll to the chosen option when it
 //!      opens yet.
+//!  11. "Disabled" is gray, does not react to the pointer or to Enter, and Tab skips it.
+//!  12. "Some disabled" has Banana disabled: its row is gray and has no highlight, and clicking it or pressing
+//!      Enter on it does nothing: the list stays open. The arrow keys still stop on it.
 //!
 //! The open lists are drawn in front of the rows below because the theme says where they are in the stacking
 //! order: see `theme_for`.
@@ -32,6 +35,7 @@ use bevy::{
     input::common_conditions::input_just_pressed,
     input_focus::tab_navigation::{TabGroup, TabNavigationPlugin},
     prelude::*,
+    ui::InteractionDisabled,
     ui_widgets::ValueChange,
 };
 use bevy_ui_component_prototypes::{
@@ -144,6 +148,29 @@ fn setup(mut commands: Commands) {
                 select::<u32>()
                     .placeholder(label("Pick a number"))
                     .options((1..=20).map(|n| (n, Text::new(format!("Option {n}")))))
+                    .build(),
+            );
+            spawn_row(
+                root,
+                "Disabled",
+                (
+                    select::<Fruit>()
+                        .placeholder(label("Pick a fruit"))
+                        .options(Fruit::ALL.map(|fruit| (fruit, label(fruit.name()))))
+                        .selected(Fruit::Cherry)
+                        .build(),
+                    InteractionDisabled,
+                ),
+            );
+            spawn_row(
+                root,
+                "Some disabled",
+                select::<Fruit>()
+                    .placeholder(label("Pick a fruit"))
+                    .options_with_disabled(
+                        Fruit::ALL
+                            .map(|fruit| (fruit, label(fruit.name()), fruit == Fruit::Banana)),
+                    )
                     .build(),
             );
             spawn_scoped_panel(root);
