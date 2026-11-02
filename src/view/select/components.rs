@@ -5,7 +5,9 @@ use crate::{
     },
     view::{KeyboardNavigable, button::button_node, focus::hidden_outline},
 };
+use accesskit::{HasPopup, Node as AccessKitNode, Role};
 use bevy::{
+    a11y::AccessibilityNode,
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     input_focus::tab_navigation::TabIndex,
     picking::hover::PickingInteraction,
@@ -143,6 +145,8 @@ fn clear_index(mut world: DeferredWorld, context: HookContext) {
 #[derive(Component, Clone, Copy, Default)]
 #[require(
     MenuButton,
+    // `MenuButton` asks for the button role; a select is a combo box.
+    AccessibilityNode = trigger_accessibility(),
     PickingInteraction,
     TabIndex(0),
     KeyboardNavigable,
@@ -188,6 +192,14 @@ pub(crate) struct SelectList;
 )]
 pub(crate) struct SelectRow {
     pub(crate) index: usize,
+}
+
+/// A combo box that opens a list, closed to start with.
+pub(crate) fn trigger_accessibility() -> AccessibilityNode {
+    let mut node = AccessKitNode::new(Role::ComboBox);
+    node.set_has_popup(HasPopup::Listbox);
+    node.set_expanded(false);
+    AccessibilityNode(node)
 }
 
 pub(crate) fn select_node() -> Node {

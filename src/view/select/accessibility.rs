@@ -1,12 +1,14 @@
-use super::components::{Select, SelectTrigger};
+use super::{
+    components::{Select, SelectTrigger},
+    open::SelectOpen,
+};
 use crate::view::style_targets::drain_removed;
-use bevy::a11y::AccessibilityNode;
-use bevy::prelude::*;
+use bevy::{a11y::AccessibilityNode, prelude::*};
 
 pub(super) struct SelectAccessibilityPlugin;
 impl Plugin for SelectAccessibilityPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PostUpdate, forward_label);
+        app.add_systems(PostUpdate, (forward_label, sync_expanded));
     }
 }
 
@@ -40,6 +42,35 @@ fn forward_label(
         if let Some(trigger) = trigger_of(children) {
             commands.entity(trigger).try_insert(label.clone());
             commands.entity(select).try_remove::<AccessibilityNode>();
+        }
+    }
+}
+
+type TriggerNodes<'w, 's> = Query<'w, 's, &'static mut AccessibilityNode, With<SelectTrigger>>;
+
+/// Tells a screen reader whether the list is open.
+fn sync_expanded(
+    opened: Query<&Children, (With<Select>, Added<SelectOpen>)>,
+    selects: Query<&Children, With<Select>>,
+    mut closed: RemovedComponents<SelectOpen>,
+    mut nodes: TriggerNodes,
+) {
+    // Closing comes first: a list that was closed and opened again in the same frame ends up open.
+    for entity in drain_removed(&mut closed) {
+        if let Ok(children) = selects.get(entity) {
+            set_expanded(&mut nodes, children, false);
+        }
+    }
+    for children in &opened {
+        set_expanded(&mut nodes, children, true);
+    }
+}
+
+fn set_expanded(nodes: &mut TriggerNodes, children: &Children, expanded: bool) {
+    for child in children.iter() {
+        if let Ok(mut node) = nodes.get_mut(child) {
+            node.set_expanded(expanded);
+            return;
         }
     }
 }

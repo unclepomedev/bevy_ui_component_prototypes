@@ -3,6 +3,7 @@
 //! The pointer and the keys are covered by `examples/select_check.rs`.
 
 use crate::probe::probe_theme;
+use accesskit::{HasPopup, Role};
 use bevy::{
     a11y::AccessibilityNode,
     input_focus::{
@@ -762,6 +763,46 @@ fn a_name_that_is_removed_goes_from_the_trigger_too() {
     app.world_mut().entity_mut(root).remove::<AccessibleLabel>();
     app.update();
     assert_eq!(trigger_name(&app, root), None);
+}
+
+#[test]
+fn the_trigger_is_a_closed_combo_box_that_opens_a_list() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    let node = trigger_node(&app, root);
+    assert_eq!(node.role(), Role::ComboBox);
+    assert_eq!(node.has_popup(), Some(HasPopup::Listbox));
+    assert_eq!(node.is_expanded(), Some(false));
+}
+
+#[test]
+fn the_expanded_state_follows_the_list_opening_and_closing() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    let trigger = trigger(&app, root);
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert_eq!(trigger_node(&app, root).is_expanded(), Some(true));
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert_eq!(trigger_node(&app, root).is_expanded(), Some(false));
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert_eq!(trigger_node(&app, root).is_expanded(), Some(true));
+}
+
+#[test]
+fn the_name_is_added_to_the_combo_box_without_changing_what_it_is() {
+    let mut app = test_app();
+    let root = named_fruit(&mut app);
+
+    app.update();
+
+    let node = trigger_node(&app, root);
+    assert_eq!(node.label(), Some("Fruit"));
+    assert_eq!(node.role(), Role::ComboBox);
+    assert_eq!(node.is_expanded(), Some(false));
 }
 
 // ---------------------------------------------------------------------------
@@ -1541,6 +1582,12 @@ fn shown(app: &App, root: Entity) -> Option<Entity> {
 
 fn shown_text(app: &App, root: Entity) -> Option<String> {
     shown(app, root).map(|label| app.world().get::<Text>(label).unwrap().0.clone())
+}
+
+fn trigger_node(app: &App, root: Entity) -> &AccessibilityNode {
+    app.world()
+        .get::<AccessibilityNode>(trigger(app, root))
+        .unwrap()
 }
 
 fn trigger_name(app: &App, root: Entity) -> Option<String> {
