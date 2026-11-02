@@ -5,12 +5,12 @@
 
 use crate::{
     probe::probe_theme,
-    support::{outline, red, test_app},
+    support::{focus, outline, red, tab_index, test_app},
 };
 use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
-    input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex},
+    input_focus::tab_navigation::TabIndex,
     picking::hover::PickingInteraction,
     prelude::*,
     ui::{Checked, InteractionDisabled},
@@ -434,15 +434,6 @@ fn red_on_theme() -> Theme {
     let mut theme = probe_theme();
     theme.switch.track.checked = StateColors::uniform(red());
     theme
-}
-
-fn focus(app: &mut App, switch: Entity, visible: bool) {
-    app.insert_resource(InputFocus::from_entity(switch));
-    app.insert_resource(InputFocusVisible(visible));
-}
-
-fn tab_index(app: &App, switch: Entity) -> i32 {
-    app.world().get::<TabIndex>(switch).unwrap().0
 }
 
 fn track(app: &App, switch: Entity) -> Color {

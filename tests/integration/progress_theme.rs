@@ -6,7 +6,7 @@
 use crate::{
     gradient::{painted_blocks, stops},
     probe::probe_theme,
-    support::{node, red, test_app},
+    support::{node, passes_through, red, test_app},
 };
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, picking::Pickable, prelude::*};
@@ -465,10 +465,6 @@ fn spawn_bar_under(app: &mut App, parent: Entity) -> Entity {
     app.world_mut()
         .spawn((progress_bar().build(), ChildOf(parent)))
         .id()
-}
-
-fn passes_through(pickable: &Pickable) -> bool {
-    !pickable.should_block_lower && !pickable.is_hoverable
 }
 
 /// The probe theme with a red fill for the base style.

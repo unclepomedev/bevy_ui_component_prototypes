@@ -2,7 +2,11 @@
 //! (its parts, how to spawn it) stays in the file of the widget.
 
 use crate::probe::probe_theme;
-use bevy::prelude::*;
+use bevy::{
+    input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex},
+    picking::Pickable,
+    prelude::*,
+};
 use bevy_ui_component_prototypes::{GlobalTheme, UiComponentPrototypesPlugin};
 
 /// An app with the plugin of the crate, and the probe theme as the global theme.
@@ -32,4 +36,19 @@ pub fn border_color(app: &App, entity: Entity) -> BorderColor {
 
 pub fn node(app: &App, entity: Entity) -> Node {
     app.world().get::<Node>(entity).unwrap().clone()
+}
+
+/// Gives the focus to `entity`, with the focus indicator shown or hidden.
+pub fn focus(app: &mut App, entity: Entity, visible: bool) {
+    app.insert_resource(InputFocus::from_entity(entity));
+    app.insert_resource(InputFocusVisible(visible));
+}
+
+pub fn tab_index(app: &App, entity: Entity) -> i32 {
+    app.world().get::<TabIndex>(entity).unwrap().0
+}
+
+/// Whether the pointer goes through `pickable` to what is behind it.
+pub fn passes_through(pickable: &Pickable) -> bool {
+    !pickable.should_block_lower && !pickable.is_hoverable
 }

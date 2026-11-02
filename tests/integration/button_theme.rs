@@ -4,14 +4,14 @@
 
 use crate::{
     probe::probe_theme,
-    support::{bg, border_color, node, outline, test_app},
+    support::{bg, border_color, focus, node, outline, tab_index, test_app},
 };
 use bevy::{
     a11y::AccessibilityNode,
     asset::uuid_handle,
     ecs::system::RunSystemOnce,
     input_focus::{
-        InputFocus, InputFocusVisible,
+        InputFocus,
         tab_navigation::{NavAction, TabGroup, TabIndex, TabNavigation},
     },
     picking::hover::PickingInteraction,
@@ -874,20 +874,11 @@ fn spawn_primary_under(app: &mut App, parent: Entity) -> Entity {
         .id()
 }
 
-fn focus(app: &mut App, button: Entity, visible: bool) {
-    app.insert_resource(InputFocus::from_entity(button));
-    app.insert_resource(InputFocusVisible(visible));
-}
-
 fn spawn_bundle() -> impl Bundle {
     icon_button()
         .label("button")
         .variant(ButtonVariantId::PRIMARY)
         .build()
-}
-
-fn tab_index(app: &App, button: Entity) -> i32 {
-    app.world().get::<TabIndex>(button).unwrap().0
 }
 
 fn navigate(app: &mut App, from: Entity, action: NavAction) -> Entity {

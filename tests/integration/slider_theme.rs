@@ -6,12 +6,12 @@
 use crate::{
     gradient::{painted_blocks, stops},
     probe::probe_theme,
-    support::{node, outline, red, test_app},
+    support::{focus, node, outline, red, tab_index, test_app},
 };
 use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
-    input_focus::{InputFocus, InputFocusVisible, tab_navigation::TabIndex},
+    input_focus::tab_navigation::TabIndex,
     picking::hover::Hovered,
     prelude::*,
     ui::{InteractionDisabled, Pressed},
@@ -763,15 +763,6 @@ fn blocks_theme() -> Theme {
         ..default()
     };
     theme
-}
-
-fn focus(app: &mut App, slider: Entity, visible: bool) {
-    app.insert_resource(InputFocus::from_entity(slider));
-    app.insert_resource(InputFocusVisible(visible));
-}
-
-fn tab_index(app: &App, slider: Entity) -> i32 {
-    app.world().get::<TabIndex>(slider).unwrap().0
 }
 
 /// The parts, in the order the builder spawns them: the rail, then a travel area holding the fill

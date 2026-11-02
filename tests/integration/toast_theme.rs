@@ -5,7 +5,7 @@
 
 use crate::{
     probe::probe_theme,
-    support::{bg, border_color, red, test_app},
+    support::{bg, border_color, passes_through, red, test_app},
 };
 use bevy::{picking::Pickable, prelude::*, time::TimeUpdateStrategy};
 use bevy_ui_component_prototypes::{
@@ -767,10 +767,6 @@ fn children_of_the_host_that_are_not_toasts_are_left_alone() {
 
 fn spawn_toast(app: &mut App, text: &str) -> Entity {
     app.world_mut().spawn(toast().text(text).build()).id()
-}
-
-fn passes_through(pickable: &Pickable) -> bool {
-    !pickable.should_block_lower && !pickable.is_hoverable
 }
 
 fn label(app: &App, toast: Entity) -> Entity {
