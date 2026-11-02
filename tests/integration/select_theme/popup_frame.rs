@@ -3,9 +3,10 @@
 use super::{popup, spawn_fruit, spawn_fruit_under};
 use crate::{
     probe::probe_theme,
-    support::{bg, red, test_app},
+    support::{bg, passes_through, red, test_app},
 };
 use bevy::{
+    picking::Pickable,
     prelude::*,
     ui_widgets::popover::{Popover, PopoverAlign, PopoverSide},
 };
@@ -180,4 +181,95 @@ fn placements(app: &App, root: Entity) -> Vec<(PopoverSide, PopoverAlign, f32)> 
 
 fn z_index(app: &App, entity: Entity) -> i32 {
     app.world().get::<GlobalZIndex>(entity).unwrap().0
+}
+
+fn scroll_mark(app: &App, root: Entity) -> (Entity, Entity) {
+    let world = app.world();
+    let track = world.get::<Children>(popup(app, root)).unwrap()[1];
+    let thumb = world.get::<Children>(track).unwrap()[0];
+    (track, thumb)
+}
+
+#[test]
+fn the_scroll_mark_is_the_second_child_of_the_popup_and_the_thumb_is_in_it() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    let (track, thumb) = scroll_mark(&app, root);
+    let world = app.world();
+    assert_eq!(world.get::<Children>(popup(&app, root)).unwrap().len(), 2);
+    assert_eq!(world.get::<ChildOf>(thumb).unwrap().parent(), track);
+}
+
+#[test]
+fn the_scroll_mark_lets_the_pointer_through() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    let (track, thumb) = scroll_mark(&app, root);
+    for part in [track, thumb] {
+        assert!(passes_through(app.world().get::<Pickable>(part).unwrap()));
+    }
+}
+
+#[test]
+fn the_scroll_mark_is_hidden_when_there_is_nothing_to_scroll() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+    let (track, _) = scroll_mark(&app, root);
+    assert_eq!(
+        app.world().get::<Node>(track).unwrap().display,
+        Display::None
+    );
+}
+
+fn assert_scroll_mark(app: &App, root: Entity, track_color: Color, thumb_color: Color, width: f32) {
+    let (track, thumb) = scroll_mark(app, root);
+    assert_eq!(bg(app, track), track_color);
+    assert_eq!(bg(app, thumb), thumb_color);
+    let node = app.world().get::<Node>(track).unwrap();
+    assert_eq!(node.width, Val::Px(width));
+}
+
+#[test]
+fn the_scroll_mark_takes_the_theme() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+    let theme = probe_theme();
+    assert_scroll_mark(
+        &app,
+        root,
+        theme.select.scroll_track,
+        theme.select.scroll_thumb,
+        theme.select_metrics.scroll_indicator_width,
+    );
+    let (track, _) = scroll_mark(&app, root);
+    let node = app.world().get::<Node>(track).unwrap();
+    assert_eq!(node.top, theme.select_metrics.popup_padding.top);
+    assert_eq!(node.bottom, theme.select_metrics.popup_padding.bottom);
+    assert_eq!(node.right, theme.select_metrics.popup_padding.right);
+}
+
+#[test]
+fn the_scroll_mark_follows_the_global_theme_but_not_a_scoped_one() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    let scope = app.world_mut().spawn(probe_theme()).id();
+    let scoped = spawn_fruit_under(&mut app, scope);
+    app.update();
+    let mut changed = probe_theme();
+    changed.select.scroll_track = red();
+    changed.select.scroll_thumb = red();
+    changed.select_metrics.scroll_indicator_width = 9.0;
+    app.insert_resource(GlobalTheme(changed));
+    app.update();
+    assert_scroll_mark(&app, root, red(), red(), 9.0);
+    let theme = probe_theme();
+    assert_scroll_mark(
+        &app,
+        scoped,
+        theme.select.scroll_track,
+        theme.select.scroll_thumb,
+        theme.select_metrics.scroll_indicator_width,
+    );
 }

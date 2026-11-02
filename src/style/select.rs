@@ -41,6 +41,10 @@ pub struct SelectStyle {
     pub option_bg: SelectionColors,
     /// Text color of an option row, chosen the same way as `option_bg`.
     pub option_fg: SelectionColors,
+    /// The mark at the right edge of a list that scrolls, which shows where the visible rows are among all of them: the track it moves along and the thumb that moves. It is drawn over the right edge of the rows and lets the pointer through.
+    pub scroll_track: Color,
+    /// The thumb of the mark; see `scroll_track`.
+    pub scroll_thumb: Color,
 }
 
 /// The colors of an option row in each state it can be in. There is no hovered state: the row under the pointer
@@ -130,6 +134,8 @@ impl Default for SelectStyle {
                 unselected: fg,
                 selected: fg,
             },
+            scroll_track: BG_PRESSED,
+            scroll_thumb: BORDER,
         }
     }
 }
@@ -175,6 +181,8 @@ pub struct SelectMetrics {
     pub popup_z_index: i32,
     /// How many options the list shows at most; with more, it scrolls. At least one.
     pub max_visible_options: usize,
+    /// The width of the mark that shows where a list that scrolls is, in pixels.
+    pub scroll_indicator_width: f32,
 }
 
 impl Default for SelectMetrics {
@@ -190,6 +198,7 @@ impl Default for SelectMetrics {
             popup_gap: 4.0,
             popup_z_index: 50,
             max_visible_options: 8,
+            scroll_indicator_width: 4.0,
         }
     }
 }
@@ -255,5 +264,6 @@ mod tests {
         assert_eq!(metrics.option_height, 40.0);
         assert!(metrics.popup_gap >= 0.0);
         assert!(metrics.max_visible_options >= 1);
+        assert!(metrics.scroll_indicator_width > 0.0);
     }
 }
