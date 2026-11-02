@@ -4,7 +4,7 @@ use super::components::{
 use crate::{
     style::state::VisualState,
     view::{
-        button::{ButtonContent, ButtonIcon, ButtonLabel, ButtonSurface, write_button_layout},
+        button::{ButtonIcon, ButtonLabel, ButtonParts, write_button_colors, write_button_layout},
         focus::FocusRingTracker,
         pass_through,
         style_targets::{drain_removed, pick_targets},
@@ -79,7 +79,7 @@ pub(super) fn sync_select_style(
     mut triggers: Query<TriggerRow, (With<SelectTrigger>, Without<ButtonIcon>)>,
     mut arrows: Query<&mut BorderColor, (With<SelectArrow>, Without<SelectTrigger>)>,
     children: Query<&Children>,
-    mut parts: SelectParts,
+    mut parts: ButtonParts,
 ) {
     let (focused, focus_moved) = ring.update();
     let targets = targets.collect(lookup.needs_resync(), focus_moved);
@@ -96,21 +96,17 @@ pub(super) fn sync_select_style(
         let state = VisualState::resolve(trigger.interaction, is_focused, trigger.disabled);
         let look = style.look(state, is_focused);
 
-        trigger.bg.set_if_neq(BackgroundColor(look.background));
-        trigger.border.set_if_neq(BorderColor::all(look.border));
-        trigger.outline.set_if_neq(Outline::new(
-            look.ring.width,
-            look.ring.offset,
-            look.ring.color,
-        ));
+        write_button_colors(
+            &look,
+            &mut trigger.bg,
+            &mut trigger.border,
+            &mut trigger.outline,
+        );
         write_button_layout(
             &mut trigger.node,
             &trigger_node(&theme.select_metrics, &style.shape),
         );
-        parts
-            .surface
-            .apply(entity, style.surface.as_ref(), look.tint);
-        parts.content.apply(entity, look.fg, Some(metrics), theme);
+        parts.paint(entity, style, &look, Some(metrics), theme);
         for descendant in children.iter_descendants(entity) {
             if let Ok(mut arrow) = arrows.get_mut(descendant) {
                 arrow.set_if_neq(BorderColor::all(look.fg));
@@ -129,13 +125,6 @@ pub(super) struct TriggerRow {
     border: &'static mut BorderColor,
     outline: &'static mut Outline,
     node: &'static mut Node,
-}
-
-/// What the sync writes besides the trigger node itself.
-#[derive(SystemParam)]
-pub(super) struct SelectParts<'w, 's> {
-    content: ButtonContent<'w, 's>,
-    surface: ButtonSurface<'w, 's>,
 }
 
 /// Finds the triggers whose look may have changed from the last run.

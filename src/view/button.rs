@@ -17,7 +17,13 @@ use super::{
     style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
 };
-use crate::style::{button::ButtonLook, state::VisualState};
+use crate::{
+    Theme,
+    style::{
+        button::{ButtonLook, ButtonMetrics, ButtonStyle},
+        state::VisualState,
+    },
+};
 use bevy::{
     ecs::{query::QueryData, system::SystemParam},
     picking::hover::PickingInteraction,
@@ -56,22 +62,29 @@ fn sync_button_style(
         let state = VisualState::resolve(button.interaction, is_focused, button.disabled);
         let look = style.look(state, is_focused);
 
-        write_node(&look, &mut button);
+        write_button_colors(
+            &look,
+            &mut button.bg,
+            &mut button.border,
+            &mut button.outline,
+        );
         if let (Some(metrics), Some(node)) = (metrics, button.node.as_mut()) {
             write_button_layout(node, &button_node(metrics, &style.shape));
         }
-        parts
-            .surface
-            .apply(entity, style.surface.as_ref(), look.tint);
-        parts.content.apply(entity, look.fg, metrics, theme);
+        parts.paint(entity, style, &look, metrics, theme);
     }
 }
 
 /// Writes the node-level colors and the focus ring, only where they changed.
-fn write_node(look: &ButtonLook, button: &mut ButtonRowItem) {
-    button.bg.set_if_neq(BackgroundColor(look.background));
-    button.border.set_if_neq(BorderColor::all(look.border));
-    button.outline.set_if_neq(Outline::new(
+pub(crate) fn write_button_colors(
+    look: &ButtonLook,
+    bg: &mut Mut<BackgroundColor>,
+    border: &mut Mut<BorderColor>,
+    outline: &mut Mut<Outline>,
+) {
+    bg.set_if_neq(BackgroundColor(look.background));
+    border.set_if_neq(BorderColor::all(look.border));
+    outline.set_if_neq(Outline::new(
         look.ring.width,
         look.ring.offset,
         look.ring.color,
@@ -117,11 +130,27 @@ type ChangedButtons<'w, 's> = Query<
     ),
 >;
 
-/// What the style sync writes besides the button node itself.
+/// What the style sync writes besides the node itself: the image surface and the content (text and icon).
 #[derive(SystemParam)]
-struct ButtonParts<'w, 's> {
+pub(crate) struct ButtonParts<'w, 's> {
     content: ButtonContent<'w, 's>,
     surface: ButtonSurface<'w, 's>,
+}
+
+impl ButtonParts<'_, '_> {
+    /// Draws the image surface of `style` and styles the content, for the `look` the button has now.
+    pub(crate) fn paint(
+        &mut self,
+        button: Entity,
+        style: &ButtonStyle,
+        look: &ButtonLook,
+        metrics: Option<&ButtonMetrics>,
+        theme: &Theme,
+    ) {
+        self.surface
+            .apply(button, style.surface.as_ref(), look.tint);
+        self.content.apply(button, look.fg, metrics, theme);
+    }
 }
 
 // Without the icon, which the content writes a `Node` of its own to.
