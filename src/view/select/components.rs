@@ -5,13 +5,15 @@ use crate::{
     },
     view::{KeyboardNavigable, button::button_node, focus::hidden_outline},
 };
+use accesskit::{HasPopup, Node as AccessKitNode, Role};
 use bevy::{
+    a11y::AccessibilityNode,
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     input_focus::tab_navigation::TabIndex,
     picking::hover::PickingInteraction,
     prelude::*,
     ui_widgets::{
-        ListBox, ListItem, MenuButton, MenuPopup,
+        ListBox, ListItem, MenuButton, MenuPopup, ScrollArea,
         popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide},
     },
 };
@@ -35,6 +37,9 @@ pub(crate) type LabelSpawner = Arc<dyn Fn(&mut EntityWorldMut) + Send + Sync>;
 /// It is controlled, like the other widgets: the select never changes its own choice. Choosing an option in
 /// the list emits `ValueChange<V>` (`V` is the type of the option values) with this entity as `source`,
 /// and the app applies it by inserting [`SelectedOption`] (or [`SelectedIndex`]) on this entity.
+///
+/// Text placed next to the select is not associated with it: give the select a name for screen readers
+/// with `AccessibleLabel` on this entity.
 ///
 /// The width follows the parent layout (`100%`).
 #[derive(Component)]
@@ -140,6 +145,8 @@ fn clear_index(mut world: DeferredWorld, context: HookContext) {
 #[derive(Component, Clone, Copy, Default)]
 #[require(
     MenuButton,
+    // `MenuButton` asks for the button role; a select is a combo box.
+    AccessibilityNode = trigger_accessibility(),
     PickingInteraction,
     TabIndex(0),
     KeyboardNavigable,
@@ -160,6 +167,8 @@ pub(crate) struct SelectArrow;
 #[derive(Component, Clone, Copy, Default)]
 #[require(
     MenuPopup,
+    // `MenuPopup` asks for the menu role; this is only a wrapper around the list.
+    AccessibilityNode = popup_accessibility(),
     Popover = popup_placement(&SelectMetrics::default()),
     GlobalZIndex = GlobalZIndex(SelectMetrics::default().popup_z_index),
     Visibility = Visibility::Hidden,
@@ -169,9 +178,10 @@ pub(crate) struct SelectArrow;
 )]
 pub(crate) struct SelectPopup;
 
-/// The options inside the popup. It holds the focus while the popup is open.
+/// The options inside the popup. It holds the focus while the popup is open, and scrolls when there are more
+/// options than the theme says it shows.
 #[derive(Component, Clone, Copy, Default)]
-#[require(ListBox, TabIndex(0), Node = list_node())]
+#[require(ListBox, ScrollArea, TabIndex(0), Node = list_node(&SelectMetrics::default()))]
 pub(crate) struct SelectList;
 
 /// One option of the list. `index` is its position among the options.
@@ -184,6 +194,21 @@ pub(crate) struct SelectList;
 )]
 pub(crate) struct SelectRow {
     pub(crate) index: usize,
+}
+
+/// A combo box that opens a list, closed to start with.
+pub(crate) fn trigger_accessibility() -> AccessibilityNode {
+    let mut node = AccessKitNode::new(Role::ComboBox);
+    node.set_has_popup(HasPopup::Listbox);
+    node.set_expanded(false);
+    AccessibilityNode(node)
+}
+
+/// A plain wrapper around the list, out of the way of a screen reader until the select opens.
+pub(crate) fn popup_accessibility() -> AccessibilityNode {
+    let mut node = AccessKitNode::new(Role::GenericContainer);
+    node.set_hidden();
+    AccessibilityNode(node)
 }
 
 pub(crate) fn select_node() -> Node {
@@ -221,18 +246,22 @@ pub(crate) fn popup_placement(metrics: &SelectMetrics) -> Popover {
     }
 }
 
-pub(crate) fn list_node() -> Node {
+pub(crate) fn list_node(metrics: &SelectMetrics) -> Node {
     Node {
         flex_direction: FlexDirection::Column,
+        overflow: Overflow::scroll_y(),
+        max_height: px(metrics.option_height * metrics.max_visible_options.max(1) as f32),
         ..default()
     }
 }
 
 pub(crate) fn row_node(metrics: &SelectMetrics) -> Node {
     Node {
-        height: metrics.option_height,
+        height: px(metrics.option_height),
         padding: metrics.option_padding,
         align_items: AlignItems::Center,
+        // The rows keep their height in a list that is shorter than all of them.
+        flex_shrink: 0.0,
         ..default()
     }
 }

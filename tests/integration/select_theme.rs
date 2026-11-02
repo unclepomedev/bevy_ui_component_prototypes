@@ -3,7 +3,9 @@
 //! The pointer and the keys are covered by `examples/select_check.rs`.
 
 use crate::probe::probe_theme;
+use accesskit::{HasPopup, NodeId, Role};
 use bevy::{
+    a11y::AccessibilityNode,
     input_focus::{
         InputFocus, InputFocusVisible,
         tab_navigation::{NavAction, TabIndex},
@@ -13,7 +15,7 @@ use bevy::{
     ui::{InteractionDisabled, Selected},
     ui_widgets::{
         ActiveDescendant, ListBox, ListItem, MenuAction, MenuButton, MenuEvent, MenuFocusState,
-        MenuPopup, ReselectListRow, ValueChange,
+        MenuPopup, ReselectListRow, ScrollArea, ValueChange,
         popover::{Popover, PopoverAlign, PopoverSide},
     },
 };
@@ -697,8 +699,211 @@ fn the_popup_is_as_wide_as_the_select_at_least() {
 }
 
 // ---------------------------------------------------------------------------
+// The name for screen readers
+// ---------------------------------------------------------------------------
+
+fn named_fruit(app: &mut App) -> Entity {
+    app.world_mut()
+        .spawn((fruit_select(), AccessibleLabel::new("Fruit")))
+        .id()
+}
+
+#[test]
+fn the_name_given_to_the_select_is_the_name_of_the_trigger() {
+    let mut app = test_app();
+    let root = named_fruit(&mut app);
+    app.update();
+    assert_eq!(trigger_name(&app, root), Some("Fruit".to_string()));
+    assert!(app.world().get::<AccessibilityNode>(root).is_none());
+}
+
+#[test]
+fn a_select_without_a_name_has_a_trigger_without_one() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+    assert_eq!(trigger_name(&app, root), None);
+    assert!(
+        app.world()
+            .get::<AccessibleLabel>(trigger(&app, root))
+            .is_none()
+    );
+}
+
+#[test]
+fn a_name_that_is_changed_changes_the_name_of_the_trigger() {
+    let mut app = test_app();
+    let root = named_fruit(&mut app);
+    app.update();
+    app.world_mut()
+        .entity_mut(root)
+        .insert(AccessibleLabel::new("Berry"));
+    app.update();
+    assert_eq!(trigger_name(&app, root), Some("Berry".to_string()));
+    assert!(app.world().get::<AccessibilityNode>(root).is_none());
+}
+
+#[test]
+fn a_name_that_is_added_later_reaches_the_trigger() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+    app.world_mut()
+        .entity_mut(root)
+        .insert(AccessibleLabel::new("Fruit"));
+    app.update();
+    assert_eq!(trigger_name(&app, root), Some("Fruit".to_string()));
+}
+
+#[test]
+fn a_name_that_is_removed_goes_from_the_trigger_too() {
+    let mut app = test_app();
+    let root = named_fruit(&mut app);
+    app.update();
+    app.world_mut().entity_mut(root).remove::<AccessibleLabel>();
+    app.update();
+    assert_eq!(trigger_name(&app, root), None);
+}
+
+#[test]
+fn the_trigger_is_a_closed_combo_box_that_opens_a_list() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    let node = trigger_node(&app, root);
+    assert_eq!(node.role(), Role::ComboBox);
+    assert_eq!(node.has_popup(), Some(HasPopup::Listbox));
+    assert_eq!(node.is_expanded(), Some(false));
+}
+
+#[test]
+fn the_expanded_state_follows_the_list_opening_and_closing() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    let trigger = trigger(&app, root);
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert_eq!(trigger_node(&app, root).is_expanded(), Some(true));
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert_eq!(trigger_node(&app, root).is_expanded(), Some(false));
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert_eq!(trigger_node(&app, root).is_expanded(), Some(true));
+}
+
+#[test]
+fn the_name_is_added_to_the_combo_box_without_changing_what_it_is() {
+    let mut app = test_app();
+    let root = named_fruit(&mut app);
+
+    app.update();
+
+    let node = trigger_node(&app, root);
+    assert_eq!(node.label(), Some("Fruit"));
+    assert_eq!(node.role(), Role::ComboBox);
+    assert_eq!(node.is_expanded(), Some(false));
+}
+
+#[test]
+fn the_closed_list_is_out_of_the_tree_of_a_screen_reader() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    app.update();
+
+    let node = popup_node(&app, root);
+    assert_eq!(node.role(), Role::GenericContainer);
+    assert!(node.is_hidden());
+}
+
+#[test]
+fn the_list_is_in_the_tree_while_it_is_open() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    let trigger = trigger(&app, root);
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert!(!popup_node(&app, root).is_hidden());
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert!(popup_node(&app, root).is_hidden());
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert!(!popup_node(&app, root).is_hidden());
+}
+
+#[test]
+fn the_trigger_says_which_list_it_opens() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    app.update();
+
+    let list = list(&app, root);
+    assert_eq!(
+        trigger_node(&app, root).controls(),
+        [NodeId(list.to_bits())]
+    );
+}
+
+// ---------------------------------------------------------------------------
 // The rows of the popup
 // ---------------------------------------------------------------------------
+
+#[test]
+fn the_list_shows_as_many_rows_as_the_theme_says_and_scrolls_beyond() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    let list = list(&app, root);
+    assert!(app.world().get::<ScrollArea>(list).is_some());
+    let node = app.world().get::<Node>(list).unwrap();
+    assert_eq!(node.overflow, Overflow::scroll_y());
+    assert_eq!(node.max_height, Val::Px(37.0 * 2.0));
+}
+
+#[test]
+fn a_theme_change_changes_how_many_rows_the_list_shows() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    let mut theme = probe_theme();
+    theme.select_metrics.option_height = 10.0;
+    theme.select_metrics.max_visible_options = 5;
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+
+    let node = app.world().get::<Node>(list(&app, root)).unwrap();
+    assert_eq!(node.max_height, Val::Px(50.0));
+}
+
+#[test]
+fn a_list_shows_at_least_one_row() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    let mut theme = probe_theme();
+    theme.select_metrics.max_visible_options = 0;
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+
+    let node = app.world().get::<Node>(list(&app, root)).unwrap();
+    assert_eq!(node.max_height, Val::Px(37.0));
+}
+
+#[test]
+fn the_rows_do_not_shrink_when_the_list_is_shorter_than_all_of_them() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    for row in rows(&app, root) {
+        assert_eq!(app.world().get::<Node>(row).unwrap().flex_shrink, 0.0);
+    }
+}
 
 #[test]
 fn the_rows_and_their_labels_are_styled_after_one_update() {
@@ -712,7 +917,7 @@ fn the_rows_and_their_labels_are_styled_after_one_update() {
     let row = rows(&app, root)[0];
     assert_eq!(bg(&app, row), style.option_bg.unchecked.normal);
     let node = app.world().get::<Node>(row).unwrap();
-    assert_eq!(node.height, metrics.option_height);
+    assert_eq!(node.height, Val::Px(metrics.option_height));
     assert_eq!(node.padding, metrics.option_padding);
 
     let label = row_label(&app, row);
@@ -867,7 +1072,7 @@ fn a_theme_change_resizes_the_rows_and_their_text() {
     app.update();
 
     let mut theme = probe_theme();
-    theme.select_metrics.option_height = Val::Px(51.0);
+    theme.select_metrics.option_height = 51.0;
     theme.select_metrics.trigger.font_size = FontSize::Px(52.0);
     app.insert_resource(GlobalTheme(theme));
     app.update();
@@ -1419,6 +1624,140 @@ fn shown(app: &App, root: Entity) -> Option<Entity> {
 
 fn shown_text(app: &App, root: Entity) -> Option<String> {
     shown(app, root).map(|label| app.world().get::<Text>(label).unwrap().0.clone())
+}
+
+#[test]
+fn the_placeholder_is_read_while_nothing_is_chosen() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    app.update();
+
+    let node = trigger_node(&app, root);
+    assert_eq!(node.placeholder(), Some("Pick one"));
+    assert_eq!(node.value(), None);
+}
+
+#[test]
+fn the_chosen_option_is_the_value_of_the_trigger() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    app.world_mut().entity_mut(root).insert(SelectedOption {
+        value: Fruit::Banana,
+    });
+    app.update();
+    let node = trigger_node(&app, root);
+    assert_eq!(node.value(), Some("Banana"));
+    assert_eq!(node.placeholder(), None);
+
+    app.world_mut()
+        .entity_mut(root)
+        .remove::<SelectedOption<Fruit>>();
+    app.update();
+    let node = trigger_node(&app, root);
+    assert_eq!(node.value(), None);
+    assert_eq!(node.placeholder(), Some("Pick one"));
+}
+
+#[test]
+fn a_text_that_changes_changes_what_is_read() {
+    let mut app = test_app();
+    let root = spawn_preselected(&mut app, Fruit::Banana);
+    app.update();
+
+    let label = shown(&app, root).unwrap();
+    app.world_mut().get_mut::<Text>(label).unwrap().0 = "Berry".to_string();
+    app.update();
+
+    assert_eq!(trigger_node(&app, root).value(), Some("Berry"));
+}
+
+#[test]
+fn a_position_past_the_last_option_is_read_as_the_placeholder() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    app.update();
+
+    app.world_mut()
+        .entity_mut(root)
+        .insert(SelectedIndex { index: Some(9) });
+    app.update();
+
+    let node = trigger_node(&app, root);
+    assert_eq!(node.value(), None);
+    assert_eq!(node.placeholder(), Some("Pick one"));
+}
+
+#[test]
+fn the_rows_are_named_by_the_text_of_their_labels() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    app.update();
+
+    let names: Vec<Option<String>> = rows(&app, root)
+        .iter()
+        .map(|row| {
+            app.world()
+                .get::<AccessibilityNode>(*row)
+                .unwrap()
+                .label()
+                .map(str::to_owned)
+        })
+        .collect();
+    assert_eq!(
+        names,
+        [
+            Some("Apple".to_string()),
+            Some("Banana".to_string()),
+            Some("Cherry".to_string())
+        ]
+    );
+}
+
+#[test]
+fn a_label_without_a_text_is_not_read() {
+    let mut app = test_app();
+    let root = app
+        .world_mut()
+        .spawn(
+            select::<Fruit>()
+                .option(Fruit::Apple, Marker(1))
+                .selected(Fruit::Apple)
+                .build(),
+        )
+        .id();
+
+    app.update();
+
+    assert_eq!(trigger_node(&app, root).value(), None);
+    let row = rows(&app, root)[0];
+    assert_eq!(
+        app.world().get::<AccessibilityNode>(row).unwrap().label(),
+        None
+    );
+}
+
+fn popup_node(app: &App, root: Entity) -> &AccessibilityNode {
+    app.world()
+        .get::<AccessibilityNode>(popup(app, root))
+        .unwrap()
+}
+
+fn trigger_node(app: &App, root: Entity) -> &AccessibilityNode {
+    app.world()
+        .get::<AccessibilityNode>(trigger(app, root))
+        .unwrap()
+}
+
+fn trigger_name(app: &App, root: Entity) -> Option<String> {
+    app.world()
+        .get::<AccessibilityNode>(trigger(app, root))
+        .unwrap()
+        .label()
+        .map(str::to_owned)
 }
 
 fn index(app: &App, root: Entity) -> Option<usize> {

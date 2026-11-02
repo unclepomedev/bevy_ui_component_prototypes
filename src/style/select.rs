@@ -108,7 +108,8 @@ impl SelectStyle {
 pub struct SelectMetrics {
     /// The trigger. The labels of the options take its font size too.
     pub trigger: ButtonMetrics,
-    pub option_height: Val,
+    /// The height of an option row, in pixels.
+    pub option_height: f32,
     pub option_padding: UiRect,
     pub popup_padding: UiRect,
     /// Space between the trigger and the popup, in pixels.
@@ -116,6 +117,8 @@ pub struct SelectMetrics {
     /// The popup is drawn in front of everything that has a lower `GlobalZIndex`. It has to be in front
     /// of what comes after the select in the UI tree, or that would hide it.
     pub popup_z_index: i32,
+    /// How many options the list shows at most; with more, it scrolls. At least one.
+    pub max_visible_options: usize,
 }
 
 impl Default for SelectMetrics {
@@ -125,11 +128,12 @@ impl Default for SelectMetrics {
                 height: Val::Px(56.0),
                 ..ButtonMetrics::default()
             },
-            option_height: Val::Px(40.0),
+            option_height: 40.0,
             option_padding: UiRect::horizontal(Val::Px(16.0)),
             popup_padding: UiRect::all(Val::Px(4.0)),
             popup_gap: 4.0,
             popup_z_index: 50,
+            max_visible_options: 8,
         }
     }
 }
@@ -183,7 +187,8 @@ mod tests {
     #[test]
     fn the_default_metrics_leave_room_for_a_row_in_the_popup() {
         let metrics = SelectMetrics::default();
-        assert_eq!(metrics.option_height, Val::Px(40.0));
+        assert_eq!(metrics.option_height, 40.0);
         assert!(metrics.popup_gap >= 0.0);
+        assert!(metrics.max_visible_options >= 1);
     }
 }

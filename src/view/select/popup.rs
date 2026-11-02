@@ -1,6 +1,6 @@
 use super::components::{
-    Select, SelectList, SelectPopup, SelectRow, SelectedIndex, popup_node, popup_placement,
-    row_node,
+    Select, SelectList, SelectPopup, SelectRow, SelectedIndex, list_node, popup_node,
+    popup_placement, row_node,
 };
 use crate::{
     style::state::VisualState,
@@ -58,12 +58,14 @@ fn sync_selected_row(
     }
 }
 
-/// Paints the frame of each popup: its background, border, corners and inner padding.
+/// Paints the frame of each popup: its background, border, corners and inner padding, and sizes its list.
 fn sync_select_popup(
     mut lookup: ThemeLookup,
     added: Query<Entity, Added<SelectPopup>>,
     all: Query<Entity, With<SelectPopup>>,
     mut popups: Query<PopupRow, With<SelectPopup>>,
+    children: Query<&Children>,
+    mut lists: Query<&mut Node, (With<SelectList>, Without<SelectPopup>)>,
 ) {
     let resync = lookup.needs_resync();
     let targets = pick_targets(resync, all.iter(), added.iter(), [], []);
@@ -88,6 +90,14 @@ fn sync_select_popup(
         let z_index = theme.select_metrics.popup_z_index;
         if popup.z_index.0 != z_index {
             popup.z_index.0 = z_index;
+        }
+        for child in children.get(entity).into_iter().flat_map(|c| c.iter()) {
+            if let Ok(mut list) = lists.get_mut(child) {
+                let want = list_node(&theme.select_metrics);
+                if list.max_height != want.max_height {
+                    list.max_height = want.max_height;
+                }
+            }
         }
     }
 }
