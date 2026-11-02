@@ -20,7 +20,8 @@
 //!      focus goes back to the box. The ring is there after the keys, and not after a click.
 //!   8. Choose the option that is already chosen: the list closes and nothing changes.
 //!   9. Move the pointer over the rows of an open list: the highlight follows it, one row at a time. The arrow keys
-//!      move the same highlight, and Enter chooses the highlighted row.
+//!      move the same highlight, and Enter chooses the highlighted row. Rest the pointer on the list and press the
+//!      arrow keys: the highlight does not jump back to the pointer when the rows scroll under it.
 //!  10. "Many options" has 20 options and the list shows 8 of them: the wheel scrolls it, and the arrow keys,
 //!      Home and End bring the highlighted row into view. The list opens at the chosen option, or at its top when
 //!      nothing is chosen: choose Option 15, scroll up with the wheel, close the list and open it again.

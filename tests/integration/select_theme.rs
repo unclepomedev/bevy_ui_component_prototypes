@@ -5,7 +5,13 @@
 use crate::support::test_app;
 use bevy::{
     a11y::AccessibilityNode,
-    picking::hover::PickingInteraction,
+    camera::NormalizedRenderTarget,
+    picking::{
+        backend::HitData,
+        events::{Pointer, PointerMove},
+        hover::PickingInteraction,
+        pointer::{Location, PointerId},
+    },
     prelude::*,
     ui::Selected,
     ui_widgets::{MenuAction, MenuEvent, MenuFocusState, ValueChange},
@@ -153,6 +159,25 @@ fn label_color(app: &App, label: Entity) -> Color {
 
 fn point_at(app: &mut App, row: Entity, interaction: PickingInteraction) {
     app.world_mut().entity_mut(row).insert(interaction);
+    app.update();
+}
+
+/// The pointer moves over `row`.
+fn pointer_moves_over(app: &mut App, row: Entity) {
+    let location = Location {
+        target: NormalizedRenderTarget::None {
+            width: 1,
+            height: 1,
+        },
+        position: Vec2::ZERO,
+    };
+    let camera = app.world_mut().spawn_empty().id();
+    app.world_mut().trigger(PointerMove {
+        entity: row,
+        pointer: Pointer::new(PointerId::Mouse, location),
+        hit: HitData::new(camera, 0.0, None, None),
+        delta: Vec2::ONE,
+    });
     app.update();
 }
 

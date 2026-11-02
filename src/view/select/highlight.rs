@@ -3,53 +3,45 @@ use super::{
     open::SelectOpen,
 };
 use bevy::{
-    picking::hover::PickingInteraction, prelude::*, ui::InteractionDisabled,
-    ui_widgets::ActiveDescendant,
+    picking::events::PointerMove, prelude::*, ui::InteractionDisabled, ui_widgets::ActiveDescendant,
 };
 
 pub(super) struct SelectHighlightPlugin;
 impl Plugin for SelectHighlightPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, highlight_row_under_pointer);
+        app.add_observer(highlight_row_under_pointer);
     }
 }
 
-type RowsUnderPointer<'w, 's> = Query<
-    'w,
-    's,
-    (
-        Entity,
-        &'static ChildOf,
-        &'static PickingInteraction,
-        Has<InteractionDisabled>,
-    ),
-    (With<SelectRow>, Changed<PickingInteraction>),
->;
-
-/// The row the pointer comes to is the highlighted one, so that the pointer and the keys share one highlight.
+/// The row the pointer moves over is the highlighted one, so that the pointer and the keys share one highlight.
+/// Only a move of the pointer counts: when the list scrolls under a pointer that rests, the highlight stays where the keys put it.
 fn highlight_row_under_pointer(
-    rows: RowsUnderPointer,
+    moved: On<PointerMove>,
+    rows: Query<(&ChildOf, Has<InteractionDisabled>), With<SelectRow>>,
     lists: Query<&ActiveDescendant, With<SelectList>>,
     parents: Query<&ChildOf>,
     open: Query<(), (With<Select>, With<SelectOpen>)>,
     mut commands: Commands,
 ) {
-    for (row, parent, interaction, disabled) in &rows {
-        if *interaction == PickingInteraction::None || disabled {
-            continue;
-        }
-        let list = parent.parent();
-        let Ok(active) = lists.get(list) else {
-            continue;
-        };
-        if active.0 == Some(row) {
-            continue;
-        }
-        if parents
-            .iter_ancestors(list)
-            .any(|ancestor| open.contains(ancestor))
-        {
-            commands.entity(list).insert(ActiveDescendant(Some(row)));
-        }
+    // The event travels up through the ancestors of the row, and only the row itself counts.
+    let row = moved.event_target();
+    let Ok((parent, disabled)) = rows.get(row) else {
+        return;
+    };
+    if disabled {
+        return;
+    }
+    let list = parent.parent();
+    let Ok(active) = lists.get(list) else {
+        return;
+    };
+    if active.0 == Some(row) {
+        return;
+    }
+    if parents
+        .iter_ancestors(list)
+        .any(|ancestor| open.contains(ancestor))
+    {
+        commands.entity(list).insert(ActiveDescendant(Some(row)));
     }
 }
