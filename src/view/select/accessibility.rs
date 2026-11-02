@@ -1,14 +1,18 @@
 use super::{
-    components::{Select, SelectTrigger},
+    components::{Select, SelectList, SelectPopup, SelectTrigger},
     open::SelectOpen,
 };
 use crate::view::style_targets::drain_removed;
+use accesskit::NodeId;
 use bevy::{a11y::AccessibilityNode, prelude::*};
 
 pub(super) struct SelectAccessibilityPlugin;
 impl Plugin for SelectAccessibilityPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PostUpdate, (forward_label, sync_expanded));
+        app.add_systems(
+            PostUpdate,
+            (forward_label, link_trigger_to_list, sync_open_state),
+        );
     }
 }
 
@@ -46,31 +50,67 @@ fn forward_label(
     }
 }
 
-type TriggerNodes<'w, 's> = Query<'w, 's, &'static mut AccessibilityNode, With<SelectTrigger>>;
+// Two queries on the same component: the filters keep them apart.
+type TriggerNodes<'w, 's> =
+    Query<'w, 's, &'static mut AccessibilityNode, (With<SelectTrigger>, Without<SelectPopup>)>;
+type PopupNodes<'w, 's> =
+    Query<'w, 's, &'static mut AccessibilityNode, (With<SelectPopup>, Without<SelectTrigger>)>;
 
-/// Tells a screen reader whether the list is open.
-fn sync_expanded(
+type NewSelects<'w, 's> = Query<'w, 's, (Entity, &'static Children), (With<Select>, Added<Select>)>;
+
+/// Tells a screen reader which list the trigger opens.
+fn link_trigger_to_list(
+    added: NewSelects,
+    descendants: Query<&Children>,
+    lists: Query<(), With<SelectList>>,
+    mut nodes: TriggerNodes,
+) {
+    for (select, children) in &added {
+        let Some(list) = descendants
+            .iter_descendants(select)
+            .find(|entity| lists.contains(*entity))
+        else {
+            continue;
+        };
+        for child in children.iter() {
+            if let Ok(mut node) = nodes.get_mut(child) {
+                node.set_controls(vec![NodeId(list.to_bits())]);
+                break;
+            }
+        }
+    }
+}
+
+/// Tells a screen reader whether the list is open: the trigger says so, and the list is out of its tree
+/// while it is closed.
+fn sync_open_state(
     opened: Query<&Children, (With<Select>, Added<SelectOpen>)>,
     selects: Query<&Children, With<Select>>,
     mut closed: RemovedComponents<SelectOpen>,
-    mut nodes: TriggerNodes,
+    mut triggers: TriggerNodes,
+    mut popups: PopupNodes,
 ) {
     // Closing comes first: a list that was closed and opened again in the same frame ends up open.
     for entity in drain_removed(&mut closed) {
         if let Ok(children) = selects.get(entity) {
-            set_expanded(&mut nodes, children, false);
+            set_open(&mut triggers, &mut popups, children, false);
         }
     }
     for children in &opened {
-        set_expanded(&mut nodes, children, true);
+        set_open(&mut triggers, &mut popups, children, true);
     }
 }
 
-fn set_expanded(nodes: &mut TriggerNodes, children: &Children, expanded: bool) {
+fn set_open(triggers: &mut TriggerNodes, popups: &mut PopupNodes, children: &Children, open: bool) {
     for child in children.iter() {
-        if let Ok(mut node) = nodes.get_mut(child) {
-            node.set_expanded(expanded);
-            return;
+        if let Ok(mut node) = triggers.get_mut(child) {
+            node.set_expanded(open);
+        } else if let Ok(mut node) = popups.get_mut(child) {
+            if open {
+                node.clear_hidden();
+            } else {
+                node.set_hidden();
+            }
         }
     }
 }

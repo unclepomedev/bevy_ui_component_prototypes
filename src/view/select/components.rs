@@ -167,6 +167,8 @@ pub(crate) struct SelectArrow;
 #[derive(Component, Clone, Copy, Default)]
 #[require(
     MenuPopup,
+    // `MenuPopup` asks for the menu role; this is only a wrapper around the list.
+    AccessibilityNode = popup_accessibility(),
     Popover = popup_placement(&SelectMetrics::default()),
     GlobalZIndex = GlobalZIndex(SelectMetrics::default().popup_z_index),
     Visibility = Visibility::Hidden,
@@ -199,6 +201,13 @@ pub(crate) fn trigger_accessibility() -> AccessibilityNode {
     let mut node = AccessKitNode::new(Role::ComboBox);
     node.set_has_popup(HasPopup::Listbox);
     node.set_expanded(false);
+    AccessibilityNode(node)
+}
+
+/// A plain wrapper around the list, out of the way of a screen reader until the select opens.
+pub(crate) fn popup_accessibility() -> AccessibilityNode {
+    let mut node = AccessKitNode::new(Role::GenericContainer);
+    node.set_hidden();
     AccessibilityNode(node)
 }
 

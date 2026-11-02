@@ -3,7 +3,7 @@
 //! The pointer and the keys are covered by `examples/select_check.rs`.
 
 use crate::probe::probe_theme;
-use accesskit::{HasPopup, Role};
+use accesskit::{HasPopup, NodeId, Role};
 use bevy::{
     a11y::AccessibilityNode,
     input_focus::{
@@ -805,6 +805,48 @@ fn the_name_is_added_to_the_combo_box_without_changing_what_it_is() {
     assert_eq!(node.is_expanded(), Some(false));
 }
 
+#[test]
+fn the_closed_list_is_out_of_the_tree_of_a_screen_reader() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    app.update();
+
+    let node = popup_node(&app, root);
+    assert_eq!(node.role(), Role::GenericContainer);
+    assert!(node.is_hidden());
+}
+
+#[test]
+fn the_list_is_in_the_tree_while_it_is_open() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+    let trigger = trigger(&app, root);
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert!(!popup_node(&app, root).is_hidden());
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert!(popup_node(&app, root).is_hidden());
+
+    menu_event(&mut app, trigger, MenuAction::Toggle);
+    assert!(!popup_node(&app, root).is_hidden());
+}
+
+#[test]
+fn the_trigger_says_which_list_it_opens() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    app.update();
+
+    let list = list(&app, root);
+    assert_eq!(
+        trigger_node(&app, root).controls(),
+        [NodeId(list.to_bits())]
+    );
+}
+
 // ---------------------------------------------------------------------------
 // The rows of the popup
 // ---------------------------------------------------------------------------
@@ -1582,6 +1624,12 @@ fn shown(app: &App, root: Entity) -> Option<Entity> {
 
 fn shown_text(app: &App, root: Entity) -> Option<String> {
     shown(app, root).map(|label| app.world().get::<Text>(label).unwrap().0.clone())
+}
+
+fn popup_node(app: &App, root: Entity) -> &AccessibilityNode {
+    app.world()
+        .get::<AccessibilityNode>(popup(app, root))
+        .unwrap()
 }
 
 fn trigger_node(app: &App, root: Entity) -> &AccessibilityNode {
