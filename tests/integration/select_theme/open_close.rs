@@ -8,8 +8,8 @@ use crate::support::test_app;
 use bevy::{
     input_focus::{InputFocus, InputFocusVisible, tab_navigation::NavAction},
     prelude::*,
-    ui::ScrollPosition,
-    ui_widgets::{MenuAction, MenuEvent, MenuFocusState, ScrollIntoView},
+    ui::{ComputedNode, ScrollPosition, UiGlobalTransform},
+    ui_widgets::{MenuAction, MenuEvent, MenuFocusState, ScrollAreaPlugin, ScrollIntoView},
 };
 use bevy_ui_component_prototypes::{SelectedIndex, SelectedOption};
 
@@ -144,6 +144,7 @@ struct Scrolled(Vec<Entity>);
 
 fn app_that_records_scrolling() -> App {
     let mut app = test_app();
+    app.add_plugins(ScrollAreaPlugin);
     app.init_resource::<Scrolled>();
     app.add_observer(
         |event: On<ScrollIntoView>, mut scrolled: ResMut<Scrolled>| {
@@ -167,10 +168,33 @@ fn opening_a_list_with_a_chosen_option_scrolls_to_its_row() {
     let mut app = app_that_records_scrolling();
     let root = spawn_preselected(&mut app, Fruit::Cherry);
     app.update();
+    // There is no layout in the tests, so the sizes are given by hand: the list shows 100 of its 300, and the
+    // chosen row lies below the visible part.
+    let list_entity = list(&app, root);
+    let row = rows(&app, root)[2];
+    app.world_mut().entity_mut(list_entity).insert((
+        ComputedNode {
+            size: Vec2::new(100.0, 100.0),
+            content_size: Vec2::new(100.0, 300.0),
+            inverse_scale_factor: 1.0,
+            ..default()
+        },
+        UiGlobalTransform::from_translation(Vec2::new(50.0, 50.0)),
+    ));
+    app.world_mut().entity_mut(row).insert((
+        ComputedNode {
+            size: Vec2::new(100.0, 30.0),
+            inverse_scale_factor: 1.0,
+            ..default()
+        },
+        UiGlobalTransform::from_translation(Vec2::new(50.0, 250.0)),
+    ));
 
     toggle(&mut app, root);
 
-    assert_eq!(scrolled(&app), vec![rows(&app, root)[2]]);
+    assert_eq!(scrolled(&app), vec![row]);
+    let position = app.world().get::<ScrollPosition>(list_entity).unwrap();
+    assert_eq!(position.y, 165.0);
 }
 
 #[test]
