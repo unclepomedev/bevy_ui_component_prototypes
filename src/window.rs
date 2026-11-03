@@ -21,14 +21,20 @@ pub use self::{
     },
 };
 
-use self::components::{
-    WindowPart, WindowTitle, close_node, glyph_bar_node, glyph_box_node, title_bar_node,
-    window_node,
+use self::{
+    components::{
+        WindowPart, WindowTitle, close_node, glyph_bar_node, glyph_box_node, title_bar_node,
+        window_node,
+    },
+    style::CloseLook,
 };
-use crate::common::{
-    state::VisualState,
-    style_targets::{drain_removed, pick_targets},
-    theme_lookup::ThemeLookup,
+use crate::{
+    Theme,
+    common::{
+        state::VisualState,
+        style_targets::{drain_removed, pick_targets},
+        theme_lookup::ThemeLookup,
+    },
 };
 use bevy::{
     ecs::{query::QueryData, system::SystemParam},
@@ -67,7 +73,8 @@ fn sync_window_rect(mut windows: Query<(&WindowRect, &mut Node), Changed<WindowR
     }
 }
 
-/// Resolves each window's look from its theme and the state of its close button, and writes it to its parts.
+/// Resolves each window's look from its theme, its state and the state of its close button, and writes it to
+/// the window and its parts.
 fn sync_window_style(
     mut lookup: ThemeLookup,
     mut targets: WindowTargets,
@@ -86,68 +93,108 @@ fn sync_window_style(
 
         let theme = lookup.for_entity(entity);
         let (style, metrics) = (&theme.window, &theme.window_metrics);
-        let close_state = children
-            .iter_descendants(entity)
-            .find_map(|part| {
-                let (kind, interaction) = interactions.get(part).ok()?;
-                (*kind == WindowPart::Close).then_some(interaction)
-            })
-            .map_or(VisualState::Normal, |interaction| {
-                VisualState::resolve(interaction, false, false)
-            });
-        let close = style.close.look(close_state);
-        let (bar_bg, title_fg) = style.title_bar.colors(window.active);
+        let active = window.active;
+        let close = style
+            .close
+            .look(close_state(entity, &interactions, &children));
 
-        window.bg.set_if_neq(BackgroundColor(style.bg));
-        window.border.set_if_neq(BorderColor::all(style.border));
-        let frame = window_node(&style.shape);
-        if window.node.border != frame.border {
-            window.node.border = frame.border;
-        }
-        if window.node.border_radius != frame.border_radius {
-            window.node.border_radius = frame.border_radius;
-        }
-
+        sync_frame(&mut window, style);
         for part in children.iter_descendants(entity) {
             if let Ok(mut part) = parts.get_mut(part) {
                 match *part.kind {
-                    WindowPart::TitleBar => {
-                        part.bg.set_if_neq(BackgroundColor(bar_bg));
-                        part.node
-                            .set_if_neq(title_bar_node(metrics, style.close.side));
-                    }
-                    WindowPart::Close => {
-                        part.bg.set_if_neq(BackgroundColor(close.bg));
-                        part.node.set_if_neq(close_node(metrics, style));
-                    }
-                    WindowPart::GlyphBox => {
-                        part.node.set_if_neq(glyph_box_node(metrics));
-                    }
-                    WindowPart::GlyphBar => {
-                        part.bg.set_if_neq(BackgroundColor(close.glyph));
-                        part.node.set_if_neq(glyph_bar_node(metrics));
-                    }
+                    WindowPart::TitleBar => sync_title_bar(&mut part, style, metrics, active),
+                    WindowPart::Close => sync_close(&mut part, style, metrics, close),
+                    WindowPart::GlyphBox => sync_glyph_box(&mut part, metrics),
+                    WindowPart::GlyphBar => sync_glyph_bar(&mut part, metrics, close),
                 }
             } else if let Ok(mut title) = titles.get_mut(part) {
-                title.color.set_if_neq(TextColor(title_fg));
-                if title.font.font != theme.font {
-                    title.font.font = theme.font.clone();
-                }
-                if title.font.font_smoothing != theme.font_smoothing {
-                    title.font.font_smoothing = theme.font_smoothing;
-                }
-                if title.font.font_size != metrics.title_font_size {
-                    title.font.font_size = metrics.title_font_size;
-                }
-                let justify = match style.title_bar.align {
-                    TitleAlign::Start => Justify::Left,
-                    TitleAlign::Center => Justify::Center,
-                };
-                if title.layout.justify != justify {
-                    title.layout.justify = justify;
-                }
+                sync_title(&mut title, theme, active);
             }
         }
+    }
+}
+
+/// The state of the close button of `window`, from the pointer.
+fn close_state(
+    window: Entity,
+    interactions: &Query<(&WindowPart, &PickingInteraction)>,
+    children: &Query<&Children>,
+) -> VisualState {
+    children
+        .iter_descendants(window)
+        .find_map(|part| {
+            let (kind, interaction) = interactions.get(part).ok()?;
+            (*kind == WindowPart::Close).then_some(interaction)
+        })
+        .map_or(VisualState::Normal, |interaction| {
+            VisualState::resolve(interaction, false, false)
+        })
+}
+
+/// The window itself: the colors of the frame and its border and corners.
+fn sync_frame(window: &mut WindowRowItem, style: &WindowStyle) {
+    window.bg.set_if_neq(BackgroundColor(style.bg));
+    window.border.set_if_neq(BorderColor::all(style.border));
+    let frame = window_node(&style.shape);
+    if window.node.border != frame.border {
+        window.node.border = frame.border;
+    }
+    if window.node.border_radius != frame.border_radius {
+        window.node.border_radius = frame.border_radius;
+    }
+}
+
+fn sync_title_bar(
+    part: &mut PartRowItem,
+    style: &WindowStyle,
+    metrics: &WindowMetrics,
+    active: bool,
+) {
+    let (bg, _) = style.title_bar.colors(active);
+    part.bg.set_if_neq(BackgroundColor(bg));
+    part.node
+        .set_if_neq(title_bar_node(metrics, style.close.side));
+}
+
+fn sync_close(
+    part: &mut PartRowItem,
+    style: &WindowStyle,
+    metrics: &WindowMetrics,
+    look: CloseLook,
+) {
+    part.bg.set_if_neq(BackgroundColor(look.bg));
+    part.node.set_if_neq(close_node(metrics, style));
+}
+
+fn sync_glyph_box(part: &mut PartRowItem, metrics: &WindowMetrics) {
+    part.node.set_if_neq(glyph_box_node(metrics));
+}
+
+fn sync_glyph_bar(part: &mut PartRowItem, metrics: &WindowMetrics, look: CloseLook) {
+    part.bg.set_if_neq(BackgroundColor(look.glyph));
+    part.node.set_if_neq(glyph_bar_node(metrics));
+}
+
+/// The title text: its color, font, size and alignment.
+fn sync_title(title: &mut TitleRowItem, theme: &Theme, active: bool) {
+    let (style, metrics) = (&theme.window, &theme.window_metrics);
+    let (_, fg) = style.title_bar.colors(active);
+    title.color.set_if_neq(TextColor(fg));
+    if title.font.font != theme.font {
+        title.font.font = theme.font.clone();
+    }
+    if title.font.font_smoothing != theme.font_smoothing {
+        title.font.font_smoothing = theme.font_smoothing;
+    }
+    if title.font.font_size != metrics.title_font_size {
+        title.font.font_size = metrics.title_font_size;
+    }
+    let justify = match style.title_bar.align {
+        TitleAlign::Start => Justify::Left,
+        TitleAlign::Center => Justify::Center,
+    };
+    if title.layout.justify != justify {
+        title.layout.justify = justify;
     }
 }
 
