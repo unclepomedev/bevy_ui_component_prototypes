@@ -348,3 +348,21 @@ fn gaining_and_losing_the_active_mark_swaps_the_colors() {
     assert_eq!(bar_bg(&app), theme.window.title_bar.bg);
     assert_eq!(title_fg(&app), theme.window.title_bar.fg);
 }
+
+#[test]
+fn the_title_bar_follows_the_inside_of_the_rounded_frame() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+
+    // The probe theme: a radius of 6 and a border of 3.
+    let radius = node(&app, title_bar(&app, window)).border_radius;
+    assert_eq!(radius, BorderRadius::top(px(3.0)));
+
+    let mut theme = probe_theme();
+    theme.window.shape.radius = 0.0;
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+    let radius = node(&app, title_bar(&app, window)).border_radius;
+    assert_eq!(radius, BorderRadius::top(px(0.0)));
+}

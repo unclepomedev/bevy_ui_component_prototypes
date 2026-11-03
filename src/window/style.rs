@@ -48,6 +48,13 @@ impl Default for WindowShape {
     }
 }
 
+impl WindowShape {
+    /// The radius of the inside of the border: the title bar takes it at its top corners.
+    pub(crate) fn inner_radius(&self) -> f32 {
+        (self.radius - self.border_width).max(0.0)
+    }
+}
+
 /// Colors of the title bar. `fg` is the color of the title text.
 /// The `inactive_` colors are for a window that does not have `ActiveWindow`.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -251,6 +258,17 @@ mod tests {
             WindowStyle::windows().close.side
         );
         assert_eq!(WindowMetrics::default(), WindowMetrics::windows());
+    }
+
+    #[test]
+    fn the_inner_radius_is_the_radius_less_the_border_and_never_negative() {
+        let shape = |border_width, radius| WindowShape {
+            border_width,
+            radius,
+        };
+        assert_eq!(shape(1.0, 10.0).inner_radius(), 9.0);
+        assert_eq!(shape(4.0, 3.0).inner_radius(), 0.0);
+        assert_eq!(shape(1.0, 0.0).inner_radius(), 0.0);
     }
 
     #[test]

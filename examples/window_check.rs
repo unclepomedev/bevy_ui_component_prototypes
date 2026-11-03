@@ -7,7 +7,8 @@
 //!
 //! What to verify:
 //!   1. The window on the left has the mac look: a circular red close button at the left of the title bar
-//!      and a centered title. The cross shows only while the pointer is over the button.
+//!      and a centered title. The cross shows only while the pointer is over the button. The frame has rounded
+//!      corners, and the title bar follows them: it does not stick out at the top corners.
 //!   2. The window on the right has the Windows look: a square close button at the right end of the title
 //!      bar, flush with its top and bottom, and a left-aligned title. It turns red under the pointer.
 //!   3. Press on a close button: it gets darker. Release on it: the window closes. Press on it and release

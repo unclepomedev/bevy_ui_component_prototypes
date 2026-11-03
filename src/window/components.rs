@@ -83,9 +83,15 @@ pub(crate) fn window_node(shape: &WindowShape) -> Node {
 }
 
 /// The close button comes first among the children, and the title second. Reversing the row puts the
-/// close button at the right.
-pub(crate) fn title_bar_node(metrics: &WindowMetrics, side: WindowSide) -> Node {
+/// close button at the right. The top corners follow the inside of the frame, so that the bar does not stick
+/// out of them.
+pub(crate) fn title_bar_node(
+    metrics: &WindowMetrics,
+    shape: &WindowShape,
+    side: WindowSide,
+) -> Node {
     Node {
+        border_radius: BorderRadius::top(px(shape.inner_radius())),
         height: px(metrics.title_height),
         padding: metrics.title_padding,
         column_gap: px(metrics.title_gap),

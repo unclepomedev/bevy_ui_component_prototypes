@@ -81,7 +81,7 @@ fn spawn_title_bar(parent: &mut RelatedSpawner<ChildOf>, title_extras: Vec<Extra
     parent
         .spawn((
             WindowPart::TitleBar,
-            title_bar_node(&metrics, style.close.side),
+            title_bar_node(&metrics, &style.shape, style.close.side),
             BackgroundColor(Color::NONE),
         ))
         .observe(drag_title_bar)

@@ -153,7 +153,7 @@ fn sync_title_bar(
     let (bg, _) = style.title_bar.colors(active);
     part.bg.set_if_neq(BackgroundColor(bg));
     part.node
-        .set_if_neq(title_bar_node(metrics, style.close.side));
+        .set_if_neq(title_bar_node(metrics, &style.shape, style.close.side));
 }
 
 fn sync_close(
