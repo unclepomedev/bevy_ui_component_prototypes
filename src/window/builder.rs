@@ -1,4 +1,5 @@
 use super::{
+    close::close_on_activate,
     components::{
         UiWindow, WindowContent, WindowPart, WindowRect, WindowTitle, close_node, content_node,
         glyph_bar_node, glyph_bar_transform, glyph_box_node, title_bar_node, title_node,
@@ -106,7 +107,9 @@ fn spawn_close(bar: &mut RelatedSpawner<ChildOf>, style: &WindowStyle, metrics: 
         close_node(metrics, style),
         BackgroundColor(Color::NONE),
         PickingInteraction::default(),
+        bevy::ui_widgets::Button,
     ))
+    .observe(close_on_activate)
     .with_children(|close| {
         close
             .spawn((

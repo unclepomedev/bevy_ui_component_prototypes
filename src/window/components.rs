@@ -8,7 +8,8 @@ use bevy::prelude::*;
 ///
 /// Put the content in the entity marked [`WindowContent`]: `window().content_bundle(...)` adds a bundle to it.
 /// The position and the size are those of [`WindowRect`]. Dragging the title bar asks for the window to be
-/// moved ([`MoveWindow`](super::MoveWindow)), within [`WindowLimits`].
+/// moved ([`MoveWindow`](super::MoveWindow)), within [`WindowLimits`]. Activating the close button asks for it
+/// to be closed ([`CloseWindow`](super::CloseWindow)).
 ///
 /// A window is placed in the node it is a child of, with absolute positioning: make that node as large as
 /// the area the windows may be in.

@@ -1,7 +1,7 @@
 use super::{
     components::{ActiveWindow, UiWindow, WindowRect},
     limits::WindowLimits,
-    requests::{MoveWindow, RaiseWindow},
+    requests::{CloseWindow, MoveWindow, RaiseWindow},
     stack::WindowStack,
 };
 use bevy::{picking::events::PointerPress, prelude::*, ui::ComputedNode, ui::UiSystems};
@@ -11,6 +11,7 @@ use bevy::{picking::events::PointerPress, prelude::*, ui::ComputedNode, ui::UiSy
 /// - Keeps the [`WindowStack`]: a new window goes on the top, a despawned one leaves.
 /// - Gives each window the `GlobalZIndex` of its place in the stack, and [`ActiveWindow`] to the top one.
 /// - Moves a window by the delta of [`MoveWindow`], within its [`WindowLimits`].
+/// - Despawns a window on [`CloseWindow`].
 /// - Brings a window to the front on [`RaiseWindow`], and asks for it when the pointer presses on the window
 ///   or on anything in it.
 pub struct WindowDefaultsPlugin {
@@ -35,6 +36,7 @@ impl Plugin for WindowDefaultsPlugin {
             .add_observer(on_raise_window)
             .add_observer(raise_on_press)
             .add_observer(on_move_window)
+            .add_observer(on_close_window)
             .add_systems(
                 PostUpdate,
                 (track_windows, apply_layers)
@@ -71,6 +73,16 @@ fn on_move_window(
         ..*rect
     };
     rect.set_if_neq(moved);
+}
+
+fn on_close_window(
+    close: On<CloseWindow>,
+    windows: Query<(), With<UiWindow>>,
+    mut commands: Commands,
+) {
+    if windows.contains(close.window) {
+        commands.entity(close.window).despawn();
+    }
 }
 
 /// Asks for the window to be raised when the press lands on it or on a descendant. Widgets that stop the

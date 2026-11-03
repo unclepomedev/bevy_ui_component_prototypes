@@ -2,15 +2,16 @@
 //!
 //! Execution: cargo run --example window_check
 //!
-//! A window comes to the front when pressed, and moves when its title bar is dragged. It does not close or
-//! resize yet.
+//! A window comes to the front when pressed, moves when its title bar is dragged, and closes with its close
+//! button. It does not resize yet.
 //!
 //! What to verify:
 //!   1. The window on the left has the mac look: a circular red close button at the left of the title bar
 //!      and a centered title. The cross shows only while the pointer is over the button.
 //!   2. The window on the right has the Windows look: a square close button at the right end of the title
 //!      bar, flush with its top and bottom, and a left-aligned title. It turns red under the pointer.
-//!   3. Press on a close button: it gets darker. Nothing closes.
+//!   3. Press on a close button: it gets darker. Release on it: the window closes. Press on it and release
+//!      away from it: nothing closes.
 //!   4. The windows are placed by `WindowRect`. Their frames, title bars and corners come from their own
 //!      `Theme` (the panels they are in), not from the global one.
 //!   5. The content area clips: the long text in the narrow window is cut off at its edge and does not
@@ -30,6 +31,8 @@
 //!      the right, with its top edge at the top of the screen, and with the title bar visible at the bottom.
 //!  13. The pointer keeps hold of the window while it is dragged over the other windows.
 //!  14. Drag with the right button: nothing moves.
+//!  15. After a window closes, the one below it is the bright one and the others keep their order. [N] opens
+//!      a new window, which comes on top of the others and is the bright one.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ui_component_prototypes::{
@@ -39,6 +42,9 @@ use bevy_ui_component_prototypes::{
 
 #[derive(Resource)]
 struct MacLook(bool);
+
+#[derive(Resource)]
+struct Desktop(Entity);
 
 fn main() {
     App::new()
@@ -50,7 +56,13 @@ fn main() {
         .insert_resource(GlobalTheme(theme(true)))
         .insert_resource(MacLook(true))
         .add_systems(Startup, setup)
-        .add_systems(Update, swap_theme.run_if(input_just_pressed(KeyCode::KeyT)))
+        .add_systems(
+            Update,
+            (
+                swap_theme.run_if(input_just_pressed(KeyCode::KeyT)),
+                open_window.run_if(input_just_pressed(KeyCode::KeyN)),
+            ),
+        )
         .run();
 }
 
@@ -81,6 +93,7 @@ fn setup(mut commands: Commands) {
             ..default()
         })
         .id();
+    commands.insert_resource(Desktop(desktop));
 
     spawn_window(
         &mut commands,
@@ -105,7 +118,7 @@ fn setup(mut commands: Commands) {
     );
     commands.spawn((
         Text::new(
-            "[T] swap the GLOBAL theme; the windows with a Theme of their own are unaffected",
+            "[T] swap the GLOBAL theme; the windows with a Theme of their own are unaffected. [N] open a window",
         ),
         Node {
             position_type: PositionType::Absolute,
@@ -167,4 +180,16 @@ fn spawn_window(
 fn swap_theme(mut global: ResMut<GlobalTheme>, mut mac: ResMut<MacLook>) {
     mac.0 = !mac.0;
     *global = GlobalTheme(theme(mac.0));
+}
+
+fn open_window(mut commands: Commands, desktop: Res<Desktop>, mut opened: Local<u32>) {
+    let offset = 24.0 * (*opened % 8) as f32;
+    *opened += 1;
+    spawn_window(
+        &mut commands,
+        desktop.0,
+        None,
+        WindowRect::new(80.0 + offset, 80.0 + offset, 240.0, 160.0),
+        "New window",
+    );
 }

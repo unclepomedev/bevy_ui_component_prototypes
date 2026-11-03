@@ -14,3 +14,10 @@ pub struct MoveWindow {
     pub window: Entity,
     pub delta: Vec2,
 }
+
+/// Asks for `window` to be closed.
+#[derive(EntityEvent, Clone, Copy, Debug)]
+pub struct CloseWindow {
+    #[event_target]
+    pub window: Entity,
+}
