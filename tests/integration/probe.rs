@@ -4,10 +4,11 @@
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
-    CheckedColors, FocusRing, OptionColors, ProgressShape, ProgressStyle, ProgressStyles,
-    ProgressVariantId, SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle, SelectionColors,
-    SliderShape, SliderStyle, StateColors, SwitchStyle, Theme, ToastMetrics, ToastShape,
-    ToastStyle, ToastStyles, ToastVariantId,
+    CheckedColors, CloseShape, CloseStyle, FocusRing, OptionColors, ProgressShape, ProgressStyle,
+    ProgressStyles, ProgressVariantId, ScrollIndicatorMetrics, ScrollIndicatorStyle, SelectMetrics,
+    SelectPopupStyle, SelectShape, SelectStyle, SelectionColors, SliderShape, SliderStyle,
+    StateColors, SwitchStyle, Theme, TitleAlign, TitleBarStyle, ToastMetrics, ToastShape,
+    ToastStyle, ToastStyles, ToastVariantId, WindowMetrics, WindowShape, WindowSide, WindowStyle,
 };
 use std::collections::HashMap;
 
@@ -81,8 +82,6 @@ pub fn probe_theme() -> Theme {
                 unselected: option_tones(0.6, 0.3),
                 selected: option_tones(0.6, 0.4),
             },
-            scroll_track: Color::srgb(0.6, 0.5, 0.1),
-            scroll_thumb: Color::srgb(0.6, 0.5, 0.2),
         },
         select_metrics: SelectMetrics {
             trigger: ButtonMetrics {
@@ -98,7 +97,14 @@ pub fn probe_theme() -> Theme {
             popup_gap: 7.0,
             popup_z_index: 42,
             max_visible_options: 2,
-            scroll_indicator_width: 5.0,
+        },
+        scroll_indicator: ScrollIndicatorStyle {
+            track: Color::srgb(0.6, 0.5, 0.1),
+            thumb: Color::srgb(0.6, 0.5, 0.2),
+        },
+        scroll_indicator_metrics: ScrollIndicatorMetrics {
+            width: 5.0,
+            inset: 3.0,
         },
         toasts: ToastStyles {
             base: toast_style(0.1),
@@ -117,6 +123,43 @@ pub fn probe_theme() -> Theme {
             fade_in: 0.5,
             fade_out: 0.25,
             default_duration: 2.0,
+        },
+        window: WindowStyle {
+            bg: Color::srgb(0.7, 0.1, 0.1),
+            border: Color::srgb(0.7, 0.9, 0.9),
+            shape: WindowShape {
+                border_width: 3.0,
+                radius: 6.0,
+            },
+            title_bar: TitleBarStyle {
+                bg: Color::srgb(0.7, 0.2, 0.2),
+                fg: Color::srgb(0.7, 0.2, 0.3),
+                inactive_bg: Color::srgb(0.2, 0.7, 0.2),
+                inactive_fg: Color::srgb(0.3, 0.7, 0.2),
+                align: TitleAlign::Center,
+            },
+            close: CloseStyle {
+                side: WindowSide::Left,
+                shape: CloseShape::Circle,
+                bg: tones(0.7, 0.1),
+                glyph: tones(0.7, 0.2),
+                focus_ring: FocusRing {
+                    color: Color::srgb(0.9, 0.3, 0.6),
+                    width: Val::Px(3.0),
+                    offset: Val::Px(5.0),
+                },
+            },
+        },
+        window_metrics: WindowMetrics {
+            title_height: 31.0,
+            title_padding: UiRect::all(Val::Px(5.0)),
+            title_gap: 9.0,
+            title_font_size: FontSize::Px(19.0),
+            close_width: 23.0,
+            close_height: 21.0,
+            glyph_size: 11.0,
+            glyph_stroke: 3.0,
+            resize_grip: 11.0,
         },
         font: FontSource::monospace(),
         font_smoothing: FontSmoothing::AntiAliased,

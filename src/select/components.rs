@@ -1,16 +1,16 @@
 use super::style::{SelectMetrics, SelectShape};
 use crate::{
     button::{ButtonShape, button_node},
-    common::{focus::hidden_outline, picking::pass_through, tab_order::KeyboardNavigable},
+    common::{focus::hidden_outline, tab_order::KeyboardNavigable},
 };
 use accesskit::{HasPopup, Node as AccessKitNode, Role};
 use bevy::{
     a11y::AccessibilityNode,
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     input_focus::tab_navigation::TabIndex,
-    picking::Pickable,
     picking::hover::PickingInteraction,
     prelude::*,
+    ui::OverrideClip,
     ui_widgets::{
         ListBox, ListItem, MenuButton, MenuPopup, ScrollArea,
         popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide},
@@ -165,6 +165,7 @@ pub(crate) struct SelectContent;
 pub(crate) struct SelectArrow;
 
 /// The list that opens under the trigger. Shown only while the select is open.
+/// It ignores the clipping of its ancestors, so that it can open past the edge of a clipped container.
 #[derive(Component, Clone, Copy, Default)]
 #[require(
     MenuPopup,
@@ -172,6 +173,7 @@ pub(crate) struct SelectArrow;
     AccessibilityNode = popup_accessibility(),
     Popover = popup_placement(&SelectMetrics::default()),
     GlobalZIndex = GlobalZIndex(SelectMetrics::default().popup_z_index),
+    OverrideClip,
     Visibility = Visibility::Hidden,
     BackgroundColor = BackgroundColor(Color::NONE),
     BorderColor = BorderColor::all(Color::NONE),
@@ -302,48 +304,6 @@ pub(crate) fn arrow_node() -> Node {
 pub(crate) fn arrow_transform() -> UiTransform {
     UiTransform {
         rotation: Rot2::degrees(45.0),
-        ..default()
-    }
-}
-
-/// The track of the mark that shows where the list that scrolls is. It is not shown when there is nothing to scroll.
-#[derive(Component, Clone, Copy, Default)]
-#[require(
-    Pickable = pass_through(),
-    BackgroundColor = BackgroundColor(Color::NONE),
-    Node = scroll_track_node(&SelectMetrics::default())
-)]
-pub(crate) struct SelectScrollTrack;
-
-/// The thumb of the mark; it moves along the track.
-#[derive(Component, Clone, Copy, Default)]
-#[require(
-    Pickable = pass_through(),
-    BackgroundColor = BackgroundColor(Color::NONE),
-    Node = scroll_thumb_node(&SelectMetrics::default())
-)]
-pub(crate) struct SelectScrollThumb;
-
-pub(crate) fn scroll_track_node(metrics: &SelectMetrics) -> Node {
-    Node {
-        position_type: PositionType::Absolute,
-        top: metrics.popup_padding.top,
-        bottom: metrics.popup_padding.bottom,
-        right: metrics.popup_padding.right,
-        width: px(metrics.scroll_indicator_width),
-        border_radius: BorderRadius::all(px(metrics.scroll_indicator_width / 2.0)),
-        // Shown only while there is something to scroll.
-        display: Display::None,
-        ..default()
-    }
-}
-
-pub(crate) fn scroll_thumb_node(metrics: &SelectMetrics) -> Node {
-    Node {
-        position_type: PositionType::Absolute,
-        left: px(0),
-        width: percent(100),
-        border_radius: BorderRadius::all(px(metrics.scroll_indicator_width / 2.0)),
         ..default()
     }
 }

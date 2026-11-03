@@ -2,11 +2,13 @@
 mod button;
 mod common;
 mod progress;
+mod scroll_indicator;
 mod select;
 mod slider;
 mod theme;
 mod toast;
 mod toggle_switch;
+mod window;
 
 pub use crate::{
     button::{
@@ -24,6 +26,9 @@ pub use crate::{
         ProgressBar, ProgressBarBuilder, ProgressRange, ProgressShape, ProgressStyle,
         ProgressStyles, ProgressValue, ProgressVariant, ProgressVariantId, progress_bar,
     },
+    scroll_indicator::{
+        ScrollIndicator, ScrollIndicatorMetrics, ScrollIndicatorStyle, scroll_indicator,
+    },
     select::{
         OptionColors, Select, SelectBuilder, SelectKey, SelectMetrics, SelectPopupStyle,
         SelectShape, SelectStyle, SelectedIndex, SelectedOption, SelectionColors, select,
@@ -35,16 +40,24 @@ pub use crate::{
         ToastStyle, ToastStyles, ToastVariant, ToastVariantId, toast, toast_host,
     },
     toggle_switch::{SwitchStyle, ToggleSwitch, ToggleSwitchBuilder, toggle_switch},
+    window::{
+        ActiveWindow, CloseShape, CloseStyle, CloseWindow, MoveWindow, RaiseWindow, ResizeWindow,
+        TitleAlign, TitleBarStyle, UiWindow, WindowBuilder, WindowContent, WindowDefaultsPlugin,
+        WindowEdge, WindowGrip, WindowLimits, WindowMetrics, WindowRect, WindowShape, WindowSide,
+        WindowStack, WindowStyle, window,
+    },
 };
 
 use crate::{
     button::ButtonStylePlugin,
     common::{focus::ShowsFocusPlugin, tab_order::TabOrderPlugin},
     progress::ProgressStylePlugin,
+    scroll_indicator::ScrollIndicatorStylePlugin,
     select::SelectStylePlugin,
     slider::SliderStylePlugin,
     toast::ToastPlugin,
     toggle_switch::SwitchStylePlugin,
+    window::WindowStylePlugin,
 };
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
@@ -67,6 +80,8 @@ use bevy::{
 /// - [`ScrollAreaPlugin`] (included in `DefaultPlugins`): scrolling the list of a select
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
+///
+/// What a window asks for ([`RaiseWindow`], [`MoveWindow`], [`ResizeWindow`], [`CloseWindow`]) is applied by [`WindowDefaultsPlugin`], which is not included.
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {
@@ -79,6 +94,8 @@ impl Plugin for UiComponentPrototypesPlugin {
             ToastPlugin,
             ProgressStylePlugin,
             SelectStylePlugin,
+            ScrollIndicatorStylePlugin,
+            WindowStylePlugin,
         ));
     }
 

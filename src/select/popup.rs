@@ -89,10 +89,6 @@ fn sync_select_popup(
         if *popup.popover != placement {
             *popup.popover = placement;
         }
-        let z_index = theme.select_metrics.popup_z_index;
-        if popup.z_index.0 != z_index {
-            popup.z_index.0 = z_index;
-        }
         for child in children.get(entity).into_iter().flat_map(|c| c.iter()) {
             if let Ok(mut list) = lists.get_mut(child) {
                 let want = list_node(&theme.select_metrics);
@@ -125,7 +121,6 @@ struct PopupRow {
     border: &'static mut BorderColor,
     node: &'static mut Node,
     popover: &'static mut Popover,
-    z_index: &'static mut GlobalZIndex,
 }
 
 /// Paints each row of the list: its background, its text and its size.
