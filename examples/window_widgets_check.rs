@@ -14,9 +14,11 @@
 //!      slider does not move the window.
 //!   3. The list of a select opens past the edge of its window, and is in front of every window, also of the
 //!      one that was in front before the press. (The window comes to the front when you press the select.)
-//!   4. The wheel scrolls the hint text inside the hint window. The text is cut off at the edge of the content
-//!      area. Make the window smaller: the text is still cut off at the edge, and the wheel still reaches the
-//!      end of it.
+//!   4. The wheel scrolls the hint text inside the hint window. A thin bar at the right edge shows where the
+//!      visible part is among the text, and moves with the wheel. The text is cut off at the edge of the content
+//!      area. Make the window smaller: the text is still cut off at the edge, the bar gets a shorter track
+//!      and a shorter thumb, and the wheel still reaches the end of the text. Make the window so tall that
+//!      all of the text fits: the bar goes away.
 //!   5. [E] puts the answer window at the bottom right of the screen, and [E] again puts it back. Open the
 //!      selects in it: the list stays on the screen (it opens upward, or is moved).
 //!   6. Submit says whether the answer is right. Choose "Butler" and "Poison" for the right answer.
@@ -32,8 +34,8 @@ use bevy::{
 };
 use bevy_ui_component_prototypes::{
     GlobalTheme, SelectKey, SelectedOption, Theme, UiComponentPrototypesPlugin,
-    WindowDefaultsPlugin, WindowMetrics, WindowRect, WindowStyle, icon_button, select, slider,
-    window,
+    WindowDefaultsPlugin, WindowMetrics, WindowRect, WindowStyle, icon_button, scroll_indicator,
+    select, slider, window,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -176,16 +178,26 @@ fn spawn_hint_window(commands: &mut Commands, desktop: Entity) {
             .rect(WindowRect::new(40.0, 40.0, 360.0, 260.0))
             .title(Text::new("Hints"))
             .content_bundle(Children::spawn(Spawn((
-                // The content area of a window is a column that clips. This node fills it and scrolls.
+                // The indicator is placed in the node that holds the scroll area and is as large as it.
                 Node {
                     flex_grow: 1.0,
                     min_height: px(0),
-                    padding: UiRect::all(px(10)),
-                    overflow: Overflow::scroll_y(),
                     ..default()
                 },
-                ScrollArea,
-                Children::spawn(Spawn(Text::new(HINTS))),
+                Children::spawn((
+                    Spawn((
+                        Node {
+                            flex_grow: 1.0,
+                            min_height: px(0),
+                            padding: UiRect::all(px(10)),
+                            overflow: Overflow::scroll_y(),
+                            ..default()
+                        },
+                        ScrollArea,
+                        Children::spawn(Spawn(Text::new(HINTS))),
+                    )),
+                    Spawn(scroll_indicator()),
+                )),
             ))))
             .build(),
         HintWindow,
