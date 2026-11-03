@@ -437,3 +437,27 @@ fn the_grips_follow_the_theme() {
     assert_eq!(right.right, Val::Px(-11.0));
     assert_eq!(right.top, Val::Px(9.0));
 }
+
+#[test]
+fn a_node_given_to_the_content_sets_its_layout_but_it_still_clips_and_fills_the_window() {
+    let mut app = test_app();
+    let window = app
+        .world_mut()
+        .spawn(
+            window()
+                .content_bundle(Node {
+                    padding: UiRect::all(Val::Px(8.0)),
+                    flex_direction: FlexDirection::Row,
+                    ..default()
+                })
+                .build(),
+        )
+        .id();
+    app.update();
+
+    let content = node(&app, content(&app, window));
+    assert_eq!(content.padding, UiRect::all(Val::Px(8.0)));
+    assert_eq!(content.flex_direction, FlexDirection::Row);
+    assert_eq!(content.overflow, Overflow::clip());
+    assert_eq!(content.flex_grow, 1.0);
+}

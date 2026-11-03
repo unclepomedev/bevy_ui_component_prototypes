@@ -50,6 +50,8 @@ impl WindowBuilder {
     }
 
     /// Adds `bundle` to the [`WindowContent`] entity. Can be called more than once.
+    /// A `Node` in it sets the layout of the area (direction, padding, gap); the area always clips and fills
+    /// the window.
     pub fn content_bundle(mut self, bundle: impl Bundle) -> Self {
         self.content_extras.push(Box::new(move |content| {
             content.insert(bundle);
@@ -71,6 +73,10 @@ impl WindowBuilder {
                 let mut content = parent.spawn((WindowContent, content_node()));
                 for extra in content_extras {
                     extra(&mut content);
+                }
+                if let Some(mut node) = content.get_mut::<Node>() {
+                    node.overflow = Overflow::clip();
+                    node.flex_grow = 1.0;
                 }
                 spawn_grips(parent);
             })),
