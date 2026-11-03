@@ -7,6 +7,7 @@ mod slider;
 mod theme;
 mod toast;
 mod toggle_switch;
+mod window;
 
 pub use crate::{
     button::{
@@ -35,6 +36,10 @@ pub use crate::{
         ToastStyle, ToastStyles, ToastVariant, ToastVariantId, toast, toast_host,
     },
     toggle_switch::{SwitchStyle, ToggleSwitch, ToggleSwitchBuilder, toggle_switch},
+    window::{
+        CloseShape, CloseStyle, TitleAlign, TitleBarStyle, UiWindow, WindowBuilder, WindowContent,
+        WindowMetrics, WindowRect, WindowShape, WindowSide, WindowStyle, window,
+    },
 };
 
 use crate::{
@@ -45,6 +50,7 @@ use crate::{
     slider::SliderStylePlugin,
     toast::ToastPlugin,
     toggle_switch::SwitchStylePlugin,
+    window::WindowStylePlugin,
 };
 use bevy::{
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
@@ -79,6 +85,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             ToastPlugin,
             ProgressStylePlugin,
             SelectStylePlugin,
+            WindowStylePlugin,
         ));
     }
 

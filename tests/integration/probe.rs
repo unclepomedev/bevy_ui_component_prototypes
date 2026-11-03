@@ -4,10 +4,11 @@
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
-    CheckedColors, FocusRing, OptionColors, ProgressShape, ProgressStyle, ProgressStyles,
-    ProgressVariantId, SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle, SelectionColors,
-    SliderShape, SliderStyle, StateColors, SwitchStyle, Theme, ToastMetrics, ToastShape,
-    ToastStyle, ToastStyles, ToastVariantId,
+    CheckedColors, CloseShape, CloseStyle, FocusRing, OptionColors, ProgressShape, ProgressStyle,
+    ProgressStyles, ProgressVariantId, SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle,
+    SelectionColors, SliderShape, SliderStyle, StateColors, SwitchStyle, Theme, TitleAlign,
+    TitleBarStyle, ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId,
+    WindowMetrics, WindowShape, WindowSide, WindowStyle,
 };
 use std::collections::HashMap;
 
@@ -117,6 +118,35 @@ pub fn probe_theme() -> Theme {
             fade_in: 0.5,
             fade_out: 0.25,
             default_duration: 2.0,
+        },
+        window: WindowStyle {
+            bg: Color::srgb(0.7, 0.1, 0.1),
+            border: Color::srgb(0.7, 0.9, 0.9),
+            shape: WindowShape {
+                border_width: 3.0,
+                radius: 6.0,
+            },
+            title_bar: TitleBarStyle {
+                bg: Color::srgb(0.7, 0.2, 0.2),
+                fg: Color::srgb(0.7, 0.2, 0.3),
+                align: TitleAlign::Center,
+            },
+            close: CloseStyle {
+                side: WindowSide::Left,
+                shape: CloseShape::Circle,
+                bg: tones(0.7, 0.1),
+                glyph: tones(0.7, 0.2),
+            },
+        },
+        window_metrics: WindowMetrics {
+            title_height: 31.0,
+            title_padding: UiRect::all(Val::Px(5.0)),
+            title_gap: 9.0,
+            title_font_size: FontSize::Px(19.0),
+            close_width: 23.0,
+            close_height: 21.0,
+            glyph_size: 11.0,
+            glyph_stroke: 3.0,
         },
         font: FontSource::monospace(),
         font_smoothing: FontSmoothing::AntiAliased,

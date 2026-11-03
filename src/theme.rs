@@ -4,6 +4,7 @@ use crate::select::{SelectMetrics, SelectStyle};
 use crate::slider::SliderStyle;
 use crate::toast::{ToastMetrics, ToastStyles};
 use crate::toggle_switch::SwitchStyle;
+use crate::window::{WindowMetrics, WindowStyle};
 use bevy::prelude::*;
 
 #[derive(Component, Clone, Debug, Default)]
@@ -17,6 +18,8 @@ pub struct Theme {
     pub select_metrics: SelectMetrics,
     pub toasts: ToastStyles,
     pub toast: ToastMetrics,
+    pub window: WindowStyle,
+    pub window_metrics: WindowMetrics,
     pub font: FontSource,
     pub font_smoothing: FontSmoothing,
 }
