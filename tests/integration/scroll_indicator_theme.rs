@@ -88,8 +88,9 @@ fn content_that_does_not_fit_shows_the_track_and_the_thumb_at_the_start() {
     assert_eq!(display(&app, spot.track), Display::Flex);
     let thumb = node(&app, spot.thumb);
     assert_eq!(thumb.top, Val::Px(0.0));
-    // The share that is visible, a quarter of the track.
-    assert_eq!(thumb.height, Val::Px(25.0));
+    // The track is the height of the area less the inset of the theme at both ends: 100 - 2 * 3. The thumb
+    // is the share that is visible, a quarter of it.
+    assert_eq!(thumb.height, Val::Px(23.5));
 }
 
 #[test]
@@ -100,8 +101,24 @@ fn the_thumb_moves_with_the_scroll_position() {
 
     app.update();
 
-    // Halfway through the 300 that can be scrolled: half of the 75 the thumb can move.
-    assert_eq!(node(&app, spot.thumb).top, Val::Px(37.5));
+    // Halfway through the 300 that can be scrolled: half of the 70.5 the thumb can move on a track of 94.
+    assert_eq!(node(&app, spot.thumb).top, Val::Px(35.25));
+}
+
+#[test]
+fn at_the_end_the_thumb_ends_where_the_track_ends() {
+    let mut app = test_app();
+    let spot = spawn_spot(&mut app);
+    measure(&mut app, spot.area, 100.0, 400.0, 300.0);
+
+    app.update();
+
+    let thumb = node(&app, spot.thumb);
+    let (Val::Px(top), Val::Px(height)) = (thumb.top, thumb.height) else {
+        panic!("the thumb is placed in pixels");
+    };
+    // The track is 94 long.
+    assert!((top + height - 94.0).abs() < 1e-4);
 }
 
 #[test]
@@ -114,7 +131,8 @@ fn the_thumb_follows_a_change_of_the_size() {
     measure(&mut app, spot.area, 200.0, 400.0, 0.0);
     app.update();
 
-    assert_eq!(node(&app, spot.thumb).height, Val::Px(100.0));
+    // The track is 194 now: half of it is the share that is visible.
+    assert_eq!(node(&app, spot.thumb).height, Val::Px(97.0));
     measure(&mut app, spot.area, 400.0, 400.0, 0.0);
     app.update();
     assert_eq!(display(&app, spot.track), Display::None);
