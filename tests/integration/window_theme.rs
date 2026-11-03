@@ -6,7 +6,12 @@ use crate::{
     probe::probe_theme,
     support::{bg, border_color, node, test_app},
 };
-use bevy::{picking::hover::PickingInteraction, prelude::*};
+use bevy::{
+    a11y::AccessibilityNode,
+    input_focus::tab_navigation::{TabGroup, TabIndex},
+    picking::hover::PickingInteraction,
+    prelude::*,
+};
 use bevy_ui_component_prototypes::{
     ActiveWindow, CloseShape, GlobalTheme, Theme, TitleAlign, WindowContent, WindowMetrics,
     WindowRect, WindowSide, WindowStyle, window,
@@ -488,4 +493,60 @@ fn the_title_is_clipped_by_its_box_and_the_content_can_be_smaller_than_what_is_i
         (content.min_width, content.min_height),
         (Val::Px(0.0), Val::Px(0.0))
     );
+}
+
+// Keyboard and accessibility.
+
+fn label_of(app: &App, entity: Entity) -> Option<String> {
+    app.world()
+        .get::<AccessibleLabel>(entity)
+        .map(|label| label.0.clone())
+}
+
+#[test]
+fn a_window_is_a_dialog_named_by_its_title() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+
+    let node = app.world().get::<AccessibilityNode>(window).unwrap();
+    assert_eq!(node.role(), accesskit::Role::Dialog);
+    assert_eq!(label_of(&app, window).as_deref(), Some("Title"));
+}
+
+#[test]
+fn the_name_of_a_window_follows_its_title() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+
+    let title = title(&app, window);
+    app.world_mut().get_mut::<Text>(title).unwrap().0 = "Other".into();
+    app.update();
+
+    assert_eq!(label_of(&app, window).as_deref(), Some("Other"));
+}
+
+#[test]
+fn the_close_button_is_named_and_last_in_the_tab_order() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+
+    let close = close(&app, window);
+    assert_eq!(label_of(&app, close).as_deref(), Some("Close"));
+    assert_eq!(
+        app.world().get::<TabIndex>(close),
+        Some(&TabIndex(i32::MAX))
+    );
+}
+
+#[test]
+fn each_window_is_a_tab_group() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+
+    let group = app.world().get::<TabGroup>(window).unwrap();
+    assert!(!group.modal);
 }

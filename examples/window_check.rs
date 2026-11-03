@@ -47,9 +47,14 @@
 //!      cursor; this example does, from `WindowGrip`.
 //!  20. After a window closes, the one below it is the bright one and the others keep their order. [N] opens
 //!      a new window, which comes on top of the others and is the bright one.
+//!  21. Tab moves the focus from the close button of a window to the close button of the next one (the
+//!      focus is shown by the outline only when the close button has one: this example does not look for it).
+//!      Enter or Space on a focused close button closes its window. A window is a tab group of its own, and
+//!      its close button is the last stop in it.
 
 use bevy::{
     input::common_conditions::input_just_pressed,
+    input_focus::tab_navigation::TabNavigationPlugin,
     picking::events::{PointerDragEnd, PointerDragStart, PointerOut, PointerOver},
     prelude::*,
     window::{CursorIcon, PrimaryWindow, SystemCursorIcon},
@@ -78,6 +83,7 @@ fn main() {
         .add_plugins((
             DefaultPlugins,
             UiComponentPrototypesPlugin,
+            TabNavigationPlugin,
             WindowDefaultsPlugin::default(),
         ))
         .insert_resource(GlobalTheme(theme(true)))

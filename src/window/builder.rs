@@ -1,4 +1,5 @@
 use super::{
+    accessibility::{CLOSE_TAB_INDEX, window_node_role},
     close::close_on_activate,
     components::{
         UiWindow, WindowContent, WindowGrip, WindowPart, WindowRect, WindowTitle, close_node,
@@ -13,6 +14,7 @@ use super::{
 use crate::common::picking::pass_through;
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
+    input_focus::tab_navigation::{TabGroup, TabIndex},
     picking::hover::PickingInteraction,
     prelude::*,
 };
@@ -67,6 +69,9 @@ impl WindowBuilder {
         } = self;
         (
             UiWindow,
+            window_node_role(),
+            // Tab goes through the windows one after the other, each in its own order.
+            TabGroup::new(0),
             rect,
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 spawn_title_bar(parent, title_extras);
@@ -139,6 +144,8 @@ fn spawn_close(bar: &mut RelatedSpawner<ChildOf>, style: &WindowStyle, metrics: 
         BackgroundColor(Color::NONE),
         PickingInteraction::default(),
         bevy::ui_widgets::Button,
+        AccessibleLabel::new("Close"),
+        TabIndex(CLOSE_TAB_INDEX),
     ))
     .observe(close_on_activate)
     .with_children(|close| {
