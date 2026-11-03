@@ -287,15 +287,14 @@ fn the_scroll_mark_takes_the_theme() {
     assert_scroll_mark(
         &app,
         root,
-        theme.select.scroll_track,
-        theme.select.scroll_thumb,
-        theme.select_metrics.scroll_indicator_width,
+        theme.scroll_indicator.track,
+        theme.scroll_indicator.thumb,
+        theme.scroll_indicator_metrics.width,
     );
     let (track, _) = scroll_mark(&app, root);
     let node = app.world().get::<Node>(track).unwrap();
-    assert_eq!(node.top, theme.select_metrics.popup_padding.top);
-    assert_eq!(node.bottom, theme.select_metrics.popup_padding.bottom);
-    assert_eq!(node.right, theme.select_metrics.popup_padding.right);
+    let inset = Val::Px(theme.scroll_indicator_metrics.inset);
+    assert_eq!((node.top, node.bottom, node.right), (inset, inset, inset));
 }
 
 #[test]
@@ -306,9 +305,9 @@ fn the_scroll_mark_follows_the_global_theme_but_not_a_scoped_one() {
     let scoped = spawn_fruit_under(&mut app, scope);
     app.update();
     let mut changed = probe_theme();
-    changed.select.scroll_track = red();
-    changed.select.scroll_thumb = red();
-    changed.select_metrics.scroll_indicator_width = 9.0;
+    changed.scroll_indicator.track = red();
+    changed.scroll_indicator.thumb = red();
+    changed.scroll_indicator_metrics.width = 9.0;
     app.insert_resource(GlobalTheme(changed));
     app.update();
     assert_scroll_mark(&app, root, red(), red(), 9.0);
@@ -316,8 +315,8 @@ fn the_scroll_mark_follows_the_global_theme_but_not_a_scoped_one() {
     assert_scroll_mark(
         &app,
         scoped,
-        theme.select.scroll_track,
-        theme.select.scroll_thumb,
-        theme.select_metrics.scroll_indicator_width,
+        theme.scroll_indicator.track,
+        theme.scroll_indicator.thumb,
+        theme.scroll_indicator_metrics.width,
     );
 }

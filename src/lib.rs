@@ -2,6 +2,7 @@
 mod button;
 mod common;
 mod progress;
+mod scroll_indicator;
 mod select;
 mod slider;
 mod theme;
@@ -24,6 +25,9 @@ pub use crate::{
     progress::{
         ProgressBar, ProgressBarBuilder, ProgressRange, ProgressShape, ProgressStyle,
         ProgressStyles, ProgressValue, ProgressVariant, ProgressVariantId, progress_bar,
+    },
+    scroll_indicator::{
+        ScrollIndicator, ScrollIndicatorMetrics, ScrollIndicatorStyle, scroll_indicator,
     },
     select::{
         OptionColors, Select, SelectBuilder, SelectKey, SelectMetrics, SelectPopupStyle,
@@ -48,6 +52,7 @@ use crate::{
     button::ButtonStylePlugin,
     common::{focus::ShowsFocusPlugin, tab_order::TabOrderPlugin},
     progress::ProgressStylePlugin,
+    scroll_indicator::ScrollIndicatorStylePlugin,
     select::SelectStylePlugin,
     slider::SliderStylePlugin,
     toast::ToastPlugin,
@@ -89,6 +94,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             ToastPlugin,
             ProgressStylePlugin,
             SelectStylePlugin,
+            ScrollIndicatorStylePlugin,
             WindowStylePlugin,
         ));
     }

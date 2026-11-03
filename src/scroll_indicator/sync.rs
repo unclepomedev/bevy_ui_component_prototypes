@@ -1,11 +1,10 @@
-use super::components::{
-    SelectList, SelectScrollThumb, SelectScrollTrack, scroll_thumb_node, scroll_track_node,
-};
+use super::components::{ScrollIndicator, ScrollIndicatorThumb, thumb_node, track_node};
 use crate::common::theme_lookup::ThemeLookup;
 use bevy::{
     ecs::query::QueryData,
     prelude::*,
     ui::{ScrollPosition, UiSystems},
+    ui_widgets::ScrollArea,
 };
 
 /// The shortest the thumb gets, so that it can still be seen and found when there is a lot to scroll.
@@ -27,8 +26,8 @@ pub(crate) fn thumb(visible: f32, content: f32, offset: f32) -> Option<(f32, f32
     Some((share * (visible - length), length))
 }
 
-pub(super) struct SelectScrollIndicatorPlugin;
-impl Plugin for SelectScrollIndicatorPlugin {
+pub(crate) struct ScrollIndicatorStylePlugin;
+impl Plugin for ScrollIndicatorStylePlugin {
     fn build(&self, app: &mut App) {
         // Before the layout: the offset is the current one, and the sizes are those of the last layout.
         app.add_systems(PostUpdate, sync_scroll_indicator.before(UiSystems::Prepare));
@@ -52,54 +51,36 @@ struct ThumbRow {
 }
 
 type Tracks<'w, 's> =
-    Query<'w, 's, TrackRow, (With<SelectScrollTrack>, Without<SelectScrollThumb>)>;
+    Query<'w, 's, TrackRow, (With<ScrollIndicator>, Without<ScrollIndicatorThumb>)>;
 type Thumbs<'w, 's> =
-    Query<'w, 's, ThumbRow, (With<SelectScrollThumb>, Without<SelectScrollTrack>)>;
-type Lists<'w, 's> =
-    Query<'w, 's, (&'static ComputedNode, Option<&'static ScrollPosition>), With<SelectList>>;
+    Query<'w, 's, ThumbRow, (With<ScrollIndicatorThumb>, Without<ScrollIndicator>)>;
+type Areas<'w, 's> =
+    Query<'w, 's, (&'static ComputedNode, Option<&'static ScrollPosition>), With<ScrollArea>>;
 
+/// Writes the look of each indicator, and puts its thumb where the scroll area it is next to has scrolled to.
 fn sync_scroll_indicator(
     lookup: ThemeLookup,
     mut tracks: Tracks,
     mut thumbs: Thumbs,
-    lists: Lists,
+    areas: Areas,
     siblings: Query<&Children>,
-    track_ids: Query<Entity, With<SelectScrollTrack>>,
+    track_ids: Query<Entity, With<ScrollIndicator>>,
 ) {
     for track_entity in &track_ids {
         let Ok(mut track) = tracks.get_mut(track_entity) else {
             continue;
         };
-        let Some(list) = siblings
+        let Some(area) = siblings
             .get(track.parent.parent())
             .ok()
-            .and_then(|children| children.iter().find(|child| lists.contains(*child)))
+            .and_then(|children| children.iter().find(|child| areas.contains(*child)))
         else {
             continue;
         };
         let theme = lookup.for_entity(track_entity);
-        let style = &theme.select;
-        let wanted = scroll_track_node(&theme.select_metrics);
-        track.bg.set_if_neq(BackgroundColor(style.scroll_track));
-        if track.node.top != wanted.top {
-            track.node.top = wanted.top;
-        }
-        if track.node.bottom != wanted.bottom {
-            track.node.bottom = wanted.bottom;
-        }
-        if track.node.right != wanted.right {
-            track.node.right = wanted.right;
-        }
-        if track.node.width != wanted.width {
-            track.node.width = wanted.width;
-        }
-        if track.node.border_radius != wanted.border_radius {
-            track.node.border_radius = wanted.border_radius;
-        }
+        let (style, metrics) = (&theme.scroll_indicator, &theme.scroll_indicator_metrics);
 
-        let thumb_node = scroll_thumb_node(&theme.select_metrics);
-        let thumb_entity = track.children.iter().find(|child| thumbs.contains(*child));
-        let placed = lists.get(list).ok().and_then(|(computed, scroll)| {
+        let placed = areas.get(area).ok().and_then(|(computed, scroll)| {
             let scale = computed.inverse_scale_factor;
             thumb(
                 computed.size().y * scale,
@@ -107,32 +88,31 @@ fn sync_scroll_indicator(
                 scroll.map_or(0.0, |scroll| scroll.y),
             )
         });
-        let display = if placed.is_some() {
+        let mut wanted = track_node(metrics);
+        wanted.display = if placed.is_some() {
             Display::Flex
         } else {
             Display::None
         };
-        if track.node.display != display {
-            track.node.display = display;
-        }
-        let Some(thumb_entity) = thumb_entity else {
+        track.bg.set_if_neq(BackgroundColor(style.track));
+        track.node.set_if_neq(wanted);
+
+        let Some(thumb_entity) = track.children.iter().find(|child| thumbs.contains(*child)) else {
             continue;
         };
         let Ok(mut thumb_row) = thumbs.get_mut(thumb_entity) else {
             continue;
         };
-        thumb_row.bg.set_if_neq(BackgroundColor(style.scroll_thumb));
-        if thumb_row.node.border_radius != thumb_node.border_radius {
-            thumb_row.node.border_radius = thumb_node.border_radius;
-        }
+        thumb_row.bg.set_if_neq(BackgroundColor(style.thumb));
+        let mut wanted = thumb_node(metrics);
         if let Some((top, length)) = placed {
-            if thumb_row.node.top != px(top) {
-                thumb_row.node.top = px(top);
-            }
-            if thumb_row.node.height != px(length) {
-                thumb_row.node.height = px(length);
-            }
+            wanted.top = px(top);
+            wanted.height = px(length);
+        } else {
+            wanted.top = thumb_row.node.top;
+            wanted.height = thumb_row.node.height;
         }
+        thumb_row.node.set_if_neq(wanted);
     }
 }
 

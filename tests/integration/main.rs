@@ -4,6 +4,7 @@ mod button_theme;
 mod gradient;
 mod probe;
 mod progress_theme;
+mod scroll_indicator_theme;
 mod select_theme;
 mod shows_focus;
 mod slider_theme;
