@@ -11,7 +11,7 @@ mod style;
 
 pub use self::{
     builder::{WindowBuilder, window},
-    components::{ActiveWindow, UiWindow, WindowContent, WindowRect},
+    components::{ActiveWindow, UiWindow, WindowContent, WindowGrip, WindowRect},
     defaults::WindowDefaultsPlugin,
     limits::WindowLimits,
     requests::{CloseWindow, MoveWindow, RaiseWindow, ResizeWindow, WindowEdge},
@@ -24,7 +24,7 @@ pub use self::{
 
 use self::{
     components::{
-        WindowGrip, WindowPart, WindowTitle, close_node, glyph_bar_node, glyph_box_node, grip_node,
+        WindowPart, WindowTitle, close_node, glyph_bar_node, glyph_box_node, grip_node,
         title_bar_node, window_node,
     },
     style::CloseLook,

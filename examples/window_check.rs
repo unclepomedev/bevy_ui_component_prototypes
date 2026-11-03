@@ -41,13 +41,22 @@
 //!      resized, and the long title is cut off again at the new width.
 //!  18. Dragging from the middle of a title bar still moves the window; the strip at the top edge does not
 //!      take over, except at the outermost few pixels of the bar.
-//!  19. After a window closes, the one below it is the bright one and the others keep their order. [N] opens
+//!  19. The pointer becomes a resize arrow over a grip: up-down at the top and the bottom, left-right at the
+//!      sides, and a diagonal one at each corner. It keeps the shape during a drag, also when it is not over
+//!      the strip any more, and goes back to the arrow when the drag ends. The library does not set the
+//!      cursor; this example does, from `WindowGrip`.
+//!  20. After a window closes, the one below it is the bright one and the others keep their order. [N] opens
 //!      a new window, which comes on top of the others and is the bright one.
 
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use bevy::{
+    input::common_conditions::input_just_pressed,
+    picking::events::{PointerDragEnd, PointerDragStart, PointerOut, PointerOver},
+    prelude::*,
+    window::{CursorIcon, PrimaryWindow, SystemCursorIcon},
+};
 use bevy_ui_component_prototypes::{
-    GlobalTheme, Theme, UiComponentPrototypesPlugin, WindowDefaultsPlugin, WindowMetrics,
-    WindowRect, WindowStyle, icon_button, window,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin, WindowDefaultsPlugin, WindowEdge, WindowGrip,
+    WindowMetrics, WindowRect, WindowStyle, icon_button, window,
 };
 
 #[derive(Resource)]
@@ -55,6 +64,14 @@ struct MacLook(bool);
 
 #[derive(Resource)]
 struct Desktop(Entity);
+
+/// The grip under the pointer, and the one being dragged. The cursor keeps the shape of the dragged one,
+/// also when the pointer is not over its strip any more.
+#[derive(Resource, Default)]
+struct GripCursor {
+    hovered: Option<WindowEdge>,
+    dragging: Option<WindowEdge>,
+}
 
 fn main() {
     App::new()
@@ -65,12 +82,18 @@ fn main() {
         ))
         .insert_resource(GlobalTheme(theme(true)))
         .insert_resource(MacLook(true))
+        .init_resource::<GripCursor>()
+        .add_observer(grip_over)
+        .add_observer(grip_out)
+        .add_observer(grip_drag_start)
+        .add_observer(grip_drag_end)
         .add_systems(Startup, setup)
         .add_systems(
             Update,
             (
                 swap_theme.run_if(input_just_pressed(KeyCode::KeyT)),
                 open_window.run_if(input_just_pressed(KeyCode::KeyN)),
+                show_grip_cursor,
             ),
         )
         .run();
@@ -202,4 +225,57 @@ fn open_window(mut commands: Commands, desktop: Res<Desktop>, mut opened: Local<
         WindowRect::new(80.0 + offset, 80.0 + offset, 240.0, 160.0),
         "New window",
     );
+}
+
+fn grip_over(over: On<PointerOver>, grips: Query<&WindowGrip>, mut state: ResMut<GripCursor>) {
+    if let Ok(WindowGrip(edge)) = grips.get(over.entity) {
+        state.hovered = Some(*edge);
+    }
+}
+
+fn grip_out(out: On<PointerOut>, grips: Query<&WindowGrip>, mut state: ResMut<GripCursor>) {
+    // Only the grip that is the hovered one lets go: the pointer may have entered another one already.
+    if let Ok(WindowGrip(edge)) = grips.get(out.entity)
+        && state.hovered == Some(*edge)
+    {
+        state.hovered = None;
+    }
+}
+
+fn grip_drag_start(
+    start: On<PointerDragStart>,
+    grips: Query<&WindowGrip>,
+    mut state: ResMut<GripCursor>,
+) {
+    if let Ok(WindowGrip(edge)) = grips.get(start.entity) {
+        state.dragging = Some(*edge);
+    }
+}
+
+fn grip_drag_end(
+    end: On<PointerDragEnd>,
+    grips: Query<&WindowGrip>,
+    mut state: ResMut<GripCursor>,
+) {
+    if grips.contains(end.entity) {
+        state.dragging = None;
+    }
+}
+
+fn show_grip_cursor(
+    state: Res<GripCursor>,
+    window: Single<Entity, With<PrimaryWindow>>,
+    mut commands: Commands,
+) {
+    if !state.is_changed() {
+        return;
+    }
+    let icon = match state.dragging.or(state.hovered) {
+        Some(WindowEdge::Top | WindowEdge::Bottom) => SystemCursorIcon::NsResize,
+        Some(WindowEdge::Left | WindowEdge::Right) => SystemCursorIcon::EwResize,
+        Some(WindowEdge::TopLeft | WindowEdge::BottomRight) => SystemCursorIcon::NwseResize,
+        Some(WindowEdge::TopRight | WindowEdge::BottomLeft) => SystemCursorIcon::NeswResize,
+        None => SystemCursorIcon::Default,
+    };
+    commands.entity(*window).insert(CursorIcon::from(icon));
 }

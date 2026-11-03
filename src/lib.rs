@@ -39,8 +39,8 @@ pub use crate::{
     window::{
         ActiveWindow, CloseShape, CloseStyle, CloseWindow, MoveWindow, RaiseWindow, ResizeWindow,
         TitleAlign, TitleBarStyle, UiWindow, WindowBuilder, WindowContent, WindowDefaultsPlugin,
-        WindowEdge, WindowLimits, WindowMetrics, WindowRect, WindowShape, WindowSide, WindowStack,
-        WindowStyle, window,
+        WindowEdge, WindowGrip, WindowLimits, WindowMetrics, WindowRect, WindowShape, WindowSide,
+        WindowStack, WindowStyle, window,
     },
 };
 
