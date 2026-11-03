@@ -11,7 +11,8 @@
 //!      corners, and the title bar follows them: it does not stick out at the top corners.
 //!   2. The window on the right has the Windows look: a square close button at the right end of the title
 //!      bar, flush with its top and bottom, and a left-aligned title. It turns red under the pointer.
-//!   3. Press on a close button: it gets darker. Release on it: the window closes. Press on it and release
+//!   3. The mac close button is a soft red that keeps its color under the pointer: only the cross appears.
+//!      Press on a close button: it gets darker. Release on it: the window closes. Press on it and release
 //!      away from it: nothing closes.
 //!   4. The windows are placed by `WindowRect`. Their frames, title bars and corners come from their own
 //!      `Theme` (the panels they are in), not from the global one.

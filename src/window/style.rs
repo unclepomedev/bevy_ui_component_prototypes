@@ -1,7 +1,7 @@
 use crate::common::{
     color::{
-        BG_HOVERED, BG_NORMAL, BG_PRESSED, BORDER, DANGER_HOVERED, DANGER_NORMAL, DANGER_PRESSED,
-        DISABLED, TEXT_MAIN, TEXT_MUTED,
+        BG_HOVERED, BG_NORMAL, BG_PRESSED, BORDER, DANGER_NORMAL, DANGER_PRESSED, DISABLED,
+        TEXT_MAIN,
     },
     state::{StateColors, VisualState},
 };
@@ -112,6 +112,13 @@ pub struct WindowMetrics {
     pub glyph_stroke: f32,
 }
 
+// Estimated from the traffic lights and the tab text of a macOS window in dark mode.
+const MAC_CLOSE: Color = Color::srgb(0.925, 0.404, 0.396);
+const MAC_CLOSE_PRESSED: Color = Color::srgb(0.784, 0.345, 0.337);
+const MAC_CROSS: Color = Color::srgb(0.420, 0.114, 0.106);
+/// The title of a window that is not in front: a little dimmer than `TEXT_MAIN`, not as dim as `TEXT_MUTED`.
+const TEXT_INACTIVE: Color = Color::srgb(0.78, 0.78, 0.78);
+
 /// `normal` when the pointer is away, `hovered` over it, `pressed` while held; there is no focus or disabled look.
 fn states(normal: Color, hovered: Color, pressed: Color) -> StateColors {
     StateColors {
@@ -124,7 +131,8 @@ fn states(normal: Color, hovered: Color, pressed: Color) -> StateColors {
 }
 
 impl WindowStyle {
-    /// Circular close button at the left of a centered title; the cross shows only under the pointer.
+    /// Circular close button at the left of a centered title. The button keeps its color under the pointer,
+    /// and the cross shows only there.
     pub fn mac() -> Self {
         Self {
             bg: BG_NORMAL,
@@ -136,15 +144,15 @@ impl WindowStyle {
             title_bar: TitleBarStyle {
                 bg: BG_HOVERED,
                 fg: TEXT_MAIN,
-                inactive_bg: BG_NORMAL,
-                inactive_fg: TEXT_MUTED,
+                inactive_bg: BG_HOVERED,
+                inactive_fg: TEXT_INACTIVE,
                 align: TitleAlign::Center,
             },
             close: CloseStyle {
                 side: WindowSide::Left,
                 shape: CloseShape::Circle,
-                bg: states(DANGER_NORMAL, DANGER_HOVERED, DANGER_PRESSED),
-                glyph: states(Color::NONE, BG_PRESSED, BG_PRESSED),
+                bg: states(MAC_CLOSE, MAC_CLOSE, MAC_CLOSE_PRESSED),
+                glyph: states(Color::NONE, MAC_CROSS, MAC_CROSS),
             },
         }
     }
@@ -159,7 +167,7 @@ impl WindowStyle {
                 bg: BG_PRESSED,
                 fg: TEXT_MAIN,
                 inactive_bg: DISABLED,
-                inactive_fg: TEXT_MUTED,
+                inactive_fg: TEXT_INACTIVE,
                 align: TitleAlign::Start,
             },
             close: CloseStyle {
@@ -242,6 +250,7 @@ impl CloseStyle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::common::color::TEXT_MUTED;
 
     #[test]
     fn the_presets_differ_in_what_a_user_sees() {
@@ -294,6 +303,29 @@ mod tests {
         let close = WindowStyle::mac().close;
         assert_eq!(close.look(VisualState::Normal).glyph, Color::NONE);
         assert_ne!(close.look(VisualState::Hovered).glyph, Color::NONE);
+    }
+
+    #[test]
+    fn the_mac_close_button_keeps_its_color_under_the_pointer() {
+        let close = WindowStyle::mac().close;
+        assert_eq!(
+            close.look(VisualState::Normal).bg,
+            close.look(VisualState::Hovered).bg
+        );
+        assert_ne!(
+            close.look(VisualState::Normal).bg,
+            close.look(VisualState::Pressed).bg
+        );
+    }
+
+    #[test]
+    fn a_title_that_is_not_in_front_is_dimmer_but_still_lighter_than_the_muted_text() {
+        for style in [WindowStyle::mac(), WindowStyle::windows()] {
+            let bar = style.title_bar;
+            let luminance = |color: Color| color.to_linear().luminance();
+            assert!(luminance(bar.inactive_fg) < luminance(bar.fg));
+            assert!(luminance(bar.inactive_fg) > luminance(TEXT_MUTED));
+        }
     }
 
     #[test]
