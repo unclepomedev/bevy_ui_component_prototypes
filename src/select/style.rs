@@ -176,8 +176,8 @@ pub struct SelectMetrics {
     pub popup_padding: UiRect,
     /// Space between the trigger and the popup, in pixels.
     pub popup_gap: f32,
-    /// The popup is drawn in front of everything that has a lower `GlobalZIndex`. It has to be in front
-    /// of what comes after the select in the UI tree, or that would hide it.
+    /// The popup's `GlobalZIndex` when no ancestor has one.
+    /// Otherwise, it uses the nearest ancestor's value plus one.
     pub popup_z_index: i32,
     /// How many options the list shows at most; with more, it scrolls. At least one.
     pub max_visible_options: usize,

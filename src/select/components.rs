@@ -11,6 +11,7 @@ use bevy::{
     picking::Pickable,
     picking::hover::PickingInteraction,
     prelude::*,
+    ui::OverrideClip,
     ui_widgets::{
         ListBox, ListItem, MenuButton, MenuPopup, ScrollArea,
         popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide},
@@ -165,6 +166,7 @@ pub(crate) struct SelectContent;
 pub(crate) struct SelectArrow;
 
 /// The list that opens under the trigger. Shown only while the select is open.
+/// It ignores the clipping of its ancestors, so that it can open past the edge of a clipped container.
 #[derive(Component, Clone, Copy, Default)]
 #[require(
     MenuPopup,
@@ -172,6 +174,7 @@ pub(crate) struct SelectArrow;
     AccessibilityNode = popup_accessibility(),
     Popover = popup_placement(&SelectMetrics::default()),
     GlobalZIndex = GlobalZIndex(SelectMetrics::default().popup_z_index),
+    OverrideClip,
     Visibility = Visibility::Hidden,
     BackgroundColor = BackgroundColor(Color::NONE),
     BorderColor = BorderColor::all(Color::NONE),

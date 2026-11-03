@@ -8,6 +8,7 @@ use crate::{
 use bevy::{
     picking::Pickable,
     prelude::*,
+    ui::OverrideClip,
     ui_widgets::popover::{Popover, PopoverAlign, PopoverSide},
 };
 use bevy_ui_component_prototypes::{GlobalTheme, Theme};
@@ -148,6 +149,53 @@ fn the_popup_takes_its_place_in_the_stacking_order_from_the_theme() {
     app.update();
 
     assert_eq!(z_index(&app, popup), 7);
+}
+
+#[test]
+fn the_popup_is_one_above_the_nearest_ancestor_with_a_layer() {
+    let mut app = test_app();
+    let outer = app
+        .world_mut()
+        .spawn((Node::default(), GlobalZIndex(3)))
+        .id();
+    let panel = app
+        .world_mut()
+        .spawn((Node::default(), GlobalZIndex(7), ChildOf(outer)))
+        .id();
+    let root = spawn_fruit_under(&mut app, panel);
+
+    app.update();
+    assert_eq!(z_index(&app, popup(&app, root)), 8);
+
+    app.world_mut().entity_mut(panel).insert(GlobalZIndex(20));
+    app.update();
+    assert_eq!(z_index(&app, popup(&app, root)), 21);
+}
+
+#[test]
+fn an_ancestor_layer_wins_over_the_theme_value() {
+    let mut app = test_app();
+    let panel = app
+        .world_mut()
+        .spawn((Node::default(), GlobalZIndex(7)))
+        .id();
+    let root = spawn_fruit_under(&mut app, panel);
+    app.update();
+
+    let mut theme = probe_theme();
+    theme.select_metrics.popup_z_index = 99;
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+
+    assert_eq!(z_index(&app, popup(&app, root)), 8);
+}
+
+#[test]
+fn the_popup_ignores_the_clipping_of_its_ancestors() {
+    let mut app = test_app();
+    let root = spawn_fruit(&mut app);
+
+    assert!(app.world().get::<OverrideClip>(popup(&app, root)).is_some());
 }
 
 #[test]

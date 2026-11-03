@@ -4,6 +4,7 @@ mod choose;
 mod components;
 mod disabled;
 mod highlight;
+mod layer;
 mod open;
 mod popup;
 mod scroll;
@@ -21,8 +22,8 @@ pub use self::{
 
 use self::{
     accessibility::SelectAccessibilityPlugin, choose::SelectChoosePlugin,
-    disabled::SelectDisabledPlugin, highlight::SelectHighlightPlugin, open::SelectOpenPlugin,
-    popup::SelectPopupStylePlugin, scroll::SelectScrollPlugin,
+    disabled::SelectDisabledPlugin, highlight::SelectHighlightPlugin, layer::SelectLayerPlugin,
+    open::SelectOpenPlugin, popup::SelectPopupStylePlugin, scroll::SelectScrollPlugin,
     scroll_indicator::SelectScrollIndicatorPlugin, trigger::SelectTriggerStylePlugin,
 };
 use bevy::prelude::*;
@@ -40,6 +41,7 @@ impl Plugin for SelectStylePlugin {
             SelectDisabledPlugin,
             SelectScrollPlugin,
             SelectScrollIndicatorPlugin,
+            SelectLayerPlugin,
         ));
     }
 }
