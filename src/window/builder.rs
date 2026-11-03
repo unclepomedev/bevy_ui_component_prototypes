@@ -129,7 +129,7 @@ fn spawn_grips(parent: &mut RelatedSpawner<ChildOf>) {
         parent
             .spawn((
                 WindowPart::Grip,
-                WindowGrip(edge),
+                WindowGrip { edge },
                 grip_node(edge, &metrics, &style.shape),
                 BackgroundColor(Color::NONE),
             ))

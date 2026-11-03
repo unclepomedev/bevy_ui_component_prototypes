@@ -162,7 +162,7 @@ fn sync_glyph_bar(part: &mut PartRowItem, metrics: &WindowMetrics, look: CloseLo
 }
 
 fn sync_grip(part: &mut PartRowItem, style: &WindowStyle, metrics: &WindowMetrics) {
-    if let Some(WindowGrip(edge)) = part.grip {
+    if let Some(WindowGrip { edge }) = part.grip {
         part.node
             .set_if_neq(grip_node(*edge, metrics, &style.shape));
     }

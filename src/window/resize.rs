@@ -15,7 +15,7 @@ pub(super) fn drag_grip(
     if drag.button != PointerButton::Primary || drag.original_event_target() != grip {
         return;
     }
-    let (Ok(WindowGrip(edge)), Ok(parent)) = (grips.get(grip), parents.get(grip)) else {
+    let (Ok(WindowGrip { edge }), Ok(parent)) = (grips.get(grip), parents.get(grip)) else {
         return;
     };
     commands.trigger(ResizeWindow {

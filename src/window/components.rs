@@ -78,7 +78,9 @@ pub(crate) enum WindowPart {
 /// Marks an invisible strip along the frame of a [`UiWindow`] that resizes the window at the edge or the
 /// corner it holds when it is dragged.
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct WindowGrip(pub WindowEdge);
+pub struct WindowGrip {
+    pub edge: WindowEdge,
+}
 
 /// The frame. The position and the size are written from [`WindowRect`].
 pub(crate) fn window_node(shape: &WindowShape) -> Node {
