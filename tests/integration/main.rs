@@ -10,4 +10,5 @@ mod slider_theme;
 mod support;
 mod switch_theme;
 mod toast_theme;
+mod window_defaults;
 mod window_theme;

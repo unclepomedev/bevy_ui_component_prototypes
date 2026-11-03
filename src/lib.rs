@@ -37,8 +37,9 @@ pub use crate::{
     },
     toggle_switch::{SwitchStyle, ToggleSwitch, ToggleSwitchBuilder, toggle_switch},
     window::{
-        CloseShape, CloseStyle, TitleAlign, TitleBarStyle, UiWindow, WindowBuilder, WindowContent,
-        WindowMetrics, WindowRect, WindowShape, WindowSide, WindowStyle, window,
+        ActiveWindow, CloseShape, CloseStyle, RaiseWindow, TitleAlign, TitleBarStyle, UiWindow,
+        WindowBuilder, WindowContent, WindowDefaultsPlugin, WindowMetrics, WindowRect, WindowShape,
+        WindowSide, WindowStack, WindowStyle, window,
     },
 };
 
@@ -73,6 +74,8 @@ use bevy::{
 /// - [`ScrollAreaPlugin`] (included in `DefaultPlugins`): scrolling the list of a select
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
+///
+/// What a window asks for ([`RaiseWindow`]) is applied by [`WindowDefaultsPlugin`], which is not included.
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {

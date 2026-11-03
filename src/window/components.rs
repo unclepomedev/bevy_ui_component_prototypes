@@ -43,6 +43,10 @@ impl Default for WindowRect {
     }
 }
 
+/// Marks the window in front of the others. At most one window has it.
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct ActiveWindow;
+
 /// The area of a [`UiWindow`] below its title bar. It clips what is in it.
 #[derive(Component, Clone, Copy, Default)]
 pub struct WindowContent;

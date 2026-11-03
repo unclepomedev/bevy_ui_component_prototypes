@@ -1,10 +1,16 @@
 mod builder;
 mod components;
+mod defaults;
+mod requests;
+mod stack;
 mod style;
 
 pub use self::{
     builder::{WindowBuilder, window},
-    components::{UiWindow, WindowContent, WindowRect},
+    components::{ActiveWindow, UiWindow, WindowContent, WindowRect},
+    defaults::WindowDefaultsPlugin,
+    requests::RaiseWindow,
+    stack::WindowStack,
     style::{
         CloseShape, CloseStyle, TitleAlign, TitleBarStyle, WindowMetrics, WindowShape, WindowSide,
         WindowStyle,
