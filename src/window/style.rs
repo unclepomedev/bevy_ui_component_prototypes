@@ -1,7 +1,7 @@
 use crate::common::{
     color::{
         BG_HOVERED, BG_NORMAL, BG_PRESSED, BORDER, DANGER_HOVERED, DANGER_NORMAL, DANGER_PRESSED,
-        TEXT_MAIN,
+        DISABLED, TEXT_MAIN, TEXT_MUTED,
     },
     state::{StateColors, VisualState},
 };
@@ -48,13 +48,26 @@ impl Default for WindowShape {
     }
 }
 
-/// Colors of the title bar.
+/// Colors of the title bar. `fg` is the color of the title text.
+/// The `inactive_` colors are for a window that does not have `ActiveWindow`.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TitleBarStyle {
     pub bg: Color,
-    /// The color of the title text.
     pub fg: Color,
+    pub inactive_bg: Color,
+    pub inactive_fg: Color,
     pub align: TitleAlign,
+}
+
+impl TitleBarStyle {
+    /// The background and the text color of the title bar.
+    pub(crate) fn colors(&self, active: bool) -> (Color, Color) {
+        if active {
+            (self.bg, self.fg)
+        } else {
+            (self.inactive_bg, self.inactive_fg)
+        }
+    }
 }
 
 /// Colors and place of the close button. The glyph is the cross drawn on it.
@@ -116,6 +129,8 @@ impl WindowStyle {
             title_bar: TitleBarStyle {
                 bg: BG_HOVERED,
                 fg: TEXT_MAIN,
+                inactive_bg: BG_NORMAL,
+                inactive_fg: TEXT_MUTED,
                 align: TitleAlign::Center,
             },
             close: CloseStyle {
@@ -136,6 +151,8 @@ impl WindowStyle {
             title_bar: TitleBarStyle {
                 bg: BG_PRESSED,
                 fg: TEXT_MAIN,
+                inactive_bg: DISABLED,
+                inactive_fg: TEXT_MUTED,
                 align: TitleAlign::Start,
             },
             close: CloseStyle {
@@ -234,6 +251,16 @@ mod tests {
             WindowStyle::windows().close.side
         );
         assert_eq!(WindowMetrics::default(), WindowMetrics::windows());
+    }
+
+    #[test]
+    fn an_inactive_title_bar_uses_the_inactive_colors() {
+        for style in [WindowStyle::mac(), WindowStyle::windows()] {
+            let bar = style.title_bar;
+            assert_eq!(bar.colors(true), (bar.bg, bar.fg));
+            assert_eq!(bar.colors(false), (bar.inactive_bg, bar.inactive_fg));
+            assert_ne!(bar.colors(true), bar.colors(false));
+        }
     }
 
     #[test]

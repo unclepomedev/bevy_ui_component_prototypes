@@ -2,7 +2,7 @@
 //!
 //! Execution: cargo run --example window_check
 //!
-//! A window only has a look so far: it does not move, come to the front, close or resize yet.
+//! A window comes to the front when pressed. It does not move, close or resize yet.
 //!
 //! What to verify:
 //!   1. The window on the left has the mac look: a circular red close button at the left of the title bar
@@ -10,18 +10,24 @@
 //!   2. The window on the right has the Windows look: a square close button at the right end of the title
 //!      bar, flush with its top and bottom, and a left-aligned title. It turns red under the pointer.
 //!   3. Press on a close button: it gets darker. Nothing closes.
-//!   4. The two windows are placed by `WindowRect`. Their frames, title bars and corners come from their own
+//!   4. The windows are placed by `WindowRect`. Their frames, title bars and corners come from their own
 //!      `Theme` (the panels they are in), not from the global one.
 //!   5. The content area clips: the long text in the narrow window is cut off at its edge and does not
 //!      spill over the frame.
 //!   6. [T] swaps the global theme between the mac and the Windows look. The window at the bottom, which
 //!      has no `Theme` of its own, follows it; the other two do not.
 //!   7. A title longer than the room it has is cut off before the close button.
+//!   8. The windows overlap. Press on a window anywhere (the title bar, the text, the frame) and it comes to
+//!      the front. Press on the OK button inside a window behind the others: the window comes to the front
+//!      too.
+//!   9. Only the window in front has the bright title bar and title. The others have the dim ones. After
+//!      a press, the dim and the bright swap.
+//!  10. Press on the desktop (outside the windows): nothing changes.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ui_component_prototypes::{
-    GlobalTheme, Theme, UiComponentPrototypesPlugin, WindowMetrics, WindowRect, WindowStyle,
-    icon_button, window,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin, WindowDefaultsPlugin, WindowMetrics,
+    WindowRect, WindowStyle, icon_button, window,
 };
 
 #[derive(Resource)]
@@ -29,7 +35,11 @@ struct MacLook(bool);
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, UiComponentPrototypesPlugin))
+        .add_plugins((
+            DefaultPlugins,
+            UiComponentPrototypesPlugin,
+            WindowDefaultsPlugin::default(),
+        ))
         .insert_resource(GlobalTheme(theme(true)))
         .insert_resource(MacLook(true))
         .add_systems(Startup, setup)
@@ -76,14 +86,14 @@ fn setup(mut commands: Commands) {
         &mut commands,
         desktop,
         Some(theme(false)),
-        WindowRect::new(380.0, 40.0, 300.0, 200.0),
+        WindowRect::new(260.0, 110.0, 300.0, 200.0),
         "Windows look, with a title that does not fit",
     );
     spawn_window(
         &mut commands,
         desktop,
         None,
-        WindowRect::new(40.0, 280.0, 160.0, 160.0),
+        WindowRect::new(120.0, 200.0, 200.0, 160.0),
         "Global theme",
     );
     commands.spawn((

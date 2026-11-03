@@ -3,13 +3,14 @@ use super::{
     requests::RaiseWindow,
     stack::WindowStack,
 };
-use bevy::{prelude::*, ui::UiSystems};
+use bevy::{picking::events::PointerPress, prelude::*, ui::UiSystems};
 
 /// Applies the requests made to windows.
 ///
 /// - Keeps the [`WindowStack`]: a new window goes on the top, a despawned one leaves.
 /// - Gives each window the `GlobalZIndex` of its place in the stack, and [`ActiveWindow`] to the top one.
-/// - Brings a window to the front on [`RaiseWindow`].
+/// - Brings a window to the front on [`RaiseWindow`], and asks for it when the pointer presses on the window
+///   or on anything in it.
 pub struct WindowDefaultsPlugin {
     /// The `GlobalZIndex` of the bottom window.
     pub z_base: i32,
@@ -30,6 +31,7 @@ impl Plugin for WindowDefaultsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(WindowStack::new(self.z_base, self.z_step))
             .add_observer(on_raise_window)
+            .add_observer(raise_on_press)
             .add_systems(
                 PostUpdate,
                 (track_windows, apply_layers)
@@ -45,6 +47,27 @@ fn on_raise_window(raise: On<RaiseWindow>, mut stack: ResMut<WindowStack>) {
         return;
     }
     stack.raise(window);
+}
+
+/// Asks for the window to be raised when the press lands on it or on a descendant. Widgets that stop the
+/// propagation of the press still reach this observer: it runs for the entity the press landed on.
+fn raise_on_press(
+    press: On<PointerPress>,
+    windows: Query<(), With<UiWindow>>,
+    parents: Query<&ChildOf>,
+    stack: Res<WindowStack>,
+    mut commands: Commands,
+) {
+    let target = press.event_target();
+    let Some(window) = std::iter::once(target)
+        .chain(parents.iter_ancestors(target))
+        .find(|entity| windows.contains(*entity))
+    else {
+        return;
+    };
+    if stack.top() != Some(window) {
+        commands.trigger(RaiseWindow { window });
+    }
 }
 
 /// Puts new windows on the top of the stack, and takes the despawned ones out.

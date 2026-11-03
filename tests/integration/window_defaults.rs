@@ -1,9 +1,17 @@
 //! Behavior tests for `WindowDefaultsPlugin`: the stack of windows, their layers, and `RaiseWindow`.
 
 use crate::support::test_app;
-use bevy::prelude::*;
+use bevy::{
+    camera::NormalizedRenderTarget,
+    picking::{
+        backend::HitData,
+        events::{Pointer, PointerPress},
+        pointer::{Location, PointerButton, PointerId},
+    },
+    prelude::*,
+};
 use bevy_ui_component_prototypes::{
-    ActiveWindow, RaiseWindow, WindowDefaultsPlugin, WindowStack, window,
+    ActiveWindow, RaiseWindow, WindowContent, WindowDefaultsPlugin, WindowStack, window,
 };
 
 fn app_with_defaults(plugin: WindowDefaultsPlugin) -> App {
@@ -152,4 +160,72 @@ fn without_the_plugin_nothing_is_applied() {
 
     assert_eq!(layer(&app, a), None);
     assert!(!is_active(&app, a));
+}
+
+/// The pointer presses on `target`.
+fn press(app: &mut App, target: Entity) {
+    let location = Location {
+        target: NormalizedRenderTarget::None {
+            width: 1,
+            height: 1,
+        },
+        position: Vec2::ZERO,
+    };
+    let camera = app.world_mut().spawn_empty().id();
+    app.world_mut().trigger(PointerPress {
+        entity: target,
+        pointer: Pointer::new(PointerId::Mouse, location),
+        button: PointerButton::Primary,
+        hit: HitData::new(camera, 0.0, None, None),
+        count: 1,
+    });
+    app.update();
+}
+
+fn content_of(app: &App, window: Entity) -> Entity {
+    let children = app.world().get::<Children>(window).unwrap();
+    children
+        .iter()
+        .find(|child| app.world().get::<WindowContent>(*child).is_some())
+        .unwrap()
+}
+
+#[test]
+fn pressing_on_a_window_brings_it_to_the_front() {
+    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
+    let [a, b] = [(); 2].map(|_| spawn_window(&mut app));
+    app.update();
+
+    press(&mut app, a);
+
+    assert_eq!(layer(&app, a), Some(20));
+    assert_eq!(layer(&app, b), Some(10));
+    assert!(is_active(&app, a));
+}
+
+#[test]
+fn pressing_on_something_inside_a_window_brings_the_window_to_the_front() {
+    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
+    let [a, b] = [(); 2].map(|_| spawn_window(&mut app));
+    app.update();
+    let content = content_of(&app, a);
+    let inside = app.world_mut().spawn(ChildOf(content)).id();
+
+    press(&mut app, inside);
+
+    assert_eq!(layer(&app, a), Some(20));
+    assert_eq!(layer(&app, b), Some(10));
+}
+
+#[test]
+fn pressing_outside_the_windows_changes_nothing() {
+    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
+    let [a, b] = [(); 2].map(|_| spawn_window(&mut app));
+    let outside = app.world_mut().spawn_empty().id();
+    app.update();
+
+    press(&mut app, outside);
+
+    assert_eq!(layer(&app, a), Some(10));
+    assert_eq!(layer(&app, b), Some(20));
 }

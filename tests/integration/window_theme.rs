@@ -8,16 +8,17 @@ use crate::{
 };
 use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy_ui_component_prototypes::{
-    CloseShape, GlobalTheme, Theme, TitleAlign, WindowContent, WindowMetrics, WindowRect,
-    WindowSide, WindowStyle, window,
+    ActiveWindow, CloseShape, GlobalTheme, Theme, TitleAlign, WindowContent, WindowMetrics,
+    WindowRect, WindowSide, WindowStyle, window,
 };
 
 #[derive(Component)]
 struct Marker;
 
+/// A window that is the active one: it has the active look.
 fn spawn_window(app: &mut App) -> Entity {
     app.world_mut()
-        .spawn(window().title(Text::new("Title")).build())
+        .spawn((window().title(Text::new("Title")).build(), ActiveWindow))
         .id()
 }
 
@@ -303,4 +304,47 @@ fn the_default_theme_has_a_window_look() {
 
     assert_eq!(theme.window.close.side, WindowStyle::windows().close.side);
     assert_eq!(theme.window_metrics, WindowMetrics::windows());
+}
+
+#[test]
+fn a_window_without_the_active_mark_has_the_inactive_colors() {
+    let mut app = test_app();
+    let window = app
+        .world_mut()
+        .spawn(window().title(Text::new("Title")).build())
+        .id();
+
+    app.update();
+
+    let theme = probe_theme();
+    assert_eq!(
+        bg(&app, title_bar(&app, window)),
+        theme.window.title_bar.inactive_bg
+    );
+    assert_eq!(
+        app.world().get::<TextColor>(title(&app, window)).unwrap().0,
+        theme.window.title_bar.inactive_fg
+    );
+}
+
+#[test]
+fn gaining_and_losing_the_active_mark_swaps_the_colors() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+    let theme = probe_theme();
+    let bar_bg = |app: &App| bg(app, title_bar(app, window));
+    let title_fg = |app: &App| app.world().get::<TextColor>(title(app, window)).unwrap().0;
+    assert_eq!(bar_bg(&app), theme.window.title_bar.bg);
+    assert_eq!(title_fg(&app), theme.window.title_bar.fg);
+
+    app.world_mut().entity_mut(window).remove::<ActiveWindow>();
+    app.update();
+    assert_eq!(bar_bg(&app), theme.window.title_bar.inactive_bg);
+    assert_eq!(title_fg(&app), theme.window.title_bar.inactive_fg);
+
+    app.world_mut().entity_mut(window).insert(ActiveWindow);
+    app.update();
+    assert_eq!(bar_bg(&app), theme.window.title_bar.bg);
+    assert_eq!(title_fg(&app), theme.window.title_bar.fg);
 }

@@ -21,7 +21,11 @@ use self::components::{
     WindowPart, WindowTitle, close_node, glyph_bar_node, glyph_box_node, title_bar_node,
     window_node,
 };
-use crate::common::{state::VisualState, style_targets::pick_targets, theme_lookup::ThemeLookup};
+use crate::common::{
+    state::VisualState,
+    style_targets::{drain_removed, pick_targets},
+    theme_lookup::ThemeLookup,
+};
 use bevy::{
     ecs::{query::QueryData, system::SystemParam},
     picking::hover::PickingInteraction,
@@ -62,7 +66,7 @@ fn sync_window_rect(mut windows: Query<(&WindowRect, &mut Node), Changed<WindowR
 /// Resolves each window's look from its theme and the state of its close button, and writes it to its parts.
 fn sync_window_style(
     mut lookup: ThemeLookup,
-    targets: WindowTargets,
+    mut targets: WindowTargets,
     mut windows: Query<WindowRow, With<UiWindow>>,
     mut parts: Query<PartRow, Without<UiWindow>>,
     mut titles: Query<TitleRow, With<WindowTitle>>,
@@ -88,6 +92,7 @@ fn sync_window_style(
                 VisualState::resolve(interaction, false, false)
             });
         let close = style.close.look(close_state);
+        let (bar_bg, title_fg) = style.title_bar.colors(window.active);
 
         window.bg.set_if_neq(BackgroundColor(style.bg));
         window.border.set_if_neq(BorderColor::all(style.border));
@@ -103,7 +108,7 @@ fn sync_window_style(
             if let Ok(mut part) = parts.get_mut(part) {
                 match *part.kind {
                     WindowPart::TitleBar => {
-                        part.bg.set_if_neq(BackgroundColor(style.title_bar.bg));
+                        part.bg.set_if_neq(BackgroundColor(bar_bg));
                         part.node
                             .set_if_neq(title_bar_node(metrics, style.close.side));
                     }
@@ -120,7 +125,7 @@ fn sync_window_style(
                     }
                 }
             } else if let Ok(mut title) = titles.get_mut(part) {
-                title.color.set_if_neq(TextColor(style.title_bar.fg));
+                title.color.set_if_neq(TextColor(title_fg));
                 if title.font.font != theme.font {
                     title.font.font = theme.font.clone();
                 }
@@ -149,6 +154,7 @@ struct WindowRow {
     bg: &'static mut BackgroundColor,
     border: &'static mut BorderColor,
     node: &'static mut Node,
+    active: Has<ActiveWindow>,
 }
 
 /// What the sync writes to a part of a window.
@@ -175,12 +181,15 @@ struct WindowTargets<'w, 's> {
     added: Query<'w, 's, Entity, Added<UiWindow>>,
     all: Query<'w, 's, Entity, With<UiWindow>>,
     touched: Query<'w, 's, Entity, (With<WindowPart>, Changed<PickingInteraction>)>,
+    activated: Query<'w, 's, Entity, (With<UiWindow>, Added<ActiveWindow>)>,
+    deactivated: RemovedComponents<'w, 's, ActiveWindow>,
     parents: Query<'w, 's, &'static ChildOf>,
 }
 
 impl WindowTargets<'_, '_> {
-    /// Every window after a theme change, otherwise the new ones and those whose close button was touched.
-    fn collect(&self, resync: bool) -> Vec<Entity> {
+    /// Every window after a theme change, otherwise the new ones, those whose close button was touched,
+    /// and those that gained or lost [`ActiveWindow`].
+    fn collect(&mut self, resync: bool) -> Vec<Entity> {
         let touched: Vec<Entity> = self
             .touched
             .iter()
@@ -190,11 +199,15 @@ impl WindowTargets<'_, '_> {
                     .find(|ancestor| self.all.contains(*ancestor))
             })
             .collect();
+        let deactivated = drain_removed(&mut self.deactivated);
         pick_targets(
             resync,
             self.all.iter(),
-            self.added.iter().chain(touched),
-            [],
+            self.added
+                .iter()
+                .chain(touched)
+                .chain(self.activated.iter()),
+            deactivated,
             [],
         )
     }

@@ -129,6 +129,8 @@ pub fn probe_theme() -> Theme {
             title_bar: TitleBarStyle {
                 bg: Color::srgb(0.7, 0.2, 0.2),
                 fg: Color::srgb(0.7, 0.2, 0.3),
+                inactive_bg: Color::srgb(0.2, 0.7, 0.2),
+                inactive_fg: Color::srgb(0.3, 0.7, 0.2),
                 align: TitleAlign::Center,
             },
             close: CloseStyle {
