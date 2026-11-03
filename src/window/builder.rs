@@ -11,7 +11,7 @@ use super::{
     resize::drag_grip,
     style::{WindowMetrics, WindowStyle},
 };
-use crate::common::picking::pass_through;
+use crate::common::{focus::hidden_outline, picking::pass_through, tab_order::KeyboardNavigable};
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     input_focus::tab_navigation::{TabGroup, TabIndex},
@@ -146,6 +146,8 @@ fn spawn_close(bar: &mut RelatedSpawner<ChildOf>, style: &WindowStyle, metrics: 
         bevy::ui_widgets::Button,
         AccessibleLabel::new("Close"),
         TabIndex(CLOSE_TAB_INDEX),
+        KeyboardNavigable,
+        hidden_outline(),
     ))
     .observe(close_on_activate)
     .with_children(|close| {

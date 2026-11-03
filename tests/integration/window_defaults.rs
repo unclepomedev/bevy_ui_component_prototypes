@@ -1,6 +1,6 @@
 //! Behavior tests for `WindowDefaultsPlugin`: the stack of windows, their layers, and the requests made to windows.
 
-use crate::support::test_app;
+use crate::support::{focus, test_app};
 use bevy::{
     camera::NormalizedRenderTarget,
     picking::{
@@ -743,4 +743,34 @@ fn the_popup_follows_its_window_when_the_window_is_raised() {
     let popup_b = popup_in(&mut app, b);
     assert_eq!(layer(&app, popup_a), Some(21));
     assert_eq!(layer(&app, popup_b), Some(11));
+}
+
+#[test]
+fn moving_the_focus_into_a_window_brings_it_to_the_front() {
+    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
+    let [a, b] = [(); 2].map(|_| spawn_window(&mut app));
+    app.update();
+    let content = content_of(&app, a);
+    let inside = app.world_mut().spawn(ChildOf(content)).id();
+
+    focus(&mut app, inside, true);
+    app.update();
+
+    assert_eq!(layer(&app, a), Some(20));
+    assert_eq!(layer(&app, b), Some(10));
+    assert!(is_active(&app, a));
+}
+
+#[test]
+fn focus_outside_the_windows_changes_nothing() {
+    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
+    let [a, b] = [(); 2].map(|_| spawn_window(&mut app));
+    let outside = app.world_mut().spawn_empty().id();
+    app.update();
+
+    focus(&mut app, outside, true);
+    app.update();
+
+    assert_eq!(layer(&app, a), Some(10));
+    assert_eq!(layer(&app, b), Some(20));
 }

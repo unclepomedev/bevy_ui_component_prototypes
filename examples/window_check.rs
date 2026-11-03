@@ -47,10 +47,11 @@
 //!      cursor; this example does, from `WindowGrip`.
 //!  20. After a window closes, the one below it is the bright one and the others keep their order. [N] opens
 //!      a new window, which comes on top of the others and is the bright one.
-//!  21. Tab moves the focus from the close button of a window to the close button of the next one (the
-//!      focus is shown by the outline only when the close button has one: this example does not look for it).
-//!      Enter or Space on a focused close button closes its window. A window is a tab group of its own, and
-//!      its close button is the last stop in it.
+//!  21. Tab moves the focus from the close button of a window to the close button of the next one. The focus
+//!      is a ring around the close button, shown after Tab and hidden by a click. Enter or Space on a
+//!      focused close button closes its window. A window is a tab group of its own, and its close button
+//!      is the last stop in it.
+//!  22. Tab onto the close button of a window that is behind the others: the window comes to the front.
 
 use bevy::{
     input::common_conditions::input_just_pressed,

@@ -4,7 +4,10 @@ use super::{
     requests::{CloseWindow, MoveWindow, RaiseWindow, ResizeWindow},
     stack::WindowStack,
 };
-use bevy::{picking::events::PointerPress, prelude::*, ui::ComputedNode, ui::UiSystems};
+use bevy::{
+    input_focus::InputFocus, picking::events::PointerPress, prelude::*, ui::ComputedNode,
+    ui::UiSystems,
+};
 
 /// Applies the requests made to windows.
 ///
@@ -14,7 +17,7 @@ use bevy::{picking::events::PointerPress, prelude::*, ui::ComputedNode, ui::UiSy
 /// - Moves an edge of a window by the delta of [`ResizeWindow`], within its [`WindowLimits`].
 /// - Despawns a window on [`CloseWindow`].
 /// - Brings a window to the front on [`RaiseWindow`], and asks for it when the pointer presses on the window
-///   or on anything in it.
+///   or on anything in it, and when the input focus moves to the window or to anything in it.
 pub struct WindowDefaultsPlugin {
     /// The `GlobalZIndex` of the bottom window.
     pub z_base: i32,
@@ -39,6 +42,10 @@ impl Plugin for WindowDefaultsPlugin {
             .add_observer(on_move_window)
             .add_observer(on_resize_window)
             .add_observer(on_close_window)
+            .add_systems(
+                Update,
+                raise_on_focus.run_if(resource_exists_and_changed::<InputFocus>),
+            )
             .add_systems(
                 PostUpdate,
                 (track_windows, apply_layers)
@@ -102,6 +109,24 @@ fn on_close_window(
 ) {
     if windows.contains(close.window) {
         commands.entity(close.window).despawn();
+    }
+}
+
+/// Asks for the window to be raised when the focus moves to it or to a descendant.
+fn raise_on_focus(
+    focus: Res<InputFocus>,
+    windows: Query<(), With<UiWindow>>,
+    parents: Query<&ChildOf>,
+    mut commands: Commands,
+) {
+    let Some(focused) = focus.get() else {
+        return;
+    };
+    if let Some(window) = std::iter::once(focused)
+        .chain(parents.iter_ancestors(focused))
+        .find(|entity| windows.contains(*entity))
+    {
+        commands.trigger(RaiseWindow { window });
     }
 }
 

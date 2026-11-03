@@ -33,6 +33,7 @@ use self::{
 use crate::{
     Theme,
     common::{
+        focus::ShowsFocus,
         state::VisualState,
         style_targets::{drain_removed, pick_targets},
         theme_lookup::ThemeLookup,
@@ -84,7 +85,7 @@ fn sync_window_style(
     mut windows: Query<WindowRow, With<UiWindow>>,
     mut parts: Query<PartRow, Without<UiWindow>>,
     mut titles: Query<TitleRow, With<WindowTitle>>,
-    interactions: Query<(&WindowPart, &PickingInteraction)>,
+    interactions: Query<(&WindowPart, &PickingInteraction, Has<ShowsFocus>)>,
     children: Query<&Children>,
 ) {
     let targets = targets.collect(lookup.needs_resync());
@@ -97,9 +98,8 @@ fn sync_window_style(
         let theme = lookup.for_entity(entity);
         let (style, metrics) = (&theme.window, &theme.window_metrics);
         let active = window.active;
-        let close = style
-            .close
-            .look(close_state(entity, &interactions, &children));
+        let (state, focused) = close_state(entity, &interactions, &children);
+        let close = style.close.look(state, focused);
 
         sync_frame(&mut window, style);
         for part in children.iter_descendants(entity) {
@@ -121,17 +121,17 @@ fn sync_window_style(
 /// The state of the close button of `window`, from the pointer.
 fn close_state(
     window: Entity,
-    interactions: &Query<(&WindowPart, &PickingInteraction)>,
+    interactions: &Query<(&WindowPart, &PickingInteraction, Has<ShowsFocus>)>,
     children: &Query<&Children>,
-) -> VisualState {
+) -> (VisualState, bool) {
     children
         .iter_descendants(window)
         .find_map(|part| {
-            let (kind, interaction) = interactions.get(part).ok()?;
-            (*kind == WindowPart::Close).then_some(interaction)
+            let (kind, interaction, focused) = interactions.get(part).ok()?;
+            (*kind == WindowPart::Close).then_some((interaction, focused))
         })
-        .map_or(VisualState::Normal, |interaction| {
-            VisualState::resolve(interaction, false, false)
+        .map_or((VisualState::Normal, false), |(interaction, focused)| {
+            (VisualState::resolve(interaction, false, false), focused)
         })
 }
 
@@ -168,6 +168,13 @@ fn sync_close(
 ) {
     part.bg.set_if_neq(BackgroundColor(look.bg));
     part.node.set_if_neq(close_node(metrics, style));
+    if let Some(outline) = part.outline.as_mut() {
+        outline.set_if_neq(Outline::new(
+            look.ring.width,
+            look.ring.offset,
+            look.ring.color,
+        ));
+    }
 }
 
 fn sync_glyph_box(part: &mut PartRowItem, metrics: &WindowMetrics) {
@@ -227,6 +234,7 @@ struct PartRow {
     grip: Option<&'static WindowGrip>,
     bg: &'static mut BackgroundColor,
     node: &'static mut Node,
+    outline: Option<&'static mut Outline>,
 }
 
 /// What the sync writes to the title.
@@ -244,6 +252,8 @@ struct WindowTargets<'w, 's> {
     added: Query<'w, 's, Entity, Added<UiWindow>>,
     all: Query<'w, 's, Entity, With<UiWindow>>,
     touched: Query<'w, 's, Entity, (With<WindowPart>, Changed<PickingInteraction>)>,
+    focused: Query<'w, 's, Entity, (With<WindowPart>, Added<ShowsFocus>)>,
+    unfocused: RemovedComponents<'w, 's, ShowsFocus>,
     activated: Query<'w, 's, Entity, (With<UiWindow>, Added<ActiveWindow>)>,
     deactivated: RemovedComponents<'w, 's, ActiveWindow>,
     parents: Query<'w, 's, &'static ChildOf>,
@@ -251,11 +261,14 @@ struct WindowTargets<'w, 's> {
 
 impl WindowTargets<'_, '_> {
     /// Every window after a theme change, otherwise the new ones, those whose close button was touched,
-    /// and those that gained or lost [`ActiveWindow`].
+    /// those whose close button gained or lost the focus ring, and those that gained or lost [`ActiveWindow`].
     fn collect(&mut self, resync: bool) -> Vec<Entity> {
+        let unfocused = drain_removed(&mut self.unfocused);
         let touched: Vec<Entity> = self
             .touched
             .iter()
+            .chain(self.focused.iter())
+            .chain(unfocused)
             .filter_map(|part| {
                 self.parents
                     .iter_ancestors(part)

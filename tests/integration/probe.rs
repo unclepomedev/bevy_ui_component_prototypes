@@ -143,6 +143,11 @@ pub fn probe_theme() -> Theme {
                 shape: CloseShape::Circle,
                 bg: tones(0.7, 0.1),
                 glyph: tones(0.7, 0.2),
+                focus_ring: FocusRing {
+                    color: Color::srgb(0.9, 0.3, 0.6),
+                    width: Val::Px(3.0),
+                    offset: Val::Px(5.0),
+                },
             },
         },
         window_metrics: WindowMetrics {

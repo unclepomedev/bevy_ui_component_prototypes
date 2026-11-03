@@ -1,8 +1,9 @@
 use crate::common::{
     color::{
         BG_HOVERED, BG_NORMAL, BG_PRESSED, BORDER, DANGER_NORMAL, DANGER_PRESSED, DISABLED,
-        TEXT_MAIN,
+        FOCUS_RING, TEXT_MAIN,
     },
+    focus::FocusRing,
     state::{StateColors, VisualState},
 };
 use bevy::prelude::*;
@@ -84,6 +85,8 @@ pub struct CloseStyle {
     pub shape: CloseShape,
     pub bg: StateColors,
     pub glyph: StateColors,
+    /// Drawn around the button while it has the keyboard focus.
+    pub focus_ring: FocusRing,
 }
 
 /// Colors and shape of a window: the frame, the title bar, and the close button.
@@ -132,6 +135,14 @@ fn states(normal: Color, hovered: Color, pressed: Color) -> StateColors {
     }
 }
 
+fn close_ring() -> FocusRing {
+    FocusRing {
+        color: FOCUS_RING,
+        width: Val::Px(2.0),
+        offset: Val::Px(2.0),
+    }
+}
+
 impl WindowStyle {
     /// Circular close button at the left of a centered title. The button keeps its color under the pointer,
     /// and the cross shows only there.
@@ -155,6 +166,7 @@ impl WindowStyle {
                 shape: CloseShape::Circle,
                 bg: states(MAC_CLOSE, MAC_CLOSE, MAC_CLOSE_PRESSED),
                 glyph: states(Color::NONE, MAC_CROSS, MAC_CROSS),
+                focus_ring: close_ring(),
             },
         }
     }
@@ -177,6 +189,7 @@ impl WindowStyle {
                 shape: CloseShape::Square,
                 bg: states(Color::NONE, DANGER_NORMAL, DANGER_PRESSED),
                 glyph: StateColors::uniform(TEXT_MAIN),
+                focus_ring: close_ring(),
             },
         }
     }
@@ -229,13 +242,19 @@ impl Default for WindowMetrics {
 pub(crate) struct CloseLook {
     pub(crate) bg: Color,
     pub(crate) glyph: Color,
+    pub(crate) ring: FocusRing,
 }
 
 impl CloseStyle {
-    pub(crate) fn look(&self, state: VisualState) -> CloseLook {
+    pub(crate) fn look(&self, state: VisualState, focused: bool) -> CloseLook {
         CloseLook {
             bg: self.bg.pick(state),
             glyph: self.glyph.pick(state),
+            ring: if focused {
+                self.focus_ring
+            } else {
+                FocusRing::NONE
+            },
         }
     }
 
@@ -297,7 +316,7 @@ mod tests {
     #[test]
     fn the_close_look_follows_the_visual_state() {
         let close = WindowStyle::mac().close;
-        let look = close.look(VisualState::Pressed);
+        let look = close.look(VisualState::Pressed, false);
         assert_eq!(look.bg, close.bg.pressed);
         assert_eq!(look.glyph, close.glyph.pressed);
     }
@@ -305,20 +324,20 @@ mod tests {
     #[test]
     fn the_mac_cross_shows_only_under_the_pointer() {
         let close = WindowStyle::mac().close;
-        assert_eq!(close.look(VisualState::Normal).glyph, Color::NONE);
-        assert_ne!(close.look(VisualState::Hovered).glyph, Color::NONE);
+        assert_eq!(close.look(VisualState::Normal, false).glyph, Color::NONE);
+        assert_ne!(close.look(VisualState::Hovered, false).glyph, Color::NONE);
     }
 
     #[test]
     fn the_mac_close_button_keeps_its_color_under_the_pointer() {
         let close = WindowStyle::mac().close;
         assert_eq!(
-            close.look(VisualState::Normal).bg,
-            close.look(VisualState::Hovered).bg
+            close.look(VisualState::Normal, false).bg,
+            close.look(VisualState::Hovered, false).bg
         );
         assert_ne!(
-            close.look(VisualState::Normal).bg,
-            close.look(VisualState::Pressed).bg
+            close.look(VisualState::Normal, false).bg,
+            close.look(VisualState::Pressed, false).bg
         );
     }
 

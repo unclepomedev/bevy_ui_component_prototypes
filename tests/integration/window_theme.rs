@@ -4,11 +4,14 @@
 
 use crate::{
     probe::probe_theme,
-    support::{bg, border_color, node, test_app},
+    support::{bg, border_color, focus, node, test_app},
 };
 use bevy::{
     a11y::AccessibilityNode,
-    input_focus::tab_navigation::{TabGroup, TabIndex},
+    input_focus::{
+        InputFocusVisible,
+        tab_navigation::{TabGroup, TabIndex},
+    },
     picking::hover::PickingInteraction,
     prelude::*,
 };
@@ -549,4 +552,32 @@ fn each_window_is_a_tab_group() {
 
     let group = app.world().get::<TabGroup>(window).unwrap();
     assert!(!group.modal);
+}
+
+#[test]
+fn the_close_button_shows_the_focus_ring_of_the_theme_while_it_shows_focus() {
+    let mut app = test_app();
+    let theme = probe_theme();
+    let ring = theme.window.close.focus_ring;
+    app.insert_resource(GlobalTheme(theme));
+    let window = spawn_window(&mut app);
+    app.update();
+    let close = close(&app, window);
+    let outline = |app: &App| *app.world().get::<Outline>(close).unwrap();
+
+    assert_eq!(outline(&app).color, Color::NONE);
+
+    focus(&mut app, close, true);
+    app.update();
+    app.update();
+    let shown = outline(&app);
+    assert_eq!(
+        (shown.color, shown.width, shown.offset),
+        (ring.color, ring.width, ring.offset)
+    );
+
+    app.insert_resource(InputFocusVisible(false));
+    app.update();
+    app.update();
+    assert_eq!(outline(&app).color, Color::NONE);
 }
