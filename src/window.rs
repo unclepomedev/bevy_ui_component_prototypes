@@ -1,6 +1,8 @@
 mod builder;
 mod components;
 mod defaults;
+mod drag;
+mod limits;
 mod requests;
 mod stack;
 mod style;
@@ -9,7 +11,8 @@ pub use self::{
     builder::{WindowBuilder, window},
     components::{ActiveWindow, UiWindow, WindowContent, WindowRect},
     defaults::WindowDefaultsPlugin,
-    requests::RaiseWindow,
+    limits::WindowLimits,
+    requests::{MoveWindow, RaiseWindow},
     stack::WindowStack,
     style::{
         CloseShape, CloseStyle, TitleAlign, TitleBarStyle, WindowMetrics, WindowShape, WindowSide,

@@ -2,7 +2,8 @@
 //!
 //! Execution: cargo run --example window_check
 //!
-//! A window comes to the front when pressed. It does not move, close or resize yet.
+//! A window comes to the front when pressed, and moves when its title bar is dragged. It does not close or
+//! resize yet.
 //!
 //! What to verify:
 //!   1. The window on the left has the mac look: a circular red close button at the left of the title bar
@@ -23,6 +24,12 @@
 //!   9. Only the window in front has the bright title bar and title. The others have the dim ones. After
 //!      a press, the dim and the bright swap.
 //!  10. Press on the desktop (outside the windows): nothing changes.
+//!  11. Drag a title bar: the window follows the pointer, and comes to the front. Dragging the content area
+//!      or the frame does not move it. Dragging from the close button does not move it either.
+//!  12. Drag a window past the edge of the screen: it stops with 64 px of its width inside at the left and
+//!      the right, with its top edge at the top of the screen, and with the title bar visible at the bottom.
+//!  13. The pointer keeps hold of the window while it is dragged over the other windows.
+//!  14. Drag with the right button: nothing moves.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ui_component_prototypes::{

@@ -3,6 +3,7 @@ use super::{
         UiWindow, WindowContent, WindowPart, WindowRect, WindowTitle, close_node, content_node,
         glyph_bar_node, glyph_bar_transform, glyph_box_node, title_bar_node, title_node,
     },
+    drag::drag_title_bar,
     style::{WindowMetrics, WindowStyle},
 };
 use crate::common::picking::pass_through;
@@ -82,6 +83,7 @@ fn spawn_title_bar(parent: &mut RelatedSpawner<ChildOf>, title_extras: Vec<Extra
             title_bar_node(&metrics, style.close.side),
             BackgroundColor(Color::NONE),
         ))
+        .observe(drag_title_bar)
         .with_children(|bar| {
             spawn_close(bar, &style, &metrics);
             let mut title = bar.spawn((

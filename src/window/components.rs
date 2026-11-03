@@ -1,16 +1,21 @@
-use super::style::{WindowMetrics, WindowShape, WindowSide, WindowStyle};
+use super::{
+    limits::WindowLimits,
+    style::{WindowMetrics, WindowShape, WindowSide, WindowStyle},
+};
 use bevy::prelude::*;
 
 /// A themed window: a frame with a title bar, a close button, and an area for content.
 ///
 /// Put the content in the entity marked [`WindowContent`]: `window().content_bundle(...)` adds a bundle to it.
-/// The position and the size are those of [`WindowRect`].
+/// The position and the size are those of [`WindowRect`]. Dragging the title bar asks for the window to be
+/// moved ([`MoveWindow`](super::MoveWindow)), within [`WindowLimits`].
 ///
 /// A window is placed in the node it is a child of, with absolute positioning: make that node as large as
 /// the area the windows may be in.
 #[derive(Component)]
 #[require(
     WindowRect,
+    WindowLimits,
     BackgroundColor = BackgroundColor(Color::NONE),
     BorderColor = BorderColor::all(Color::NONE),
     Node = window_node(&WindowShape::default())

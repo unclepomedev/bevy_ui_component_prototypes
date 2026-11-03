@@ -1,14 +1,16 @@
 use super::{
-    components::{ActiveWindow, UiWindow},
-    requests::RaiseWindow,
+    components::{ActiveWindow, UiWindow, WindowRect},
+    limits::WindowLimits,
+    requests::{MoveWindow, RaiseWindow},
     stack::WindowStack,
 };
-use bevy::{picking::events::PointerPress, prelude::*, ui::UiSystems};
+use bevy::{picking::events::PointerPress, prelude::*, ui::ComputedNode, ui::UiSystems};
 
 /// Applies the requests made to windows.
 ///
 /// - Keeps the [`WindowStack`]: a new window goes on the top, a despawned one leaves.
 /// - Gives each window the `GlobalZIndex` of its place in the stack, and [`ActiveWindow`] to the top one.
+/// - Moves a window by the delta of [`MoveWindow`], within its [`WindowLimits`].
 /// - Brings a window to the front on [`RaiseWindow`], and asks for it when the pointer presses on the window
 ///   or on anything in it.
 pub struct WindowDefaultsPlugin {
@@ -32,6 +34,7 @@ impl Plugin for WindowDefaultsPlugin {
         app.insert_resource(WindowStack::new(self.z_base, self.z_step))
             .add_observer(on_raise_window)
             .add_observer(raise_on_press)
+            .add_observer(on_move_window)
             .add_systems(
                 PostUpdate,
                 (track_windows, apply_layers)
@@ -47,6 +50,27 @@ fn on_raise_window(raise: On<RaiseWindow>, mut stack: ResMut<WindowStack>) {
         return;
     }
     stack.raise(window);
+}
+
+fn on_move_window(
+    mv: On<MoveWindow>,
+    mut windows: Query<(&mut WindowRect, &WindowLimits, Option<&ChildOf>), With<UiWindow>>,
+    areas: Query<&ComputedNode>,
+) {
+    let Ok((mut rect, limits, parent)) = windows.get_mut(mv.window) else {
+        return;
+    };
+    let area = parent
+        .and_then(|parent| areas.get(parent.parent()).ok())
+        .map_or(Vec2::ZERO, |node| node.size() * node.inverse_scale_factor());
+    let target = Vec2::new(rect.x, rect.y) + mv.delta;
+    let position = limits.clamp(target, Vec2::new(rect.width, rect.height), area);
+    let moved = WindowRect {
+        x: position.x,
+        y: position.y,
+        ..*rect
+    };
+    rect.set_if_neq(moved);
 }
 
 /// Asks for the window to be raised when the press lands on it or on a descendant. Widgets that stop the
