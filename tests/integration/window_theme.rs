@@ -36,8 +36,13 @@ fn close(app: &App, window: Entity) -> Entity {
     app.world().get::<Children>(title_bar(app, window)).unwrap()[0]
 }
 
-fn title(app: &App, window: Entity) -> Entity {
+/// The box of the title is the second child of the title bar, and the title is in it.
+fn title_box(app: &App, window: Entity) -> Entity {
     app.world().get::<Children>(title_bar(app, window)).unwrap()[1]
+}
+
+fn title(app: &App, window: Entity) -> Entity {
+    app.world().get::<Children>(title_box(app, window)).unwrap()[0]
 }
 
 fn glyph_bars(app: &App, window: Entity) -> Vec<Entity> {
@@ -460,4 +465,27 @@ fn a_node_given_to_the_content_sets_its_layout_but_it_still_clips_and_fills_the_
     assert_eq!(content.flex_direction, FlexDirection::Row);
     assert_eq!(content.overflow, Overflow::clip());
     assert_eq!(content.flex_grow, 1.0);
+    assert_eq!(
+        (content.min_width, content.min_height),
+        (Val::Px(0.0), Val::Px(0.0))
+    );
+}
+
+#[test]
+fn the_title_is_clipped_by_its_box_and_the_content_can_be_smaller_than_what_is_in_it() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+
+    let title_box = node(&app, title_box(&app, window));
+    assert_eq!(title_box.overflow, Overflow::clip_x());
+    assert_eq!(title_box.min_width, Val::Px(0.0));
+    assert_eq!(title_box.flex_grow, 1.0);
+    assert_eq!(node(&app, title(&app, window)).width, Val::Percent(100.0));
+
+    let content = node(&app, content(&app, window));
+    assert_eq!(
+        (content.min_width, content.min_height),
+        (Val::Px(0.0), Val::Px(0.0))
+    );
 }

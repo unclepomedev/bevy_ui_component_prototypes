@@ -3,7 +3,7 @@ use super::{
     components::{
         UiWindow, WindowContent, WindowGrip, WindowPart, WindowRect, WindowTitle, close_node,
         content_node, glyph_bar_node, glyph_bar_transform, glyph_box_node, grip_node,
-        title_bar_node, title_node,
+        title_bar_node, title_box_node, title_node,
     },
     drag::drag_title_bar,
     requests::WindowEdge,
@@ -77,6 +77,8 @@ impl WindowBuilder {
                 if let Some(mut node) = content.get_mut::<Node>() {
                     node.overflow = Overflow::clip();
                     node.flex_grow = 1.0;
+                    node.min_width = px(0);
+                    node.min_height = px(0);
                 }
                 spawn_grips(parent);
             })),
@@ -97,17 +99,20 @@ fn spawn_title_bar(parent: &mut RelatedSpawner<ChildOf>, title_extras: Vec<Extra
         .observe(drag_title_bar)
         .with_children(|bar| {
             spawn_close(bar, &style, &metrics);
-            let mut title = bar.spawn((
-                WindowTitle,
-                title_node(),
-                TextLayout::new(Justify::Left, LineBreak::NoWrap),
-                // Unseen until the first style sync.
-                TextColor(Color::NONE),
-                pass_through(),
-            ));
-            for extra in title_extras {
-                extra(&mut title);
-            }
+            bar.spawn((title_box_node(), pass_through()))
+                .with_children(|title_box| {
+                    let mut title = title_box.spawn((
+                        WindowTitle,
+                        title_node(),
+                        TextLayout::new(Justify::Left, LineBreak::NoWrap),
+                        // Unseen until the first style sync.
+                        TextColor(Color::NONE),
+                        pass_through(),
+                    ));
+                    for extra in title_extras {
+                        extra(&mut title);
+                    }
+                });
         });
 }
 

@@ -187,8 +187,9 @@ pub(crate) fn grip_node(edge: WindowEdge, metrics: &WindowMetrics, shape: &Windo
     node
 }
 
-/// The title takes the space the close button leaves, and is cut off at its end.
-pub(crate) fn title_node() -> Node {
+/// The box of the title. It takes the space the close button leaves, and clips the title at its end:
+/// the clipping of a node is for what is in it, not for the node itself.
+pub(crate) fn title_box_node() -> Node {
     Node {
         flex_grow: 1.0,
         min_width: px(0),
@@ -197,9 +198,21 @@ pub(crate) fn title_node() -> Node {
     }
 }
 
+/// The title fills its box; a text that is longer goes on past the end of the box, where it is clipped.
+pub(crate) fn title_node() -> Node {
+    Node {
+        width: percent(100),
+        ..default()
+    }
+}
+
+/// The area fills what the title bar leaves of the window. It can be smaller than its content: `min_width`
+/// and `min_height` are zero, otherwise a flex item is as large as its content at least.
 pub(crate) fn content_node() -> Node {
     Node {
         flex_grow: 1.0,
+        min_width: px(0),
+        min_height: px(0),
         flex_direction: FlexDirection::Column,
         overflow: Overflow::clip(),
         ..default()
