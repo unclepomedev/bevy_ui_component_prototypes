@@ -97,7 +97,7 @@ pub struct WindowStyle {
     pub close: CloseStyle,
 }
 
-/// The footprint of a window: the title bar, the close button, and its glyph. In logical pixels.
+/// The footprint of a window: the title bar, the close button and its glyph, and the strips that resize it. In logical pixels.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct WindowMetrics {
     pub title_height: f32,
@@ -110,6 +110,8 @@ pub struct WindowMetrics {
     /// The side of the square that the cross is drawn in.
     pub glyph_size: f32,
     pub glyph_stroke: f32,
+    /// The thickness of the strip along each edge that resizes the window. Half of it is outside the frame.
+    pub resize_grip: f32,
 }
 
 // Estimated from the traffic lights and the tab text of a macOS window in dark mode.
@@ -197,6 +199,7 @@ impl WindowMetrics {
             close_height: 14.0,
             glyph_size: 8.0,
             glyph_stroke: 2.0,
+            resize_grip: 8.0,
         }
     }
 
@@ -210,6 +213,7 @@ impl WindowMetrics {
             close_height: 32.0,
             glyph_size: 12.0,
             glyph_stroke: 2.0,
+            resize_grip: 8.0,
         }
     }
 }

@@ -366,3 +366,74 @@ fn the_title_bar_follows_the_inside_of_the_rounded_frame() {
     let radius = node(&app, title_bar(&app, window)).border_radius;
     assert_eq!(radius, BorderRadius::top(px(0.0)));
 }
+
+// The grips follow the content, in the order of `WindowEdge::ALL`: top, bottom, left, right, top left,
+// top right, bottom left, bottom right.
+fn grip(app: &App, window: Entity, index: usize) -> Entity {
+    app.world().get::<Children>(window).unwrap()[2 + index]
+}
+
+#[test]
+fn a_window_has_eight_invisible_grips_after_its_content() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+
+    assert_eq!(app.world().get::<Children>(window).unwrap().len(), 2 + 8);
+    for index in 0..8 {
+        let grip = grip(&app, window, index);
+        assert_eq!(bg(&app, grip), Color::NONE);
+        assert_eq!(node(&app, grip).position_type, PositionType::Absolute);
+    }
+}
+
+#[test]
+fn the_grips_straddle_the_outer_edge_of_the_frame() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+
+    // The probe theme: a border of 3 and a grip of 11. A strip begins 5.5 outside the frame, so 8.5 from the
+    // padding box, and the strips of the sides begin past the corners: 5.5 - 3 = 2.5.
+    let left = node(&app, grip(&app, window, 2));
+    assert_eq!(left.left, Val::Px(-8.5));
+    assert_eq!(left.width, Val::Px(11.0));
+    assert_eq!((left.top, left.bottom), (Val::Px(2.5), Val::Px(2.5)));
+    assert_eq!(left.right, Val::Auto);
+
+    let bottom = node(&app, grip(&app, window, 1));
+    assert_eq!(bottom.bottom, Val::Px(-8.5));
+    assert_eq!(bottom.height, Val::Px(11.0));
+    assert_eq!((bottom.left, bottom.right), (Val::Px(2.5), Val::Px(2.5)));
+
+    let corner = node(&app, grip(&app, window, 4));
+    assert_eq!((corner.left, corner.top), (Val::Px(-8.5), Val::Px(-8.5)));
+    assert_eq!(
+        (corner.width, corner.height),
+        (Val::Px(11.0), Val::Px(11.0))
+    );
+
+    let corner = node(&app, grip(&app, window, 7));
+    assert_eq!(
+        (corner.right, corner.bottom),
+        (Val::Px(-8.5), Val::Px(-8.5))
+    );
+}
+
+#[test]
+fn the_grips_follow_the_theme() {
+    let mut app = test_app();
+    let window = spawn_window(&mut app);
+    app.update();
+
+    let mut theme = probe_theme();
+    theme.window_metrics.resize_grip = 20.0;
+    theme.window.shape.border_width = 1.0;
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+
+    let right = node(&app, grip(&app, window, 3));
+    assert_eq!(right.width, Val::Px(20.0));
+    assert_eq!(right.right, Val::Px(-11.0));
+    assert_eq!(right.top, Val::Px(9.0));
+}

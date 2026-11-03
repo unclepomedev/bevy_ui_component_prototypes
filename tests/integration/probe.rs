@@ -149,6 +149,7 @@ pub fn probe_theme() -> Theme {
             close_height: 21.0,
             glyph_size: 11.0,
             glyph_stroke: 3.0,
+            resize_grip: 11.0,
         },
         font: FontSource::monospace(),
         font_smoothing: FontSmoothing::AntiAliased,

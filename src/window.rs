@@ -5,6 +5,7 @@ mod defaults;
 mod drag;
 mod limits;
 mod requests;
+mod resize;
 mod stack;
 mod style;
 
@@ -13,7 +14,7 @@ pub use self::{
     components::{ActiveWindow, UiWindow, WindowContent, WindowRect},
     defaults::WindowDefaultsPlugin,
     limits::WindowLimits,
-    requests::{CloseWindow, MoveWindow, RaiseWindow},
+    requests::{CloseWindow, MoveWindow, RaiseWindow, ResizeWindow, WindowEdge},
     stack::WindowStack,
     style::{
         CloseShape, CloseStyle, TitleAlign, TitleBarStyle, WindowMetrics, WindowShape, WindowSide,
@@ -23,8 +24,8 @@ pub use self::{
 
 use self::{
     components::{
-        WindowPart, WindowTitle, close_node, glyph_bar_node, glyph_box_node, title_bar_node,
-        window_node,
+        WindowGrip, WindowPart, WindowTitle, close_node, glyph_bar_node, glyph_box_node, grip_node,
+        title_bar_node, window_node,
     },
     style::CloseLook,
 };
@@ -106,6 +107,7 @@ fn sync_window_style(
                     WindowPart::Close => sync_close(&mut part, style, metrics, close),
                     WindowPart::GlyphBox => sync_glyph_box(&mut part, metrics),
                     WindowPart::GlyphBar => sync_glyph_bar(&mut part, metrics, close),
+                    WindowPart::Grip => sync_grip(&mut part, style, metrics),
                 }
             } else if let Ok(mut title) = titles.get_mut(part) {
                 sync_title(&mut title, theme, active);
@@ -175,6 +177,13 @@ fn sync_glyph_bar(part: &mut PartRowItem, metrics: &WindowMetrics, look: CloseLo
     part.node.set_if_neq(glyph_bar_node(metrics));
 }
 
+fn sync_grip(part: &mut PartRowItem, style: &WindowStyle, metrics: &WindowMetrics) {
+    if let Some(WindowGrip(edge)) = part.grip {
+        part.node
+            .set_if_neq(grip_node(*edge, metrics, &style.shape));
+    }
+}
+
 /// The title text: its color, font, size and alignment.
 fn sync_title(title: &mut TitleRowItem, theme: &Theme, active: bool) {
     let (style, metrics) = (&theme.window, &theme.window_metrics);
@@ -213,6 +222,7 @@ struct WindowRow {
 #[query_data(mutable)]
 struct PartRow {
     kind: &'static WindowPart,
+    grip: Option<&'static WindowGrip>,
     bg: &'static mut BackgroundColor,
     node: &'static mut Node,
 }

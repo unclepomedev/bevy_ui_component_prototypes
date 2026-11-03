@@ -37,9 +37,10 @@ pub use crate::{
     },
     toggle_switch::{SwitchStyle, ToggleSwitch, ToggleSwitchBuilder, toggle_switch},
     window::{
-        ActiveWindow, CloseShape, CloseStyle, CloseWindow, MoveWindow, RaiseWindow, TitleAlign,
-        TitleBarStyle, UiWindow, WindowBuilder, WindowContent, WindowDefaultsPlugin, WindowLimits,
-        WindowMetrics, WindowRect, WindowShape, WindowSide, WindowStack, WindowStyle, window,
+        ActiveWindow, CloseShape, CloseStyle, CloseWindow, MoveWindow, RaiseWindow, ResizeWindow,
+        TitleAlign, TitleBarStyle, UiWindow, WindowBuilder, WindowContent, WindowDefaultsPlugin,
+        WindowEdge, WindowLimits, WindowMetrics, WindowRect, WindowShape, WindowSide, WindowStack,
+        WindowStyle, window,
     },
 };
 
@@ -75,7 +76,7 @@ use bevy::{
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
 ///
-/// What a window asks for ([`RaiseWindow`], [`MoveWindow`], [`CloseWindow`]) is applied by [`WindowDefaultsPlugin`], which is not included.
+/// What a window asks for ([`RaiseWindow`], [`MoveWindow`], [`ResizeWindow`], [`CloseWindow`]) is applied by [`WindowDefaultsPlugin`], which is not included.
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {

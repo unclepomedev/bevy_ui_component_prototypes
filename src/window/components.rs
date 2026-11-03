@@ -1,5 +1,6 @@
 use super::{
     limits::WindowLimits,
+    requests::WindowEdge,
     style::{WindowMetrics, WindowShape, WindowSide, WindowStyle},
 };
 use bevy::prelude::*;
@@ -9,7 +10,8 @@ use bevy::prelude::*;
 /// Put the content in the entity marked [`WindowContent`]: `window().content_bundle(...)` adds a bundle to it.
 /// The position and the size are those of [`WindowRect`]. Dragging the title bar asks for the window to be
 /// moved ([`MoveWindow`](super::MoveWindow)), within [`WindowLimits`]. Activating the close button asks for it
-/// to be closed ([`CloseWindow`](super::CloseWindow)).
+/// to be closed ([`CloseWindow`](super::CloseWindow)), and dragging the frame asks for it to be resized
+/// ([`ResizeWindow`](super::ResizeWindow)).
 ///
 /// A window is placed in the node it is a child of, with absolute positioning: make that node as large as
 /// the area the windows may be in.
@@ -69,7 +71,13 @@ pub(crate) enum WindowPart {
     /// The square that the cross is drawn in; the cross is two bars across it.
     GlyphBox,
     GlyphBar,
+    /// A strip along the frame that is dragged to resize the window; it has a [`WindowGrip`].
+    Grip,
 }
+
+/// The edge or the corner that a [`WindowPart::Grip`] resizes.
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct WindowGrip(pub(crate) WindowEdge);
 
 /// The frame. The position and the size are written from [`WindowRect`].
 pub(crate) fn window_node(shape: &WindowShape) -> Node {
@@ -142,6 +150,40 @@ pub(crate) fn glyph_bar_transform(degrees: f32) -> UiTransform {
         rotation: Rot2::degrees(degrees),
         ..default()
     }
+}
+
+/// An invisible strip centered on the outer edge of the frame, or a square centered on a corner.
+/// The positions are from the padding box of the window, so the border is counted in.
+pub(crate) fn grip_node(edge: WindowEdge, metrics: &WindowMetrics, shape: &WindowShape) -> Node {
+    let grip = metrics.resize_grip;
+    // Where the near side of a strip is, and where the strips of the sides start: past the corners.
+    let near = px(-(shape.border_width + grip / 2.0));
+    let span = px(grip / 2.0 - shape.border_width);
+    let mut node = Node {
+        position_type: PositionType::Absolute,
+        ..default()
+    };
+    if edge.has_left() {
+        node.left = near;
+        node.width = px(grip);
+    } else if edge.has_right() {
+        node.right = near;
+        node.width = px(grip);
+    } else {
+        node.left = span;
+        node.right = span;
+    }
+    if edge.has_top() {
+        node.top = near;
+        node.height = px(grip);
+    } else if edge.has_bottom() {
+        node.bottom = near;
+        node.height = px(grip);
+    } else {
+        node.top = span;
+        node.bottom = span;
+    }
+    node
 }
 
 /// The title takes the space the close button leaves, and is cut off at its end.

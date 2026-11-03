@@ -2,8 +2,8 @@
 //!
 //! Execution: cargo run --example window_check
 //!
-//! A window comes to the front when pressed, moves when its title bar is dragged, and closes with its close
-//! button. It does not resize yet.
+//! A window comes to the front when pressed, moves when its title bar is dragged, resizes when its frame is
+//! dragged, and closes with its close button.
 //!
 //! What to verify:
 //!   1. The window on the left has the mac look: a circular red close button at the left of the title bar
@@ -33,7 +33,15 @@
 //!      the right, with its top edge at the top of the screen, and with the title bar visible at the bottom.
 //!  13. The pointer keeps hold of the window while it is dragged over the other windows.
 //!  14. Drag with the right button: nothing moves.
-//!  15. After a window closes, the one below it is the bright one and the others keep their order. [N] opens
+//!  15. Drag the frame of a window, at a side or at a corner: the edge follows the pointer, and the window
+//!      comes to the front. The strip you can grab is 8 px thick, half of it outside the frame. The strips
+//!      cannot be seen; the pointer has to be near the edge.
+//!  16. A window cannot be made smaller than 120 x 60: the edge you drag stops, and the opposite edge stays.
+//!  17. An edge cannot be dragged out of the screen. The content area keeps clipping while the window is
+//!      resized, and the long title is cut off again at the new width.
+//!  18. Dragging from the middle of a title bar still moves the window; the strip at the top edge does not
+//!      take over, except at the outermost few pixels of the bar.
+//!  19. After a window closes, the one below it is the bright one and the others keep their order. [N] opens
 //!      a new window, which comes on top of the others and is the bright one.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};

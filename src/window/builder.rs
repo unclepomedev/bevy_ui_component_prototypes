@@ -1,10 +1,13 @@
 use super::{
     close::close_on_activate,
     components::{
-        UiWindow, WindowContent, WindowPart, WindowRect, WindowTitle, close_node, content_node,
-        glyph_bar_node, glyph_bar_transform, glyph_box_node, title_bar_node, title_node,
+        UiWindow, WindowContent, WindowGrip, WindowPart, WindowRect, WindowTitle, close_node,
+        content_node, glyph_bar_node, glyph_bar_transform, glyph_box_node, grip_node,
+        title_bar_node, title_node,
     },
     drag::drag_title_bar,
+    requests::WindowEdge,
+    resize::drag_grip,
     style::{WindowMetrics, WindowStyle},
 };
 use crate::common::picking::pass_through;
@@ -69,6 +72,7 @@ impl WindowBuilder {
                 for extra in content_extras {
                     extra(&mut content);
                 }
+                spawn_grips(parent);
             })),
         )
     }
@@ -99,6 +103,22 @@ fn spawn_title_bar(parent: &mut RelatedSpawner<ChildOf>, title_extras: Vec<Extra
                 extra(&mut title);
             }
         });
+}
+
+/// The grips come after the content, so they are above it.
+fn spawn_grips(parent: &mut RelatedSpawner<ChildOf>) {
+    let style = WindowStyle::default();
+    let metrics = WindowMetrics::default();
+    for edge in WindowEdge::ALL {
+        parent
+            .spawn((
+                WindowPart::Grip,
+                WindowGrip(edge),
+                grip_node(edge, &metrics, &style.shape),
+                BackgroundColor(Color::NONE),
+            ))
+            .observe(drag_grip);
+    }
 }
 
 fn spawn_close(bar: &mut RelatedSpawner<ChildOf>, style: &WindowStyle, metrics: &WindowMetrics) {

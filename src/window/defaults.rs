@@ -1,7 +1,7 @@
 use super::{
     components::{ActiveWindow, UiWindow, WindowRect},
     limits::WindowLimits,
-    requests::{CloseWindow, MoveWindow, RaiseWindow},
+    requests::{CloseWindow, MoveWindow, RaiseWindow, ResizeWindow},
     stack::WindowStack,
 };
 use bevy::{picking::events::PointerPress, prelude::*, ui::ComputedNode, ui::UiSystems};
@@ -11,6 +11,7 @@ use bevy::{picking::events::PointerPress, prelude::*, ui::ComputedNode, ui::UiSy
 /// - Keeps the [`WindowStack`]: a new window goes on the top, a despawned one leaves.
 /// - Gives each window the `GlobalZIndex` of its place in the stack, and [`ActiveWindow`] to the top one.
 /// - Moves a window by the delta of [`MoveWindow`], within its [`WindowLimits`].
+/// - Moves an edge of a window by the delta of [`ResizeWindow`], within its [`WindowLimits`].
 /// - Despawns a window on [`CloseWindow`].
 /// - Brings a window to the front on [`RaiseWindow`], and asks for it when the pointer presses on the window
 ///   or on anything in it.
@@ -36,6 +37,7 @@ impl Plugin for WindowDefaultsPlugin {
             .add_observer(on_raise_window)
             .add_observer(raise_on_press)
             .add_observer(on_move_window)
+            .add_observer(on_resize_window)
             .add_observer(on_close_window)
             .add_systems(
                 PostUpdate,
@@ -62,9 +64,7 @@ fn on_move_window(
     let Ok((mut rect, limits, parent)) = windows.get_mut(mv.window) else {
         return;
     };
-    let area = parent
-        .and_then(|parent| areas.get(parent.parent()).ok())
-        .map_or(Vec2::ZERO, |node| node.size() * node.inverse_scale_factor());
+    let area = area_of(parent, &areas);
     let target = Vec2::new(rect.x, rect.y) + mv.delta;
     let position = limits.clamp(target, Vec2::new(rect.width, rect.height), area);
     let moved = WindowRect {
@@ -73,6 +73,26 @@ fn on_move_window(
         ..*rect
     };
     rect.set_if_neq(moved);
+}
+
+fn on_resize_window(
+    resize: On<ResizeWindow>,
+    mut windows: Query<(&mut WindowRect, &WindowLimits, Option<&ChildOf>), With<UiWindow>>,
+    areas: Query<&ComputedNode>,
+) {
+    let Ok((mut rect, limits, parent)) = windows.get_mut(resize.window) else {
+        return;
+    };
+    let area = area_of(parent, &areas);
+    let resized = limits.resize(*rect, resize.edge, resize.delta, area);
+    rect.set_if_neq(resized);
+}
+
+/// The size of the node a window is placed in, in logical pixels; zero if it is not laid out yet.
+fn area_of(parent: Option<&ChildOf>, areas: &Query<&ComputedNode>) -> Vec2 {
+    parent
+        .and_then(|parent| areas.get(parent.parent()).ok())
+        .map_or(Vec2::ZERO, |node| node.size() * node.inverse_scale_factor())
 }
 
 fn on_close_window(
