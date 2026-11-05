@@ -7,8 +7,8 @@ use super::{
 };
 use crate::{common::picking::pass_through, scroll_indicator::scroll_indicator};
 use accesskit::{Node as AccessKitNode, Role};
-use bevy::a11y::AccessibilityNode;
 use bevy::{
+    a11y::AccessibilityNode,
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     prelude::*,
     text::{EditableText, TextReadWriteMode},
