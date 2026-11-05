@@ -5,6 +5,7 @@ mod progress;
 mod scroll_indicator;
 mod select;
 mod slider;
+mod text_field;
 mod theme;
 mod toast;
 mod toggle_switch;
@@ -34,6 +35,10 @@ pub use crate::{
         SelectShape, SelectStyle, SelectedIndex, SelectedOption, SelectionColors, select,
     },
     slider::{SliderBuilder, SliderEditing, SliderShape, SliderStyle, ValueSlider, slider},
+    text_field::{
+        SetFieldText, TextField, TextFieldBuilder, TextFieldInput, TextFieldMetrics,
+        TextFieldShape, TextFieldStyle, text_field,
+    },
     theme::{GlobalTheme, Theme},
     toast::{
         Toast, ToastBuilder, ToastHost, ToastHostBuilder, ToastMetrics, ToastShape, ToastStack,
@@ -55,6 +60,7 @@ use crate::{
     scroll_indicator::ScrollIndicatorStylePlugin,
     select::SelectStylePlugin,
     slider::SliderStylePlugin,
+    text_field::{TextAreaPlugin, TextFieldStylePlugin, TextFieldValuePlugin},
     toast::ToastPlugin,
     toggle_switch::SwitchStylePlugin,
     window::WindowStylePlugin,
@@ -64,7 +70,7 @@ use bevy::{
     prelude::*,
     ui_widgets::{
         ButtonPlugin, CheckboxPlugin, ListBoxPlugin, MenuPlugin, ScrollAreaPlugin, SliderPlugin,
-        popover::PopoverPlugin,
+        TextInputPlugin, popover::PopoverPlugin,
     },
 };
 
@@ -78,6 +84,7 @@ use bevy::{
 /// - [`MenuPlugin`] (included in `DefaultPlugins`): opening, closing and the focus of a select
 /// - [`PopoverPlugin`] (included in `DefaultPlugins`): where the popup of a select goes
 /// - [`ScrollAreaPlugin`] (included in `DefaultPlugins`): scrolling the list of a select
+/// - [`TextInputPlugin`] (included in `DefaultPlugins`): typing in a text field
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
 ///
@@ -95,6 +102,9 @@ impl Plugin for UiComponentPrototypesPlugin {
             ProgressStylePlugin,
             SelectStylePlugin,
             ScrollIndicatorStylePlugin,
+            TextFieldStylePlugin,
+            TextFieldValuePlugin,
+            TextAreaPlugin,
             WindowStylePlugin,
         ));
     }
@@ -105,6 +115,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             ("CheckboxPlugin", app.is_plugin_added::<CheckboxPlugin>()),
             ("SliderPlugin", app.is_plugin_added::<SliderPlugin>()),
             ("ListBoxPlugin", app.is_plugin_added::<ListBoxPlugin>()),
+            ("TextInputPlugin", app.is_plugin_added::<TextInputPlugin>()),
             ("MenuPlugin", app.is_plugin_added::<MenuPlugin>()),
             ("PopoverPlugin", app.is_plugin_added::<PopoverPlugin>()),
             (

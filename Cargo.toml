@@ -1,6 +1,6 @@
 [package]
 name = "bevy_ui_component_prototypes"
-version = "0.0.22"
+version = "0.0.23"
 edition = "2024"
 description = "Boilerplate for UI components in Bevy games"
 license = "MIT or Apache-2.0"
@@ -13,7 +13,7 @@ accesskit = "0.24" # follow bevy_ui_widgets dependency version
 
 [dev-dependencies]
 bevy_asset_loader = "0.28.1"
-bevy = { version = "0.20", features = ["system_font_discovery"] }
+bevy = { version = "0.20", features = ["system_font_discovery", "system_clipboard"] }
 
 [lints.rust]
 linker_messages = "allow"
