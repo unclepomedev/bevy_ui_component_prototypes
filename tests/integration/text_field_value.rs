@@ -1,7 +1,12 @@
 //! The text of a text field reaching the app as `ValueChange<String>`, and `SetFieldText` going the other way.
 
 use crate::support::test_app;
-use bevy::{input_focus::FocusLost, prelude::*, text::EditableText, ui_widgets::ValueChange};
+use bevy::{
+    input_focus::FocusLost,
+    prelude::*,
+    text::{EditableText, TextEdit},
+    ui_widgets::ValueChange,
+};
 use bevy_ui_component_prototypes::{SetFieldText, text_field};
 
 #[derive(Resource, Default)]
@@ -170,4 +175,50 @@ fn set_field_text_for_something_else_is_ignored() {
     app.update();
 
     assert!(seen(&app).is_empty());
+}
+
+#[test]
+fn set_field_text_drops_line_breaks_in_a_single_line_and_keeps_them_in_a_text_area() {
+    let mut app = app_with_log();
+    let single = app.world_mut().spawn(text_field().build()).id();
+    let area = app.world_mut().spawn(text_field().lines(3.0).build()).id();
+    app.update();
+
+    for field in [single, area] {
+        app.world_mut().trigger(SetFieldText {
+            field,
+            text: "a\nb".into(),
+        });
+    }
+    app.update();
+
+    assert_eq!(text(&app, single), "ab");
+    assert_eq!(text(&app, area), "a\nb");
+}
+
+#[test]
+fn set_field_text_discards_the_edits_that_were_waiting() {
+    let mut app = app_with_log();
+    let field = app
+        .world_mut()
+        .spawn(text_field().initial("a").build())
+        .id();
+    app.update();
+    let input = input(&app, field);
+    app.world_mut()
+        .get_mut::<EditableText>(input)
+        .unwrap()
+        .queue_edit(TextEdit::SelectAll);
+
+    app.world_mut().trigger(SetFieldText {
+        field,
+        text: "new".into(),
+    });
+
+    let pending = &app
+        .world()
+        .get::<EditableText>(input)
+        .unwrap()
+        .pending_edits;
+    assert_eq!(pending.len(), 1, "{pending:?}");
 }

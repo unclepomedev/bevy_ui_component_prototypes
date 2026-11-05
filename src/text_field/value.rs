@@ -6,8 +6,9 @@ use bevy::{
     ui_widgets::ValueChange,
 };
 
-/// Replaces the text of a [`TextField`]. The text is cut at the `max_characters` of the field, and the
-/// cursor goes to its end. The field does not report the change it was asked for.
+/// Replaces the text of a [`TextField`]. The text is cut at the `max_characters` of the field, and the line
+/// breaks of a text are dropped in a field of a single line. The cursor goes to the end of the text when it
+/// changes. The field does not report the change it was asked for.
 #[derive(EntityEvent, Clone, Debug, PartialEq, Eq)]
 pub struct SetFieldText {
     #[event_target]
@@ -16,15 +17,14 @@ pub struct SetFieldText {
 }
 
 type ChangedInput = (
-    Entity,
     &'static EditableText,
     &'static ChildOf,
-    Option<&'static mut ReportedText>,
+    &'static mut ReportedText,
 );
 
-/// The text the app was last told about.
-#[derive(Component, Deref, DerefMut)]
-struct ReportedText(String);
+/// The text the app was last told about. The builder starts it with the initial text, which is not a change.
+#[derive(Component, Default, Deref, DerefMut)]
+pub(super) struct ReportedText(pub(super) String);
 
 pub(crate) struct TextFieldValuePlugin;
 impl Plugin for TextFieldValuePlugin {
@@ -46,6 +46,16 @@ fn limited(text: &str, max: Option<usize>) -> &str {
     }
 }
 
+/// `text` as a field takes it: without line breaks unless `newlines` are allowed, and cut at `max`.
+pub(super) fn fit_text(text: &str, newlines: bool, max: Option<usize>) -> String {
+    if newlines {
+        limited(text, max).to_string()
+    } else {
+        let single: String = text.chars().filter(|c| !matches!(c, '\r' | '\n')).collect();
+        limited(&single, max).to_string()
+    }
+}
+
 /// Tells the app the text of a field when it is not the one it was told last, as a
 /// [`ValueChange<String>`] that is not final.
 fn report_changes(
@@ -53,14 +63,7 @@ fn report_changes(
     fields: Query<(), With<TextField>>,
     mut commands: Commands,
 ) {
-    for (input, text, parent, reported) in &mut inputs {
-        let Some(mut reported) = reported else {
-            // The text it started with is not a change.
-            commands
-                .entity(input)
-                .try_insert(ReportedText(text.value().to_string()));
-            continue;
-        };
+    for (text, parent, mut reported) in &mut inputs {
         if text.value() == reported.as_str() {
             continue;
         }
@@ -80,9 +83,12 @@ fn report_changes(
 fn report_blur(
     lost: On<FocusLost>,
     inputs: Query<(&EditableText, &ChildOf), With<TextFieldInput>>,
+    fields: Query<(), With<TextField>>,
     mut commands: Commands,
 ) {
-    if let Ok((text, parent)) = inputs.get(lost.entity) {
+    if let Ok((text, parent)) = inputs.get(lost.entity)
+        && fields.contains(parent.parent())
+    {
         commands.trigger(ValueChange {
             source: parent.parent(),
             value: text.value().to_string(),
@@ -106,8 +112,10 @@ fn on_set_field_text(
     let Ok(mut text) = inputs.get_mut(input) else {
         return;
     };
-    let new = limited(&set.text, text.max_characters).to_string();
+    let new = fit_text(&set.text, text.allow_newlines, text.max_characters);
     if text.value() != new.as_str() {
+        // The edits that were queued were made for the text that is replaced.
+        text.pending_edits.clear();
         text.editor_mut().set_text(&new);
         text.queue_edit(TextEdit::TextEnd(false));
     }
@@ -129,5 +137,13 @@ mod tests {
         assert_eq!(limited("abc", Some(10)), "abc");
         assert_eq!(limited("abc", Some(0)), "");
         assert_eq!(limited("abc", None), "abc");
+    }
+
+    #[test]
+    fn line_breaks_are_dropped_unless_allowed_and_then_the_limit_applies() {
+        assert_eq!(fit_text("a\r\nb\nc", false, None), "abc");
+        assert_eq!(fit_text("a\nb\nc", false, Some(2)), "ab");
+        assert_eq!(fit_text("a\nb\nc", true, None), "a\nb\nc");
+        assert_eq!(fit_text("a\nb\nc", true, Some(3)), "a\nb");
     }
 }

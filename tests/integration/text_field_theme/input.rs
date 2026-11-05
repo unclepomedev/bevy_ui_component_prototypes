@@ -76,6 +76,27 @@ fn the_name_of_the_field_goes_to_the_input() {
 }
 
 #[test]
+fn removing_the_name_of_the_field_removes_it_from_the_input() {
+    let mut app = test_app();
+    let field = spawn_field(&mut app);
+    app.world_mut()
+        .entity_mut(field)
+        .insert(AccessibleLabel::new("Your name"));
+    app.update();
+
+    app.world_mut()
+        .entity_mut(field)
+        .remove::<AccessibleLabel>();
+    app.update();
+
+    assert!(
+        app.world()
+            .get::<AccessibleLabel>(input(&app, field))
+            .is_none()
+    );
+}
+
+#[test]
 fn pressing_on_the_frame_focuses_the_input() {
     let mut app = test_app();
     let window = app.world_mut().spawn(PrimaryWindow).id();

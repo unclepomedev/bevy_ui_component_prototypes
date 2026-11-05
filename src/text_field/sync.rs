@@ -6,7 +6,7 @@ use super::{
 };
 use crate::{
     Theme,
-    common::{state::VisualState, theme_lookup::ThemeLookup},
+    common::{state::VisualState, style_targets::drain_removed, theme_lookup::ThemeLookup},
 };
 use bevy::{
     a11y::AccessibilityNode,
@@ -232,9 +232,19 @@ type LabelledFields<'w, 's> = Query<
 /// reader reads. The field itself does not keep a node, which would carry the name a second time.
 fn forward_label(
     labelled: LabelledFields,
+    fields: Query<(&Children, Has<AccessibleLabel>), With<TextField>>,
     inputs: Query<(), With<TextFieldInput>>,
+    mut removed: RemovedComponents<AccessibleLabel>,
     mut commands: Commands,
 ) {
+    for entity in drain_removed(&mut removed) {
+        // A field that got another label in the same frame keeps one.
+        if let Ok((children, false)) = fields.get(entity)
+            && let Some(input) = input_in(children, &inputs)
+        {
+            commands.entity(input).try_remove::<AccessibleLabel>();
+        }
+    }
     for (field, label, children) in &labelled {
         if let Some(input) = input_in(children, &inputs) {
             commands.entity(input).try_insert(label.clone());

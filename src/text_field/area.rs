@@ -32,11 +32,18 @@ fn wheel_displacement(wheel: f32, inverse_scale_factor: f32) -> f32 {
     }
 }
 
-/// The wheel over a text area scrolls its lines. A single line lets the wheel through.
+/// Whether the text can move by `displacement` (down is positive) from `offset`, when it can be scrolled by
+/// `range` at the most.
+fn can_scroll(displacement: f32, offset: f32, range: f32) -> bool {
+    (displacement > 0.0 && offset < range) || (displacement < 0.0 && offset > 0.0)
+}
+
+/// The wheel over a text area scrolls its lines, as long as they can move that way. A single line, and
+/// a wheel that has nowhere to scroll the text, let the wheel through.
 fn scroll_on_wheel(
     mut scroll: On<PointerScroll>,
     fields: Query<&Children, With<TextField>>,
-    mut inputs: Query<(&mut EditableText, &ComputedNode), With<TextFieldInput>>,
+    mut inputs: Query<(&mut EditableText, &TextLayoutInfo, &ComputedNode), With<TextFieldInput>>,
     ratio: Res<MouseScrollPixelsPerLine>,
 ) {
     let target = scroll.entity;
@@ -47,16 +54,17 @@ fn scroll_on_wheel(
     let Some(input) = input else {
         return;
     };
-    let Ok((mut text, computed)) = inputs.get_mut(input) else {
+    let Ok((mut text, info, computed)) = inputs.get_mut(input) else {
         return;
     };
     if !text.allow_newlines {
         return;
     }
-    scroll.propagate(false);
     let displacement =
         wheel_displacement(scroll.to_pixels(&ratio).y, computed.inverse_scale_factor);
-    if displacement != 0.0 {
+    let range = (info.size.y - text.viewport.size.y).max(0.0);
+    if can_scroll(displacement, text.viewport.offset.y, range) {
+        scroll.propagate(false);
         text.queue_edit(TextEdit::ScrollBy(Vec2::new(0.0, displacement)));
     }
 }
@@ -142,6 +150,16 @@ fn sync_area_indicator(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_text_scrolls_only_where_it_can_move() {
+        assert!(can_scroll(10.0, 0.0, 50.0));
+        assert!(can_scroll(-10.0, 20.0, 50.0));
+        assert!(!can_scroll(10.0, 50.0, 50.0));
+        assert!(!can_scroll(-10.0, 0.0, 50.0));
+        assert!(!can_scroll(10.0, 0.0, 0.0));
+        assert!(!can_scroll(0.0, 20.0, 50.0));
+    }
 
     #[test]
     fn the_wheel_moves_the_text_the_other_way() {

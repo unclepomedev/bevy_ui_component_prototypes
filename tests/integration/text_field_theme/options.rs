@@ -78,3 +78,33 @@ fn fewer_than_one_line_is_one_line() {
     let text = app.world().get::<EditableText>(input(&app, area)).unwrap();
     assert_eq!(text.visible_lines, Some(1.0));
 }
+
+#[test]
+fn the_initial_text_is_cut_at_the_limit_and_has_no_line_breaks_in_a_single_line() {
+    let mut app = test_app();
+    let cut = app
+        .world_mut()
+        .spawn(text_field().initial("あいうえお").max_characters(3).build())
+        .id();
+    let single = app
+        .world_mut()
+        .spawn(text_field().initial("a\nb\r\nc").build())
+        .id();
+    let area = app
+        .world_mut()
+        .spawn(text_field().lines(3.0).initial("a\nb").build())
+        .id();
+
+    app.update();
+
+    let text = |field| {
+        app.world()
+            .get::<EditableText>(input(&app, field))
+            .unwrap()
+            .value()
+            .to_string()
+    };
+    assert_eq!(text(cut), "あいう");
+    assert_eq!(text(single), "abc");
+    assert_eq!(text(area), "a\nb");
+}

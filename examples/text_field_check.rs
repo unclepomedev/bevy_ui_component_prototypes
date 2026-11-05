@@ -237,8 +237,13 @@ fn on_button(
         bright.0 = !bright.0;
         let mut next = Theme::default();
         if bright.0 {
-            next.text_field.bg.normal = Color::srgb(0.9, 0.9, 0.95);
-            next.text_field.text.normal = Color::BLACK;
+            let light = Color::srgb(0.9, 0.9, 0.95);
+            let bg = &mut next.text_field.bg;
+            (bg.normal, bg.hovered, bg.pressed) = (light, light, light);
+            bg.focused = Color::WHITE;
+            let text = &mut next.text_field.text;
+            (text.normal, text.hovered, text.pressed, text.focused) =
+                (Color::BLACK, Color::BLACK, Color::BLACK, Color::BLACK);
             next.text_field.cursor = Color::BLACK;
             next.text_field.shape.radius = 10.0;
         }

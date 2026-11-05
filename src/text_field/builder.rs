@@ -4,6 +4,7 @@ use super::{
         sized_input_node,
     },
     style::TextFieldMetrics,
+    value::{ReportedText, fit_text},
 };
 use crate::{common::picking::pass_through, scroll_indicator::scroll_indicator};
 use accesskit::{Node as AccessKitNode, Role};
@@ -38,7 +39,7 @@ pub struct TextFieldBuilder {
 }
 
 impl TextFieldBuilder {
-    /// The text the field starts with.
+    /// The text the field starts with, cut at `max_characters` and without line breaks unless `lines` is set.
     pub fn initial(mut self, text: impl Into<String>) -> Self {
         self.initial = text.into();
         self
@@ -87,7 +88,8 @@ impl TextFieldBuilder {
             read_only,
             placeholder_extras,
         } = self;
-        let mut text = EditableText::new(initial);
+        let initial = fit_text(&initial, lines.is_some(), max_characters);
+        let mut text = EditableText::new(&initial);
         text.max_characters = max_characters;
         text.visible_width = visible_width;
         if let Some(lines) = lines {
@@ -110,7 +112,7 @@ impl TextFieldBuilder {
             TextField,
             node,
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
-                let mut input = parent.spawn((TextFieldInput, text, mode));
+                let mut input = parent.spawn((TextFieldInput, ReportedText(initial), text, mode));
                 if visible_width.is_some() {
                     input.insert(sized_input_node());
                 }

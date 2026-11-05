@@ -7,8 +7,8 @@ use bevy::{
     core_pipeline::CorePipelinePlugin, gilrs::GilrsPlugin, gizmos::GizmoPlugin,
     gizmos_render::GizmoRenderPlugin, gltf::GltfPlugin, light::LightPlugin, log::LogPlugin,
     pbr::PbrPlugin, post_process::PostProcessPlugin, prelude::*, render::RenderPlugin,
-    sprite_render::SpriteRenderPlugin, ui::ComputedNode, ui_render::UiRenderPlugin,
-    window::ExitCondition, winit::WinitPlugin,
+    sprite_render::SpriteRenderPlugin, text::TextLayoutInfo, ui::ComputedNode,
+    ui_render::UiRenderPlugin, window::ExitCondition, winit::WinitPlugin,
 };
 use bevy_ui_component_prototypes::{ScrollIndicator, UiComponentPrototypesPlugin, text_field};
 
@@ -152,6 +152,10 @@ fn a_text_area_wraps_long_text_instead_of_growing() {
         (size.y - (FRAME_HEIGHT + 2.0 * 19.2)).abs() <= 1.0,
         "{size:?}"
     );
+    // The height is that of the lines shown, so the text itself must be on more lines than that.
+    let input = app.world().get::<Children>(field).unwrap()[0];
+    let text = app.world().get::<TextLayoutInfo>(input).unwrap();
+    assert!(text.size.y > 3.0 * 19.2, "{:?}", text.size);
 }
 
 fn indicator(app: &App, field: Entity) -> Entity {

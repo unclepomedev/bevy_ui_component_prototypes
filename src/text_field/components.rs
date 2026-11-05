@@ -1,4 +1,5 @@
 use super::style::{TextFieldMetrics, TextFieldShape};
+use super::value::ReportedText;
 use crate::common::{focus::hidden_outline, tab_order::KeyboardNavigable};
 use bevy::{
     ecs::query::{QueryData, QueryFilter},
@@ -44,6 +45,7 @@ pub struct TextField;
     TabIndex(0),
     KeyboardNavigable,
     TextCursorStyle,
+    ReportedText,
     Node = input_node()
 )]
 pub struct TextFieldInput;
