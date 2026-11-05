@@ -3,6 +3,7 @@ use crate::progress::ProgressStyles;
 use crate::scroll_indicator::{ScrollIndicatorMetrics, ScrollIndicatorStyle};
 use crate::select::{SelectMetrics, SelectStyle};
 use crate::slider::SliderStyle;
+use crate::text_field::{TextFieldMetrics, TextFieldStyle};
 use crate::toast::{ToastMetrics, ToastStyles};
 use crate::toggle_switch::SwitchStyle;
 use crate::window::{WindowMetrics, WindowStyle};
@@ -19,6 +20,8 @@ pub struct Theme {
     pub select_metrics: SelectMetrics,
     pub scroll_indicator: ScrollIndicatorStyle,
     pub scroll_indicator_metrics: ScrollIndicatorMetrics,
+    pub text_field: TextFieldStyle,
+    pub text_field_metrics: TextFieldMetrics,
     pub toasts: ToastStyles,
     pub toast: ToastMetrics,
     pub window: WindowStyle,

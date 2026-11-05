@@ -7,4 +7,7 @@ pub use self::{
     style::{ScrollIndicatorMetrics, ScrollIndicatorStyle},
 };
 
-pub(crate) use self::sync::ScrollIndicatorStylePlugin;
+pub(crate) use self::{
+    components::{ScrollIndicatorThumb, thumb_node, track_node},
+    sync::{ScrollIndicatorStylePlugin, thumb},
+};

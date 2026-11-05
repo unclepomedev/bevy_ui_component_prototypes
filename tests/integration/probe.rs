@@ -7,8 +7,9 @@ use bevy_ui_component_prototypes::{
     CheckedColors, CloseShape, CloseStyle, FocusRing, OptionColors, ProgressShape, ProgressStyle,
     ProgressStyles, ProgressVariantId, ScrollIndicatorMetrics, ScrollIndicatorStyle, SelectMetrics,
     SelectPopupStyle, SelectShape, SelectStyle, SelectionColors, SliderShape, SliderStyle,
-    StateColors, SwitchStyle, Theme, TitleAlign, TitleBarStyle, ToastMetrics, ToastShape,
-    ToastStyle, ToastStyles, ToastVariantId, WindowMetrics, WindowShape, WindowSide, WindowStyle,
+    StateColors, SwitchStyle, TextFieldMetrics, TextFieldShape, TextFieldStyle, Theme, TitleAlign,
+    TitleBarStyle, ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId,
+    WindowMetrics, WindowShape, WindowSide, WindowStyle,
 };
 use std::collections::HashMap;
 
@@ -105,6 +106,24 @@ pub fn probe_theme() -> Theme {
         scroll_indicator_metrics: ScrollIndicatorMetrics {
             width: 5.0,
             inset: 3.0,
+        },
+        text_field: TextFieldStyle {
+            bg: tones(0.7, 0.4),
+            border: tones(0.7, 0.5),
+            text: tones(0.7, 0.6),
+            placeholder: Color::srgb(0.7, 0.7, 0.1),
+            cursor: Color::srgb(0.7, 0.7, 0.2),
+            selection: Color::srgb(0.7, 0.7, 0.3),
+            unfocused_selection: Color::srgb(0.7, 0.7, 0.4),
+            focus_ring: ring(0.7),
+            shape: TextFieldShape {
+                border_width: 2.0,
+                radius: 7.0,
+            },
+        },
+        text_field_metrics: TextFieldMetrics {
+            padding: UiRect::new(Val::Px(11.0), Val::Px(12.0), Val::Px(13.0), Val::Px(14.0)),
+            font_size: FontSize::Px(19.0),
         },
         toasts: ToastStyles {
             base: toast_style(0.1),

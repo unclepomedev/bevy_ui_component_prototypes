@@ -13,7 +13,7 @@ accesskit = "0.24" # follow bevy_ui_widgets dependency version
 
 [dev-dependencies]
 bevy_asset_loader = "0.28.1"
-bevy = { version = "0.20", features = ["system_font_discovery"] }
+bevy = { version = "0.20", features = ["system_font_discovery", "system_clipboard"] }
 
 [lints.rust]
 linker_messages = "allow"
