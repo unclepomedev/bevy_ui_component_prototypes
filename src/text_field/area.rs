@@ -3,10 +3,12 @@
 
 use super::components::{TextField, TextFieldInput, input_in};
 use crate::{
+    Theme,
     common::theme_lookup::ThemeLookup,
     scroll_indicator::{ScrollIndicator, ScrollIndicatorThumb, thumb, thumb_node, track_node},
 };
 use bevy::{
+    ecs::query::QueryData,
     input::mouse::MouseScrollPixelsPerLine,
     picking::events::PointerScroll,
     prelude::*,
@@ -69,79 +71,119 @@ fn scroll_on_wheel(
     }
 }
 
+/// The track of a text area, with the scroll indicator's parts.
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct TrackRow {
+    parent: &'static ChildOf,
+    children: &'static Children,
+    node: &'static mut Node,
+    bg: &'static mut BackgroundColor,
+}
+
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct ThumbRow {
+    node: &'static mut Node,
+    bg: &'static mut BackgroundColor,
+}
+
 type Tracks<'w, 's> = Query<
     'w,
     's,
-    (Entity, &'static ChildOf, &'static Children),
-    (With<ScrollIndicator>, Without<TextField>),
+    TrackRow,
+    (
+        With<ScrollIndicator>,
+        Without<TextField>,
+        Without<ScrollIndicatorThumb>,
+    ),
+>;
+type Thumbs<'w, 's> =
+    Query<'w, 's, ThumbRow, (With<ScrollIndicatorThumb>, Without<ScrollIndicator>)>;
+type Inputs<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static EditableText,
+        &'static TextLayoutInfo,
+        &'static ComputedNode,
+    ),
+    With<TextFieldInput>,
 >;
 
-/// Puts the thumb of each text area where its visible lines are.
+/// Puts the track and the thumb of each text area where its visible lines are.
 fn sync_area_indicator(
     lookup: ThemeLookup,
     fields: Query<(&Children, &ComputedNode), With<TextField>>,
-    inputs: Query<(&EditableText, &TextLayoutInfo, &ComputedNode), With<TextFieldInput>>,
-    tracks: Tracks,
-    mut nodes: Query<&mut Node>,
-    mut colors: Query<&mut BackgroundColor>,
-    thumbs: Query<(), With<ScrollIndicatorThumb>>,
+    inputs: Inputs,
+    mut tracks: Tracks,
+    mut thumbs: Thumbs,
 ) {
-    for (track, parent, kids) in &tracks {
-        let Ok((children, field_computed)) = fields.get(parent.parent()) else {
+    for mut track in &mut tracks {
+        let field = track.parent.parent();
+        let Ok((children, field_size)) = fields.get(field) else {
             continue;
         };
-        let Some((text, info, input_computed)) =
-            children.iter().find_map(|child| inputs.get(child).ok())
+        let Some(input) = input_in(children, &inputs).and_then(|input| inputs.get(input).ok())
         else {
             continue;
         };
-        let theme = lookup.for_entity(parent.parent());
-        let (style, metrics) = (&theme.scroll_indicator, &theme.scroll_indicator_metrics);
+        let theme = lookup.for_entity(field);
 
-        let input_scale = input_computed.inverse_scale_factor;
-        let field_scale = field_computed.inverse_scale_factor;
-        let border = theme.text_field.shape.border_width;
-        let track_length = field_computed.size().y * field_scale - 2.0 * (border + metrics.inset);
-        let placed = thumb(
-            track_length,
-            text.viewport.size.y * input_scale,
-            info.size.y * input_scale,
-            text.viewport.offset.y * input_scale,
-        );
-
-        let mut wanted = track_node(metrics);
-        // The track is in the padding box, inside the border.
-        wanted.top = px(metrics.inset);
-        wanted.bottom = px(metrics.inset);
-        wanted.display = if placed.is_some() {
-            Display::Flex
-        } else {
-            Display::None
-        };
-        if let Ok(mut node) = nodes.get_mut(track) {
-            node.set_if_neq(wanted);
-        }
-        if let Ok(mut bg) = colors.get_mut(track) {
-            bg.set_if_neq(BackgroundColor(style.track));
-        }
-        let Some(thumb) = kids.iter().find(|kid| thumbs.contains(*kid)) else {
-            continue;
-        };
-        if let Ok(mut bg) = colors.get_mut(thumb) {
-            bg.set_if_neq(BackgroundColor(style.thumb));
-        }
-        if let Ok(mut node) = nodes.get_mut(thumb) {
-            let mut wanted = thumb_node(metrics);
-            if let Some((top, length)) = placed {
-                wanted.top = px(top);
-                wanted.height = px(length);
-            } else {
-                wanted.top = node.top;
-                wanted.height = node.height;
-            }
-            node.set_if_neq(wanted);
+        let placed = thumb_of(input, field_size, theme);
+        write_track(&mut track, placed.is_some(), theme);
+        let thumb = track.children.iter().find(|kid| thumbs.contains(*kid));
+        if let Some(mut thumb) = thumb.and_then(|kid| thumbs.get_mut(kid).ok()) {
+            write_thumb(&mut thumb, placed, theme);
         }
     }
+}
+
+/// Where the thumb goes on the track of a field as `(top, length)` in logical pixels; `None` while
+/// all the lines are shown. The track is inside the border and the inset, along the height of the field.
+fn thumb_of(
+    (text, info, input_size): (&EditableText, &TextLayoutInfo, &ComputedNode),
+    field_size: &ComputedNode,
+    theme: &Theme,
+) -> Option<(f32, f32)> {
+    let scale = input_size.inverse_scale_factor;
+    let edge = theme.text_field.shape.border_width + theme.scroll_indicator_metrics.inset;
+    let track = field_size.size().y * field_size.inverse_scale_factor - 2.0 * edge;
+    thumb(
+        track,
+        text.viewport.size.y * scale,
+        info.size.y * scale,
+        text.viewport.offset.y * scale,
+    )
+}
+
+/// The track is shown while the thumb has a place.
+fn write_track(track: &mut TrackRowItem, shown: bool, theme: &Theme) {
+    let mut wanted = track_node(&theme.scroll_indicator_metrics);
+    wanted.display = if shown { Display::Flex } else { Display::None };
+    track.node.set_if_neq(wanted);
+    track
+        .bg
+        .set_if_neq(BackgroundColor(theme.scroll_indicator.track));
+}
+
+/// A thumb that has no place keeps the one it had; it is hidden with its track.
+fn write_thumb(thumb: &mut ThumbRowItem, placed: Option<(f32, f32)>, theme: &Theme) {
+    let mut wanted = thumb_node(&theme.scroll_indicator_metrics);
+    match placed {
+        Some((top, length)) => {
+            wanted.top = px(top);
+            wanted.height = px(length);
+        }
+        None => {
+            wanted.top = thumb.node.top;
+            wanted.height = thumb.node.height;
+        }
+    }
+    thumb.node.set_if_neq(wanted);
+    thumb
+        .bg
+        .set_if_neq(BackgroundColor(theme.scroll_indicator.thumb));
 }
 
 // ============================================================================================
