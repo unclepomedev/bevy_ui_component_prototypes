@@ -62,7 +62,15 @@ pub(super) fn fit_text(
         &single
     };
     match filter {
-        Some(filter) => limited(&filter.apply(text), max).to_string(),
+        Some(filter) => {
+            let filtered = filter.apply(text);
+            let filtered = if newlines {
+                filtered
+            } else {
+                filtered.replace(['\r', '\n'], "")
+            };
+            limited(&filtered, max).to_string()
+        }
         None => limited(text, max).to_string(),
     }
 }
@@ -166,6 +174,17 @@ mod tests {
             c => Some(c),
         });
         assert_eq!(fit_text("a-bc", false, Some(2), Some(&filter)), "あb");
+    }
+
+    #[test]
+    fn line_breaks_from_the_filter_are_dropped_unless_allowed() {
+        let filter = CharFilter::new(|c| match c {
+            '-' => Some('\n'),
+            c => Some(c),
+        });
+        assert_eq!(fit_text("a-b-c", false, None, Some(&filter)), "abc");
+        assert_eq!(fit_text("a-b-c", false, Some(2), Some(&filter)), "ab");
+        assert_eq!(fit_text("a-b-c", true, None, Some(&filter)), "a\nb\nc");
     }
 
     #[test]

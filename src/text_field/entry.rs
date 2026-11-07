@@ -108,10 +108,11 @@ fn send_submits(
 
 /// What a field takes of `raw`: without line breaks unless it is a text area, through the filter.
 fn clean(filter: &CharFilter, newlines: bool, raw: &str) -> String {
+    let kept = filter.apply(raw);
     if newlines {
-        filter.apply(raw)
+        kept
     } else {
-        filter.apply(&raw.replace(['\r', '\n'], ""))
+        kept.replace(['\r', '\n'], "")
     }
 }
 
@@ -182,5 +183,12 @@ mod tests {
         assert_eq!(filter.apply("07kt"), "07KT");
         assert_eq!(filter.apply("07-K"), "07K");
         assert_eq!(filter.apply("あ-"), "");
+    }
+
+    #[test]
+    fn a_line_break_made_by_the_filter_is_removed_unless_newlines_are_allowed() {
+        let filter = CharFilter::new(|c| Some(if c == ' ' { '\n' } else { c }));
+        assert_eq!(clean(&filter, false, "a b"), "ab");
+        assert_eq!(clean(&filter, true, "a b"), "a\nb");
     }
 }
