@@ -131,6 +131,23 @@ fn setup(mut commands: Commands) {
                         .build(),
                     Passcode,
                 )),
+                Spawn((
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        column_gap: px(8),
+                        ..default()
+                    },
+                    Children::spawn((
+                        Spawn(Text::new("Centered")),
+                        Spawn(
+                            text_field()
+                                .visible_width(6.0)
+                                .align_self(AlignSelf::Center)
+                                .build(),
+                        ),
+                    )),
+                )),
                 Spawn(Text::new("Member ID")),
                 Spawn(text_field().initial("A-1024").read_only(true).build()),
                 Spawn(Text::new("About you")),
