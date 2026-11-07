@@ -36,7 +36,7 @@ pub use crate::{
     },
     slider::{SliderBuilder, SliderEditing, SliderShape, SliderStyle, ValueSlider, slider},
     text_field::{
-        SetFieldText, TextField, TextFieldBuilder, TextFieldInput, TextFieldMetrics,
+        SetFieldText, Submit, TextField, TextFieldBuilder, TextFieldInput, TextFieldMetrics,
         TextFieldShape, TextFieldStyle, text_field,
     },
     theme::{GlobalTheme, Theme},
@@ -60,7 +60,9 @@ use crate::{
     scroll_indicator::ScrollIndicatorStylePlugin,
     select::SelectStylePlugin,
     slider::SliderStylePlugin,
-    text_field::{TextAreaPlugin, TextFieldStylePlugin, TextFieldValuePlugin},
+    text_field::{
+        TextAreaPlugin, TextFieldEntryPlugin, TextFieldStylePlugin, TextFieldValuePlugin,
+    },
     toast::ToastPlugin,
     toggle_switch::SwitchStylePlugin,
     window::WindowStylePlugin,
@@ -104,6 +106,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             ScrollIndicatorStylePlugin,
             TextFieldStylePlugin,
             TextFieldValuePlugin,
+            TextFieldEntryPlugin,
             TextAreaPlugin,
             WindowStylePlugin,
         ));

@@ -1,4 +1,7 @@
-use super::components::{TextField, TextFieldInput, input_in};
+use super::{
+    components::{TextField, TextFieldInput, input_in},
+    entry::CharFilter,
+};
 use bevy::{
     input_focus::FocusLost,
     prelude::*,
@@ -6,9 +9,7 @@ use bevy::{
     ui_widgets::ValueChange,
 };
 
-/// Replaces the text of a [`TextField`]. The text is cut at the `max_characters` of the field, and the line
-/// breaks of a text are dropped in a field of a single line. The cursor goes to the end of the text when it
-/// changes. The field does not report the change it was asked for.
+/// Replaces the text of a [`TextField`], through its limits and filter. Not reported back.
 #[derive(EntityEvent, Clone, Debug, PartialEq, Eq)]
 pub struct SetFieldText {
     #[event_target]
@@ -46,13 +47,23 @@ fn limited(text: &str, max: Option<usize>) -> &str {
     }
 }
 
-/// `text` as a field takes it: without line breaks unless `newlines` are allowed, and cut at `max`.
-pub(super) fn fit_text(text: &str, newlines: bool, max: Option<usize>) -> String {
-    if newlines {
-        limited(text, max).to_string()
+/// `text` as a field takes it: without line breaks unless `newlines` are allowed, through the `filter`, and cut at `max`.
+pub(super) fn fit_text(
+    text: &str,
+    newlines: bool,
+    max: Option<usize>,
+    filter: Option<&CharFilter>,
+) -> String {
+    let single;
+    let text = if newlines {
+        text
     } else {
-        let single: String = text.chars().filter(|c| !matches!(c, '\r' | '\n')).collect();
-        limited(&single, max).to_string()
+        single = text.replace(['\r', '\n'], "");
+        &single
+    };
+    match filter {
+        Some(filter) => limited(&filter.apply(text), max).to_string(),
+        None => limited(text, max).to_string(),
     }
 }
 
@@ -100,7 +111,7 @@ fn report_blur(
 fn on_set_field_text(
     set: On<SetFieldText>,
     fields: Query<&Children, With<TextField>>,
-    mut inputs: Query<&mut EditableText, With<TextFieldInput>>,
+    mut inputs: Query<(&mut EditableText, Option<&CharFilter>), With<TextFieldInput>>,
     mut commands: Commands,
 ) {
     let Ok(children) = fields.get(set.field) else {
@@ -109,10 +120,10 @@ fn on_set_field_text(
     let Some(input) = input_in(children, &inputs) else {
         return;
     };
-    let Ok(mut text) = inputs.get_mut(input) else {
+    let Ok((mut text, filter)) = inputs.get_mut(input) else {
         return;
     };
-    let new = fit_text(&set.text, text.allow_newlines, text.max_characters);
+    let new = fit_text(&set.text, text.allow_newlines, text.max_characters, filter);
     if text.value() != new.as_str() {
         // The edits that were queued were made for the text that is replaced.
         text.pending_edits.clear();
@@ -141,9 +152,16 @@ mod tests {
 
     #[test]
     fn line_breaks_are_dropped_unless_allowed_and_then_the_limit_applies() {
-        assert_eq!(fit_text("a\r\nb\nc", false, None), "abc");
-        assert_eq!(fit_text("a\nb\nc", false, Some(2)), "ab");
-        assert_eq!(fit_text("a\nb\nc", true, None), "a\nb\nc");
-        assert_eq!(fit_text("a\nb\nc", true, Some(3)), "a\nb");
+        assert_eq!(fit_text("a\r\nb\nc", false, None, None), "abc");
+        assert_eq!(fit_text("a\nb\nc", false, Some(2), None), "ab");
+        assert_eq!(fit_text("a\nb\nc", true, None, None), "a\nb\nc");
+        assert_eq!(fit_text("a\nb\nc", true, Some(3), None), "a\nb");
+    }
+
+    #[test]
+    fn the_filter_comes_before_the_limit() {
+        let filter = CharFilter::new(|c| c.is_ascii_digit().then_some(c));
+        assert_eq!(fit_text("1-2-3-4-5", false, Some(4), Some(&filter)), "1234");
+        assert_eq!(fit_text("a\n1", true, None, Some(&filter)), "1");
     }
 }

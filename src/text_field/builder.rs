@@ -3,6 +3,7 @@ use super::{
         TextField, TextFieldInput, TextFieldPlaceholder, default_field_node, placeholder_node,
         sized_input_node,
     },
+    entry::CharFilter,
     style::TextFieldMetrics,
     value::{ReportedText, fit_text},
 };
@@ -24,6 +25,7 @@ pub fn text_field() -> TextFieldBuilder {
         max_characters: None,
         visible_width: None,
         lines: None,
+        filter: None,
         read_only: false,
         placeholder_extras: Vec::new(),
     }
@@ -34,12 +36,14 @@ pub struct TextFieldBuilder {
     max_characters: Option<usize>,
     visible_width: Option<f32>,
     lines: Option<f32>,
+    filter: Option<CharFilter>,
     read_only: bool,
     placeholder_extras: Vec<Extra>,
 }
 
 impl TextFieldBuilder {
-    /// The text the field starts with, cut at `max_characters` and without line breaks unless `lines` is set.
+    /// The text the field starts with, as the field takes it: through `char_filter`, cut at `max_characters`,
+    /// and without line breaks unless `lines` is set.
     pub fn initial(mut self, text: impl Into<String>) -> Self {
         self.initial = text.into();
         self
@@ -57,6 +61,16 @@ impl TextFieldBuilder {
     /// The most characters the field takes in.
     pub fn max_characters(mut self, count: usize) -> Self {
         self.max_characters = Some(count);
+        self
+    }
+
+    /// Keeps (`Some(c)`), replaces, or drops (`None`) each character that is typed, IME-committed,
+    /// pasted, in `initial`, or set by `SetFieldText`. `max_characters` counts what is kept.
+    pub fn char_filter(
+        mut self,
+        filter: impl Fn(char) -> Option<char> + Send + Sync + 'static,
+    ) -> Self {
+        self.filter = Some(CharFilter::new(filter));
         self
     }
 
@@ -85,6 +99,7 @@ impl TextFieldBuilder {
         let Self {
             visible_width,
             lines,
+            filter,
             read_only,
             placeholder_extras,
             ..
@@ -100,6 +115,9 @@ impl TextFieldBuilder {
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 let mut input = parent.spawn((TextFieldInput, reported, text, mode));
                 add_input_options(&mut input, visible_width, lines.is_some());
+                if let Some(filter) = filter {
+                    input.insert(filter);
+                }
                 let mut placeholder = parent.spawn((
                     TextFieldPlaceholder,
                     placeholder_node(&TextFieldMetrics::default()),
@@ -129,7 +147,12 @@ impl TextFieldBuilder {
 
     /// The editable text with its limits, and the text the app was last told about (the initial one).
     fn input_text(&self) -> (EditableText, ReportedText) {
-        let initial = fit_text(&self.initial, self.lines.is_some(), self.max_characters);
+        let initial = fit_text(
+            &self.initial,
+            self.lines.is_some(),
+            self.max_characters,
+            self.filter.as_ref(),
+        );
         let mut text = EditableText::new(&initial);
         text.max_characters = self.max_characters;
         text.visible_width = self.visible_width;
