@@ -159,6 +159,10 @@ fn a_visible_width_field_can_align_with_text_in_a_row() {
         app.update();
     }
 
+    assert_eq!(
+        app.world().get::<Node>(field).unwrap().align_self,
+        AlignSelf::Center
+    );
     let label_center = app
         .world()
         .get::<UiGlobalTransform>(label)

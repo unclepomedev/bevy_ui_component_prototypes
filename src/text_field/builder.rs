@@ -82,8 +82,8 @@ impl TextFieldBuilder {
         self
     }
 
-    /// Aligns the field in its parent's cross axis.
-    /// By default, a field with `visible_width` uses `AlignSelf::FlexStart`; otherwise, it leaves alignment to the parent's `align_items`.
+    /// Sets the field's cross-axis alignment.
+    /// Defaults to `FlexStart` with `visible_width`, otherwise inherits the parent's alignment.
     pub fn align_self(mut self, align: AlignSelf) -> Self {
         self.align_self = Some(align);
         self
@@ -145,13 +145,14 @@ impl TextFieldBuilder {
     /// The frame: as wide as the parent, or as wide as its input when `visible_width` is set.
     fn frame_node(&self) -> Node {
         let mut node = default_field_node();
+        let align_self = self.align_self.filter(|align| *align != AlignSelf::Auto);
         if self.visible_width.is_none() {
             node.width = percent(100);
-        } else if self.align_self.is_none() {
+        } else if align_self.is_none() {
             // Not stretched across the parent: the input gives it its width.
             node.align_self = AlignSelf::FlexStart;
         }
-        if let Some(align_self) = self.align_self {
+        if let Some(align_self) = align_self {
             node.align_self = align_self;
         }
         node
@@ -216,6 +217,16 @@ mod tests {
             .frame_node();
 
         assert_eq!(node.align_self, AlignSelf::Center);
+    }
+
+    #[test]
+    fn auto_alignment_keeps_the_visible_width_default() {
+        let node = text_field()
+            .visible_width(10.0)
+            .align_self(AlignSelf::Auto)
+            .frame_node();
+
+        assert_eq!(node.align_self, AlignSelf::FlexStart);
     }
 
     #[test]
