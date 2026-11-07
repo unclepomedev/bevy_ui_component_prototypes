@@ -24,6 +24,7 @@ pub fn text_field() -> TextFieldBuilder {
         initial: String::new(),
         max_characters: None,
         visible_width: None,
+        align_self: None,
         lines: None,
         filter: None,
         read_only: false,
@@ -35,6 +36,7 @@ pub struct TextFieldBuilder {
     initial: String,
     max_characters: Option<usize>,
     visible_width: Option<f32>,
+    align_self: Option<AlignSelf>,
     lines: Option<f32>,
     filter: Option<CharFilter>,
     read_only: bool,
@@ -77,6 +79,13 @@ impl TextFieldBuilder {
     /// The width in `glyphs` instead of the width of the parent.
     pub fn visible_width(mut self, glyphs: f32) -> Self {
         self.visible_width = Some(glyphs);
+        self
+    }
+
+    /// Aligns the field in its parent's cross axis.
+    /// By default, a field with `visible_width` uses `AlignSelf::FlexStart`; otherwise, it leaves alignment to the parent's `align_items`.
+    pub fn align_self(mut self, align: AlignSelf) -> Self {
+        self.align_self = Some(align);
         self
     }
 
@@ -138,9 +147,12 @@ impl TextFieldBuilder {
         let mut node = default_field_node();
         if self.visible_width.is_none() {
             node.width = percent(100);
-        } else {
+        } else if self.align_self.is_none() {
             // Not stretched across the parent: the input gives it its width.
             node.align_self = AlignSelf::FlexStart;
+        }
+        if let Some(align_self) = self.align_self {
+            node.align_self = align_self;
         }
         node
     }
@@ -174,5 +186,43 @@ fn add_input_options(input: &mut EntityWorldMut, visible_width: Option<f32>, are
             TextLayout::new(Justify::Left, LineBreak::WordBoundary),
             AccessibilityNode::from(AccessKitNode::new(Role::MultilineTextInput)),
         ));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn visible_width_defaults_to_flex_start() {
+        let node = text_field().visible_width(10.0).frame_node();
+
+        assert_eq!(node.align_self, AlignSelf::FlexStart);
+    }
+
+    #[test]
+    fn full_width_defaults_to_auto_alignment() {
+        let node = text_field().frame_node();
+
+        assert_eq!(node.align_self, AlignSelf::Auto);
+        assert_eq!(node.width, percent(100));
+    }
+
+    #[test]
+    fn explicit_alignment_overrides_visible_width_default() {
+        let node = text_field()
+            .visible_width(10.0)
+            .align_self(AlignSelf::Center)
+            .frame_node();
+
+        assert_eq!(node.align_self, AlignSelf::Center);
+    }
+
+    #[test]
+    fn explicit_alignment_is_used_for_full_width_fields() {
+        let node = text_field().align_self(AlignSelf::Center).frame_node();
+
+        assert_eq!(node.align_self, AlignSelf::Center);
+        assert_eq!(node.width, percent(100));
     }
 }

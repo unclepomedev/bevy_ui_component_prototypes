@@ -3,12 +3,26 @@
 //! Each test builds its own app: the app of the other integration tests has no layout.
 
 use bevy::{
-    anti_alias::AntiAliasPlugin, audio::AudioPlugin, camera::RenderTarget,
-    core_pipeline::CorePipelinePlugin, gilrs::GilrsPlugin, gizmos::GizmoPlugin,
-    gizmos_render::GizmoRenderPlugin, gltf::GltfPlugin, light::LightPlugin, log::LogPlugin,
-    pbr::PbrPlugin, post_process::PostProcessPlugin, prelude::*, render::RenderPlugin,
-    sprite_render::SpriteRenderPlugin, text::TextLayoutInfo, ui::ComputedNode,
-    ui_render::UiRenderPlugin, window::ExitCondition, winit::WinitPlugin,
+    anti_alias::AntiAliasPlugin,
+    audio::AudioPlugin,
+    camera::RenderTarget,
+    core_pipeline::CorePipelinePlugin,
+    gilrs::GilrsPlugin,
+    gizmos::GizmoPlugin,
+    gizmos_render::GizmoRenderPlugin,
+    gltf::GltfPlugin,
+    light::LightPlugin,
+    log::LogPlugin,
+    pbr::PbrPlugin,
+    post_process::PostProcessPlugin,
+    prelude::*,
+    render::RenderPlugin,
+    sprite_render::SpriteRenderPlugin,
+    text::TextLayoutInfo,
+    ui::{ComputedNode, UiGlobalTransform},
+    ui_render::UiRenderPlugin,
+    window::ExitCondition,
+    winit::WinitPlugin,
 };
 use bevy_ui_component_prototypes::{ScrollIndicator, UiComponentPrototypesPlugin, text_field};
 
@@ -108,6 +122,59 @@ fn a_field_with_a_visible_width_is_as_wide_as_its_glyphs() {
     let size = size(&app, field);
     assert!(size.x > 100.0 && size.x < 130.0, "{size:?}");
     assert!((size.y - FRAME_HEIGHT).abs() <= 1.0, "{size:?}");
+}
+
+#[test]
+fn a_visible_width_field_can_align_with_text_in_a_row() {
+    let (mut app, column) = layout_app();
+    let row = app
+        .world_mut()
+        .spawn((
+            Node {
+                width: px(400),
+                height: px(100),
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            ChildOf(column),
+        ))
+        .id();
+    let label = app
+        .world_mut()
+        .spawn((Text::new("Label"), ChildOf(row)))
+        .id();
+    let field = app
+        .world_mut()
+        .spawn((
+            text_field()
+                .visible_width(10.0)
+                .align_self(AlignSelf::Center)
+                .build(),
+            ChildOf(row),
+        ))
+        .id();
+
+    for _ in 0..6 {
+        app.update();
+    }
+
+    let label_center = app
+        .world()
+        .get::<UiGlobalTransform>(label)
+        .unwrap()
+        .translation
+        .y;
+    let field_center = app
+        .world()
+        .get::<UiGlobalTransform>(field)
+        .unwrap()
+        .translation
+        .y;
+    assert!(
+        (label_center - field_center).abs() <= 1.0,
+        "label {label_center}, field {field_center}"
+    );
 }
 
 #[test]
