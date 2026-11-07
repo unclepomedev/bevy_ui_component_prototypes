@@ -159,6 +159,16 @@ mod tests {
     }
 
     #[test]
+    fn the_limit_counts_replaced_characters() {
+        let filter = CharFilter::new(|c| match c {
+            '-' => None,
+            'a' => Some('あ'),
+            c => Some(c),
+        });
+        assert_eq!(fit_text("a-bc", false, Some(2), Some(&filter)), "あb");
+    }
+
+    #[test]
     fn the_filter_comes_before_the_limit() {
         let filter = CharFilter::new(|c| c.is_ascii_digit().then_some(c));
         assert_eq!(fit_text("1-2-3-4-5", false, Some(4), Some(&filter)), "1234");
