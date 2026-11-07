@@ -10,6 +10,7 @@ mod shows_focus;
 mod slider_theme;
 mod support;
 mod switch_theme;
+mod text_field_entry;
 mod text_field_layout;
 mod text_field_theme;
 mod text_field_value;

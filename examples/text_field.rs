@@ -7,6 +7,8 @@
 //!   into the `Form`), and replaces it with the `SetFieldText` event ("Clear").
 //! - "Send" locks the form with `InteractionDisabled`, "Edit" unlocks it. A disabled field takes no focus,
 //!   no selection and no copy; "Member ID" is `read_only` instead, which can be selected and copied.
+//! - "Passcode" takes four letters or digits (`char_filter` turns "k" into "K" and leaves out the rest, also from
+//!   a paste) and tells the app with `Submit` when Enter is pressed (`on_submit`).
 //! - "About you" is a text area (`lines`): Enter starts a new line, and a scroll indicator shows up when the
 //!   text is longer than the lines shown.
 //! - The "Feedback" window has a text field in its content.
@@ -15,8 +17,9 @@
 //! the tests. Only these need a person, with the real keyboard, window and clipboard:
 //! - Input method (Japanese, for instance): the composing text is underlined in the field and the candidate
 //!   list opens next to the cursor, also in the "Feedback" window while it is dragged.
+//! - Enter while an input method is composing only confirms the composition: it does not submit "Passcode".
 //! - Copy and paste (Ctrl+C / Ctrl+V, Cmd on macOS) go through the clipboard of the OS, also from and to other
-//!   applications.
+//!   applications. Pasting "07-kt" into "Passcode" gives "07KT".
 //! - The mouse wheel over "About you" scrolls its lines, and hands over to the page at the ends.
 
 use bevy::{
@@ -26,8 +29,8 @@ use bevy::{
     ui_widgets::{Activate, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    SetFieldText, UiComponentPrototypesPlugin, WindowDefaultsPlugin, WindowRect, icon_button,
-    text_field, window,
+    SetFieldText, Submit, UiComponentPrototypesPlugin, WindowDefaultsPlugin, WindowRect,
+    icon_button, text_field, window,
 };
 
 /// Which field of the form a `TextField` is.
@@ -56,6 +59,10 @@ enum Action {
 #[derive(Component)]
 struct Summary;
 
+/// The field that takes a passcode.
+#[derive(Component)]
+struct Passcode;
+
 fn main() {
     App::new()
         .add_plugins((
@@ -66,6 +73,7 @@ fn main() {
         ))
         .init_resource::<Form>()
         .add_observer(on_value)
+        .add_observer(on_submit)
         .add_observer(on_button)
         .add_systems(Startup, setup)
         .run();
@@ -112,6 +120,16 @@ fn setup(mut commands: Commands) {
                         .placeholder(Text::new("you@example.com"))
                         .build(),
                     Field::Email,
+                )),
+                Spawn(Text::new("Passcode")),
+                Spawn((
+                    text_field()
+                        .max_characters(4)
+                        .visible_width(6.0)
+                        .char_filter(|c| c.is_ascii_alphanumeric().then(|| c.to_ascii_uppercase()))
+                        .placeholder(Text::new("0000"))
+                        .build(),
+                    Passcode,
                 )),
                 Spawn(Text::new("Member ID")),
                 Spawn(text_field().initial("A-1024").read_only(true).build()),
@@ -173,6 +191,17 @@ fn on_value(change: On<ValueChange<String>>, fields: Query<&Field>, mut form: Re
         Field::Name => form.name = text,
         Field::Email => form.email = text,
         Field::About => form.about = text,
+    }
+}
+
+/// Enter in a single-line field. `field` is the `TextField`, `value` the text it has.
+fn on_submit(
+    submit: On<Submit>,
+    passcodes: Query<(), With<Passcode>>,
+    mut summary: Single<&mut Text, With<Summary>>,
+) {
+    if passcodes.contains(submit.field) {
+        summary.0 = format!("Passcode {} entered", submit.value);
     }
 }
 

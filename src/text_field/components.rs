@@ -20,7 +20,8 @@ use bevy::{
 ///
 /// The field reports its text as [`bevy::ui_widgets::ValueChange<String>`] with the field as `source`: while
 /// the text changes (`is_final` is `false`), and once more when the input loses the focus (`is_final` is
-/// `true`). [`SetFieldText`](super::SetFieldText) replaces the text.
+/// `true`). [`SetFieldText`](super::SetFieldText) replaces the text, and Enter in a single line sends
+/// [`Submit`](super::Submit).
 ///
 /// With `lines` on the builder it is a text area: Enter starts a new line, long lines wrap, the mouse wheel
 /// scrolls it, and a scroll indicator at the right shows where the visible lines are.
