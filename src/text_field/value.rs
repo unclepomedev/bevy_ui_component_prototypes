@@ -69,7 +69,7 @@ pub(super) fn fit_text(
 
 /// Tells the app the text of a field when it is not the one it was told last, as a
 /// [`ValueChange<String>`] that is not final.
-fn report_changes(
+pub(super) fn report_changes(
     mut inputs: Query<ChangedInput, (With<TextFieldInput>, Changed<EditableText>)>,
     fields: Query<(), With<TextField>>,
     mut commands: Commands,

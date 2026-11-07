@@ -1,6 +1,9 @@
 //! What goes into a field: the characters it accepts, and the Enter that submits it.
 
-use super::components::{TextField, TextFieldInput};
+use super::{
+    components::{TextField, TextFieldInput},
+    value::report_changes,
+};
 use bevy::{
     clipboard::Clipboard,
     input::{
@@ -22,6 +25,10 @@ pub struct Submit {
     pub value: String,
 }
 
+/// An Enter whose `Submit` waits for the edits of the same frame to be applied.
+#[derive(Component)]
+struct SubmitPending;
+
 /// Per-character input filter: keep, replace, or drop (`None`).
 #[derive(Component, Clone)]
 pub(super) struct CharFilter(Arc<dyn Fn(char) -> Option<char> + Send + Sync>);
@@ -39,15 +46,21 @@ impl CharFilter {
 pub(crate) struct TextFieldEntryPlugin;
 impl Plugin for TextFieldEntryPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(submit_on_enter)
-            .add_systems(PostUpdate, filter_edits.before(EditableTextSystems));
+        app.add_observer(submit_on_enter).add_systems(
+            PostUpdate,
+            (
+                filter_edits.before(EditableTextSystems),
+                send_submits
+                    .after(EditableTextSystems)
+                    .after(report_changes),
+            ),
+        );
     }
 }
 
 fn submit_on_enter(
     key: On<FocusedInput<KeyboardInput>>,
-    inputs: Query<(&EditableText, &ChildOf), With<TextFieldInput>>,
-    fields: Query<(), With<TextField>>,
+    inputs: Query<&EditableText, With<TextFieldInput>>,
     mut commands: Commands,
 ) {
     // The event passes the input on its way up: act where it starts.
@@ -58,16 +71,39 @@ fn submit_on_enter(
     if input.state != ButtonState::Pressed || input.repeat || input.logical_key != Key::Enter {
         return;
     }
-    let Ok((text, parent)) = inputs.get(key.focused_entity) else {
+    let Ok(text) = inputs.get(key.focused_entity) else {
         return;
     };
-    if text.allow_newlines || text.is_composing() || !fields.contains(parent.parent()) {
+    if text.allow_newlines || text.is_composing() {
         return;
     }
-    commands.trigger(Submit {
-        field: parent.parent(),
-        value: text.value().to_string(),
-    });
+    commands
+        .entity(key.focused_entity)
+        .try_insert(SubmitPending);
+}
+
+type PendingSubmits<'w, 's> = Query<
+    'w,
+    's,
+    (Entity, &'static EditableText, &'static ChildOf),
+    (With<TextFieldInput>, With<SubmitPending>),
+>;
+
+/// Sends the `Submit` of each Enter, after the edits that came with it are applied and reported.
+fn send_submits(
+    inputs: PendingSubmits,
+    fields: Query<(), With<TextField>>,
+    mut commands: Commands,
+) {
+    for (input, text, parent) in &inputs {
+        commands.entity(input).remove::<SubmitPending>();
+        if fields.contains(parent.parent()) {
+            commands.trigger(Submit {
+                field: parent.parent(),
+                value: text.value().to_string(),
+            });
+        }
+    }
 }
 
 /// What a field takes of `raw`: without line breaks unless it is a text area, through the filter.

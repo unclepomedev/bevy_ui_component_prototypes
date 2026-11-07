@@ -8,7 +8,8 @@ use bevy::{
     },
     input_focus::FocusedInput,
     prelude::*,
-    text::{EditableText, TextEdit},
+    text::{EditableText, EditableTextSystems, TextEdit},
+    ui_widgets::ValueChange,
 };
 use bevy_ui_component_prototypes::{SetFieldText, Submit, text_field};
 
@@ -250,4 +251,45 @@ fn a_text_area_asks_the_filter_about_line_breaks_too() {
     app.update();
 
     assert_eq!(text(&app, field), "ab");
+}
+
+#[test]
+fn the_submitted_text_has_the_edits_of_the_frame_of_the_enter() {
+    #[derive(Resource, Default)]
+    struct Order(Vec<String>);
+
+    let mut app = app_with_log();
+    app.init_resource::<Order>();
+    app.add_observer(|submit: On<Submit>, mut order: ResMut<Order>| {
+        order.0.push(format!("submit {}", submit.value));
+    });
+    app.add_observer(
+        |change: On<ValueChange<String>>, mut order: ResMut<Order>| {
+            order.0.push(format!("change {}", change.value));
+        },
+    );
+    let field = app
+        .world_mut()
+        .spawn(text_field().initial("07K").build())
+        .id();
+    app.update();
+    let input = input(&app, field);
+    // Stands in for the system of Bevy that applies the edits that were queued in the frame.
+    app.add_systems(
+        PostUpdate,
+        (move |mut texts: Query<&mut EditableText>| {
+            if let Ok(mut text) = texts.get_mut(input)
+                && text.value() == "07K"
+            {
+                text.editor_mut().set_text("07KT");
+            }
+        })
+        .in_set(EditableTextSystems),
+    );
+
+    press(&mut app, field, Key::Enter, false);
+
+    assert_eq!(submitted(&app), vec![(field, "07KT".to_string())]);
+    let order = &app.world().resource::<Order>().0;
+    assert_eq!(order, &["change 07KT", "submit 07KT"]);
 }
