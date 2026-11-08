@@ -68,7 +68,7 @@ impl Tracker {
                 self.waited += dt;
             }
             let timing = timing(target);
-            let delay = if self.since_shown < timing.warmup {
+            let delay = if self.since_shown + dt < timing.warmup {
                 0.0
             } else {
                 timing.delay
@@ -207,6 +207,16 @@ mod tests {
         assert_eq!(shows(&mut tracker, Some(B), 0.2), Step::default());
         assert_eq!(shows(&mut tracker, Some(B), 0.4), Step::default());
         assert_eq!(shows(&mut tracker, Some(B), 0.2).show, Some(B));
+    }
+
+    /// A step long enough to cross the warmup is already past it, so the next widget waits.
+    #[test]
+    fn a_step_that_crosses_the_warmup_waits_again() {
+        let mut tracker = Tracker::default();
+        shows(&mut tracker, Some(A), 0.0);
+        shows(&mut tracker, Some(A), 0.6);
+        shows(&mut tracker, None, 0.1);
+        assert_eq!(shows(&mut tracker, Some(B), 0.5), Step::default());
     }
 
     #[test]
