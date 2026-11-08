@@ -181,6 +181,37 @@ fn the_nearest_tooltip_up_the_tree_wins() {
 }
 
 #[test]
+fn the_camera_drawn_last_wins_over_a_nearer_depth_below_it() {
+    let mut app = timed_app(0.5);
+    let below = app.world_mut().spawn(Camera2d).id();
+    let above = app
+        .world_mut()
+        .spawn((
+            Camera2d,
+            Camera {
+                order: 1,
+                ..default()
+            },
+        ))
+        .id();
+    let back = spawn_button(&mut app, Tooltip::new("back"));
+    let front = spawn_button(&mut app, Tooltip::new("front"));
+
+    // The widget of the camera above is further away, but its layer is drawn over the other one.
+    let mut hits = EntityHashMap::default();
+    hits.insert(back, HitData::new(below, 0.0, None, None));
+    hits.insert(front, HitData::new(above, 10.0, None, None));
+    let mut map = HoverMap::default();
+    map.insert(PointerId::Mouse, hits);
+    app.insert_resource(map);
+
+    run(&mut app, 2);
+    assert_eq!(popup(&mut app, back), None);
+    let popup = popup(&mut app, front).expect("the hit of the camera above shows its tooltip");
+    assert_eq!(popup_text(&app, popup), "front");
+}
+
+#[test]
 fn the_next_widget_shows_at_once_after_one_was_shown() {
     // The probe theme warms up for 0.25 seconds; a step is 0.1.
     let mut app = timed_app(0.1);

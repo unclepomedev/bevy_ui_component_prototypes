@@ -16,13 +16,14 @@ use self::{
 use crate::common::{focus::FocusIndicator, theme_lookup::ThemeLookup};
 use bevy::{
     a11y::AccessibilityNode,
-    ecs::query::QueryData,
+    ecs::{query::QueryData, system::SystemParam},
     input_focus::{InputFocus, InputFocusVisible},
+    math::FloatOrd,
     picking::{hover::HoverMap, pointer::PointerId},
     prelude::*,
     ui::UiSystems,
 };
-use std::iter::once as iter_once;
+use std::{cmp::Reverse, iter::once as iter_once};
 
 pub(crate) struct TooltipPlugin;
 impl Plugin for TooltipPlugin {
@@ -81,7 +82,7 @@ fn forget_lost_popup(popups: Query<(), With<TooltipPopup>>, mut state: ResMut<To
 /// Finds the widget that wants a tooltip, and whether this frame asks the tooltip on screen to go away.
 /// The pointer wins over the focus: while the pointer rests on a widget with a tooltip, the focus is not asked.
 fn ask_for_tooltip(
-    hover: Option<Res<HoverMap>>,
+    pointer: MousePointer,
     focus: Option<Res<InputFocus>>,
     focus_visible: Option<Res<InputFocusVisible>>,
     indicator: Res<FocusIndicator>,
@@ -89,18 +90,7 @@ fn ask_for_tooltip(
     parents: Query<&ChildOf>,
     mut state: ResMut<TooltipState>,
 ) {
-    // The nearest hit counts: a smaller depth is closer to the camera.
-    let hovered = hover
-        .as_deref()
-        .and_then(|map| map.get(&PointerId::Mouse))
-        .and_then(|hits| {
-            hits.iter()
-                .filter_map(|(entity, hit)| {
-                    owner(*entity, &tooltips, &parents).map(|owner| (hit.depth, owner))
-                })
-                .min_by(|a, b| a.0.total_cmp(&b.0))
-        })
-        .map(|(_, owner)| owner);
+    let hovered = pointer.front(&tooltips, &parents);
     let focused = focus
         .as_deref()
         .and_then(InputFocus::get)
@@ -108,6 +98,35 @@ fn ask_for_tooltip(
         .and_then(|entity| owner(entity, &tooltips, &parents));
 
     state.wanted = hovered.or(focused);
+}
+
+/// What the mouse rests on, and the cameras that say which of those hits is in front.
+#[derive(SystemParam)]
+struct MousePointer<'w, 's> {
+    hover: Option<Res<'w, HoverMap>>,
+    cameras: Query<'w, 's, &'static Camera>,
+}
+
+impl MousePointer<'_, '_> {
+    /// The widget the mouse rests on, from the hit in front of all the others.
+    fn front(&self, tooltips: &Query<&Tooltip>, parents: &Query<&ChildOf>) -> Option<Entity> {
+        self.hover
+            .as_deref()
+            .and_then(|map| map.get(&PointerId::Mouse))
+            .and_then(|hits| {
+                hits.iter()
+                    .filter_map(|(entity, hit)| {
+                        let layer = self
+                            .cameras
+                            .get(hit.camera)
+                            .map_or(0, |camera| camera.order);
+                        owner(*entity, tooltips, parents)
+                            .map(|owner| ((Reverse(layer), FloatOrd(hit.depth)), owner))
+                    })
+                    .min_by_key(|(order, _)| *order)
+            })
+            .map(|(_, owner)| owner)
+    }
 }
 
 /// Tells whether this frame asks the tooltip on screen to go away: a pointer press, or Escape.
