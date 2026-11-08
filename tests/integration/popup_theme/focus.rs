@@ -18,6 +18,8 @@ use bevy_ui_component_prototypes::{ButtonVariant, PopupChoice, PopupRoot, popup}
 
 /// The layer of the popup the example puts in front, well above the one of the theme.
 const FRONT_Z: i32 = 1000;
+/// A layer below it, like the one the theme gives.
+const BEHIND_Z: i32 = 300;
 
 fn label_of(app: &App, entity: Entity) -> Option<String> {
     app.world()
@@ -88,61 +90,12 @@ fn a_popup_takes_the_focus_when_spawned() {
     app.insert_resource(InputFocus::from_entity(behind));
 
     let root = spawn_confirm_popup(&mut app);
+    app.update();
 
     assert_eq!(
         app.world().resource::<InputFocus>().get(),
         Some(panel(&app, root))
     );
-}
-
-#[test]
-fn the_focus_goes_to_the_popup_spawned_last_even_when_it_is_behind() {
-    let mut app = test_app();
-    app.insert_resource(InputFocus::default());
-    let front = app
-        .world_mut()
-        .spawn((
-            popup()
-                .message("In front")
-                .button("Yes", PopupChoice::Confirm, ButtonVariant::Default)
-                .button("No", PopupChoice::Cancel, ButtonVariant::Default)
-                .build(),
-            GlobalZIndex(FRONT_Z),
-        ))
-        .id();
-    let behind = spawn_confirm_popup(&mut app);
-    let [front_yes, front_no] = buttons(&app, front)[..] else {
-        panic!("two buttons");
-    };
-    let [delete, keep] = buttons(&app, behind)[..] else {
-        panic!("two buttons");
-    };
-    let behind_panel = panel(&app, behind);
-    let shown = [
-        front,
-        panel(&app, front),
-        app.world().get::<ChildOf>(front_yes).unwrap().parent(),
-        front_yes,
-        front_no,
-        behind,
-        behind_panel,
-        app.world().get::<ChildOf>(delete).unwrap().parent(),
-        delete,
-        keep,
-    ];
-    show_all(&mut app, &shown);
-    app.update();
-
-    let layer = |e: Entity| app.world().get::<GlobalZIndex>(e).unwrap().0;
-    assert!(layer(front) > layer(behind));
-    assert_eq!(
-        app.world().resource::<InputFocus>().get(),
-        Some(behind_panel)
-    );
-    // The popup that has the focus is a modal tab group: Tab never reaches the one in front.
-    assert_eq!(navigate(&mut app, behind_panel, NavAction::Next), delete);
-    assert_eq!(navigate(&mut app, delete, NavAction::Next), keep);
-    assert_eq!(navigate(&mut app, keep, NavAction::Next), delete);
 }
 
 #[test]
@@ -233,12 +186,77 @@ fn a_press_on_a_button_focuses_the_button() {
 }
 
 #[test]
-fn a_press_outside_the_popup_still_clears_the_focus() {
+fn a_press_outside_the_popup_leaves_the_focus_in_the_popup() {
     let (mut app, window) = pressable_app();
-    spawn_confirm_popup(&mut app);
+    let root = spawn_confirm_popup(&mut app);
     let outside = app.world_mut().spawn_empty().id();
 
     press(&mut app, window, outside);
 
-    assert_eq!(focused(&app), None);
+    assert_eq!(focused(&app), Some(panel(&app, root)));
+}
+
+// ---------------------------------------------------------------------------
+// Several popups
+// ---------------------------------------------------------------------------
+
+fn spawn_on_layer(app: &mut App, layer: i32) -> Entity {
+    let bundle = popup()
+        .message("Sure?")
+        .button("Yes", PopupChoice::Confirm, ButtonVariant::Default)
+        .build();
+    app.world_mut().spawn((bundle, GlobalZIndex(layer))).id()
+}
+
+#[test]
+fn the_focus_goes_to_the_front_popup_even_when_a_popup_behind_it_is_spawned_later() {
+    let mut app = test_app();
+    app.init_resource::<InputFocus>();
+    let front = spawn_on_layer(&mut app, FRONT_Z);
+    let _behind = spawn_on_layer(&mut app, BEHIND_Z);
+
+    app.update();
+
+    assert_eq!(focused(&app), Some(panel(&app, front)));
+}
+
+#[test]
+fn a_popup_spawned_in_front_takes_the_focus_from_the_one_behind() {
+    let mut app = test_app();
+    app.init_resource::<InputFocus>();
+    let _behind = spawn_on_layer(&mut app, BEHIND_Z);
+    app.update();
+    let front = spawn_on_layer(&mut app, FRONT_Z);
+
+    app.update();
+
+    assert_eq!(focused(&app), Some(panel(&app, front)));
+}
+
+#[test]
+fn the_focus_passes_to_the_popup_behind_when_the_front_one_is_despawned() {
+    let mut app = test_app();
+    app.init_resource::<InputFocus>();
+    let front = spawn_on_layer(&mut app, FRONT_Z);
+    let behind = spawn_on_layer(&mut app, BEHIND_Z);
+    app.update();
+
+    app.world_mut().entity_mut(front).despawn();
+    app.update();
+
+    assert_eq!(focused(&app), Some(panel(&app, behind)));
+}
+
+#[test]
+fn the_focus_is_brought_back_into_the_popup_from_what_is_behind() {
+    let mut app = test_app();
+    app.init_resource::<InputFocus>();
+    let root = spawn_on_layer(&mut app, BEHIND_Z);
+    app.update();
+    let behind = app.world_mut().spawn_empty().id();
+    app.insert_resource(InputFocus::from_entity(behind));
+
+    app.update();
+
+    assert_eq!(focused(&app), Some(panel(&app, root)));
 }
