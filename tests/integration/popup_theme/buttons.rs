@@ -23,7 +23,7 @@ fn app_with_log() -> App {
     app
 }
 
-fn spawn_confirm_popup(app: &mut App) -> Entity {
+pub(super) fn spawn_confirm_popup(app: &mut App) -> Entity {
     app.world_mut()
         .spawn(
             popup()
@@ -36,7 +36,7 @@ fn spawn_confirm_popup(app: &mut App) -> Entity {
 }
 
 /// The message comes first in the panel, and the row of buttons after it.
-fn buttons(app: &App, root: Entity) -> Vec<Entity> {
+pub(super) fn buttons(app: &App, root: Entity) -> Vec<Entity> {
     let panel = app.world().get::<Children>(panel(app, root)).unwrap();
     app.world().get::<Children>(panel[1]).unwrap().to_vec()
 }

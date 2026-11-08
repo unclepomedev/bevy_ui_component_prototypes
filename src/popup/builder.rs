@@ -1,4 +1,5 @@
 use super::{
+    accessibility::popup_node_role,
     choose::choose_on_activate,
     components::{
         PopupButton, PopupButtons, PopupChoice, PopupMessage, PopupPanel, PopupRoot,
@@ -12,6 +13,7 @@ use crate::{
 };
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
+    input_focus::tab_navigation::TabGroup,
     prelude::*,
 };
 
@@ -60,6 +62,9 @@ impl PopupBuilder {
         let Self { message, buttons } = self;
         (
             PopupRoot,
+            popup_node_role(),
+            AccessibleLabel::new(message.clone()),
+            TabGroup::modal(),
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 parent.spawn(PopupPanel).with_children(|panel| {
                     panel.spawn((
@@ -93,7 +98,8 @@ fn spawn_buttons(panel: &mut RelatedSpawner<ChildOf>, buttons: Vec<ButtonSpec>) 
             } in buttons
             {
                 row.spawn((
-                    icon_button().label(label).variant(variant).build(),
+                    icon_button().label(label.clone()).variant(variant).build(),
+                    AccessibleLabel::new(label),
                     PopupButton { choice },
                 ))
                 .observe(choose_on_activate);

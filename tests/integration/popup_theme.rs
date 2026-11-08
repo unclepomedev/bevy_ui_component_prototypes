@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy_ui_component_prototypes::popup;
 
 mod buttons;
+mod focus;
 mod layer;
 mod structure;
 mod styling;
