@@ -47,7 +47,10 @@ use bevy::{
     ui_widgets::{Activate, Slider, SliderValue, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    SliderEditing, UiComponentPrototypesPlugin, icon_button, slider, toggle_switch,
+    UiComponentPrototypesPlugin,
+    button::icon_button,
+    slider::{SliderEditing, slider},
+    toggle_switch::toggle_switch,
 };
 
 /// The widget that gets the focus on the first arrow key press.

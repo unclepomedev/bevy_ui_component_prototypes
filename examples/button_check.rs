@@ -19,7 +19,8 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonVariantId, GlobalTheme, Theme, UiComponentPrototypesPlugin, icon_button,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    button::{ButtonVariantId, icon_button},
 };
 
 /// Marker that identifies which button emitted an `Activate` event.

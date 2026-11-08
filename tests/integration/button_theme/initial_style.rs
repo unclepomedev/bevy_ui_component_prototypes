@@ -6,7 +6,7 @@ use crate::{
     support::{bg, test_app},
 };
 use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
-use bevy_ui_component_prototypes::{ButtonVariant, ButtonVariantId};
+use bevy_ui_component_prototypes::button::{ButtonVariant, ButtonVariantId};
 
 #[test]
 fn a_button_attached_to_an_existing_entity_is_styled_after_one_update() {

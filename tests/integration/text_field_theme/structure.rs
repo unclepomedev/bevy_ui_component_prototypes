@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     text::{EditableText, TextReadWriteMode},
 };
-use bevy_ui_component_prototypes::TextFieldInput;
+use bevy_ui_component_prototypes::text_field::TextFieldInput;
 
 #[test]
 fn the_text_is_in_an_input_inside_the_frame() {

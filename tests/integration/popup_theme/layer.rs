@@ -3,7 +3,7 @@
 use super::spawn_popup;
 use crate::{probe::probe_theme, support::test_app};
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::{GlobalTheme, popup};
+use bevy_ui_component_prototypes::{GlobalTheme, popup::popup};
 
 fn layer(app: &App, root: Entity) -> Option<i32> {
     app.world().get::<GlobalZIndex>(root).map(|z| z.0)

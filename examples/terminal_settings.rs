@@ -33,9 +33,13 @@ use bevy::{
     ui_widgets::{Activate, SliderValue, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    BarSegments, ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
-    ButtonVariant, ButtonVariantId, FocusRing, GlobalTheme, ShowsFocus, SliderShape, SliderStyle,
-    StateColors, Theme, UiComponentPrototypesPlugin, icon_button, slider,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    button::{
+        ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant,
+        ButtonVariantId, icon_button,
+    },
+    common::{BarSegments, FocusRing, ShowsFocus, StateColors},
+    slider::{SliderShape, SliderStyle, slider},
 };
 use std::collections::HashMap;
 

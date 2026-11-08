@@ -18,7 +18,7 @@ use bevy::{
     ui::InteractionDisabled,
     ui_widgets::{ActiveDescendant, MenuAction},
 };
-use bevy_ui_component_prototypes::select;
+use bevy_ui_component_prototypes::select::select;
 
 #[test]
 fn a_disabled_select_has_a_gray_trigger_that_is_out_of_the_tab_order() {

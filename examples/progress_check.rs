@@ -17,8 +17,12 @@
 
 use bevy::{ecs::query::QueryData, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ui_component_prototypes::{
-    BarSegments, GlobalTheme, ProgressRange, ProgressShape, ProgressValue, ProgressVariant,
-    ProgressVariantId, Theme, UiComponentPrototypesPlugin, progress_bar,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    common::BarSegments,
+    progress::{
+        ProgressRange, ProgressShape, ProgressValue, ProgressVariant, ProgressVariantId,
+        progress_bar,
+    },
 };
 
 const HP_MAX: f32 = 100.0;

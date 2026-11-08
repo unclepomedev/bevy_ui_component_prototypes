@@ -5,7 +5,7 @@
 
 use crate::support::test_app;
 use bevy::{prelude::*, time::TimeUpdateStrategy};
-use bevy_ui_component_prototypes::{Toast, toast};
+use bevy_ui_component_prototypes::toast::{Toast, toast};
 use std::time::Duration;
 
 mod host;

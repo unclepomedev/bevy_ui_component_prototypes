@@ -38,7 +38,9 @@ use bevy::{
     ui_widgets::{SliderRange, SliderStep, SliderValue, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SliderShape, StateColors, Theme, UiComponentPrototypesPlugin, slider,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    common::StateColors,
+    slider::{SliderShape, slider},
 };
 
 /// Name of the slider, shown in the status line.
@@ -137,7 +139,7 @@ fn spawn_row(
     root: &mut ChildSpawnerCommands,
     label: &'static str,
     width: i32,
-    builder: bevy_ui_component_prototypes::SliderBuilder,
+    builder: bevy_ui_component_prototypes::slider::SliderBuilder,
     extra: impl Bundle,
 ) {
     root.spawn(Node {

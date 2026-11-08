@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     text::{EditableText, TextReadWriteMode},
 };
-use bevy_ui_component_prototypes::text_field;
+use bevy_ui_component_prototypes::text_field::text_field;
 
 #[test]
 fn the_builder_options_go_to_the_input() {

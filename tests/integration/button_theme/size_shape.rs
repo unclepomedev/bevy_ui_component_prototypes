@@ -7,8 +7,9 @@ use crate::{
 };
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonVariantId, GlobalTheme,
-    StateColors, Theme, icon_button,
+    GlobalTheme, Theme,
+    button::{ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonVariantId, icon_button},
+    common::StateColors,
 };
 
 const ROW: ButtonSizeId = ButtonSizeId::new("row");

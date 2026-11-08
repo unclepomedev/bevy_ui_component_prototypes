@@ -24,7 +24,9 @@ use bevy::{
     window::ExitCondition,
     winit::WinitPlugin,
 };
-use bevy_ui_component_prototypes::{ScrollIndicator, UiComponentPrototypesPlugin, text_field};
+use bevy_ui_component_prototypes::{
+    UiComponentPrototypesPlugin, scroll_indicator::ScrollIndicator, text_field::text_field,
+};
 
 /// An app that lays out UI for a target of 800 x 600, and a column of 400 x 300 to put fields in.
 fn layout_app() -> (App, Entity) {

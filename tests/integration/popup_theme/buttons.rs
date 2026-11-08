@@ -7,7 +7,9 @@ use crate::{
 };
 use bevy::{prelude::*, ui_widgets::Activate};
 use bevy_ui_component_prototypes::{
-    ButtonVariant, ButtonVariantId, GlobalTheme, IconButton, PopupChoice, PopupChosen, popup,
+    GlobalTheme,
+    button::{ButtonVariant, ButtonVariantId, IconButton},
+    popup::{PopupChoice, PopupChosen, popup},
 };
 
 #[derive(Resource, Default)]

@@ -7,7 +7,9 @@ use crate::{
 };
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SliderEditing, SliderShape, StateColors, Theme, slider,
+    GlobalTheme, Theme,
+    common::StateColors,
+    slider::{SliderEditing, SliderShape, slider},
 };
 
 #[test]

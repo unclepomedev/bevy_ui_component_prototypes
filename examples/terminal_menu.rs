@@ -32,9 +32,12 @@ use bevy::{
     ui_widgets::Activate,
 };
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
-    FocusIndicator, GlobalTheme, ShowsFocus, StateColors, Theme, UiComponentPrototypesPlugin,
-    icon_button,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    button::{
+        ButtonMetrics, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
+        icon_button,
+    },
+    common::{FocusIndicator, ShowsFocus, StateColors},
 };
 use std::collections::HashMap;
 

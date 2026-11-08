@@ -1,7 +1,7 @@
 //! Behavior tests for the popup: structure, the pointer, the look and the layer.
 
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::popup;
+use bevy_ui_component_prototypes::popup::popup;
 
 mod buttons;
 mod focus;

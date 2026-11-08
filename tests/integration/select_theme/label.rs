@@ -9,7 +9,7 @@ use bevy::{
     prelude::*,
     ui_widgets::{MenuAction, ReselectListRow},
 };
-use bevy_ui_component_prototypes::{SelectedIndex, SelectedOption, select};
+use bevy_ui_component_prototypes::select::{SelectedIndex, SelectedOption, select};
 
 #[test]
 fn nothing_chosen_shows_the_placeholder() {

@@ -2,7 +2,7 @@
 
 use super::{Fruit, selected_rows, spawn_fruit, text};
 use crate::support::test_app;
-use bevy_ui_component_prototypes::{SelectedIndex, SelectedOption, select};
+use bevy_ui_component_prototypes::select::{SelectedIndex, SelectedOption, select};
 
 #[test]
 fn the_row_of_the_initial_choice_is_selected() {

@@ -6,7 +6,7 @@ use crate::{
     support::{bg, border_color, test_app},
 };
 use bevy::{picking::hover::PickingInteraction, prelude::*, ui::InteractionDisabled};
-use bevy_ui_component_prototypes::{GlobalTheme, StateColors};
+use bevy_ui_component_prototypes::{GlobalTheme, common::StateColors};
 
 #[test]
 fn hover_and_press_change_colors_and_release_restores_them() {

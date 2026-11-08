@@ -6,7 +6,7 @@ use crate::{
     support::{focus, outline, test_app},
 };
 use bevy::{prelude::*, ui::InteractionDisabled};
-use bevy_ui_component_prototypes::SliderEditing;
+use bevy_ui_component_prototypes::slider::SliderEditing;
 
 #[test]
 fn editing_changes_the_thumb_and_the_ring_and_removal_restores_them() {

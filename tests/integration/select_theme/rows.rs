@@ -14,7 +14,7 @@ use bevy::{
     ui::InteractionDisabled,
     ui_widgets::{ActiveDescendant, MenuAction, ScrollArea},
 };
-use bevy_ui_component_prototypes::{GlobalTheme, SelectedIndex, Theme};
+use bevy_ui_component_prototypes::{GlobalTheme, Theme, select::SelectedIndex};
 
 #[test]
 fn the_list_shows_as_many_rows_as_the_theme_says_and_scrolls_beyond() {

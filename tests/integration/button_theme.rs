@@ -3,7 +3,10 @@
 //! Real pointer picking, layout, and text shaping are not covered by `examples/button_check.rs`.
 
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::{ButtonStyle, ButtonVariantId, Theme, icon_button};
+use bevy_ui_component_prototypes::{
+    Theme,
+    button::{ButtonStyle, ButtonVariantId, icon_button},
+};
 
 mod behavior;
 mod focus;

@@ -13,8 +13,11 @@ use bevy::{
     ui_widgets::{Activate, popover::Popover},
 };
 use bevy_ui_component_prototypes::{
-    ActiveWindow, CloseWindow, MoveWindow, RaiseWindow, ResizeWindow, WindowContent,
-    WindowDefaultsPlugin, WindowEdge, WindowLimits, WindowRect, WindowStack, select, window,
+    select::select,
+    window::{
+        ActiveWindow, CloseWindow, MoveWindow, RaiseWindow, ResizeWindow, WindowContent,
+        WindowDefaultsPlugin, WindowEdge, WindowLimits, WindowRect, WindowStack, window,
+    },
 };
 
 mod close;

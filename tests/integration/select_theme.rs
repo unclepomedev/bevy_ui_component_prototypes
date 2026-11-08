@@ -16,7 +16,7 @@ use bevy::{
     ui::Selected,
     ui_widgets::{MenuAction, MenuEvent, MenuFocusState, ValueChange},
 };
-use bevy_ui_component_prototypes::{SelectedIndex, select};
+use bevy_ui_component_prototypes::select::{SelectedIndex, select};
 
 mod accessibility;
 mod choose;

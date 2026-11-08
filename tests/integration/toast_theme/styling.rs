@@ -7,7 +7,8 @@ use crate::{
 };
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
-    GlobalTheme, Theme, ToastVariant, ToastVariantId, toast, toast_host,
+    GlobalTheme, Theme,
+    toast::{ToastVariant, ToastVariantId, toast, toast_host},
 };
 
 #[test]

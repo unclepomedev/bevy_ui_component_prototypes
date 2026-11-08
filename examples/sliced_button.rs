@@ -26,9 +26,12 @@ use bevy::{
 };
 use bevy_asset_loader::prelude::*;
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
-    ButtonVariantId, FocusRing, GlobalTheme, SlicedImage, StateColors, Theme,
-    UiComponentPrototypesPlugin, icon_button,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    button::{
+        ButtonMetrics, ButtonShape, ButtonSizeId, ButtonSizes, ButtonStyle, ButtonStyles,
+        ButtonVariantId, SlicedImage, icon_button,
+    },
+    common::{FocusRing, StateColors},
 };
 use std::collections::HashMap;
 
