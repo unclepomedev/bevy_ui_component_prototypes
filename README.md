@@ -11,12 +11,13 @@ Won't support WASM.
 The crate root only exposes `UiComponentPrototypesPlugin`, `GlobalTheme` and `Theme`. Each widget has its own module that holds its builder function, components and style types.
 
 ```rust
-use bevy_ui_component_prototypes::{GlobalTheme, Theme, UiComponentPrototypesPlugin};
-use bevy_ui_component_prototypes::slider::{SliderShape, slider};
-use bevy_ui_component_prototypes::common::BarSegments;
+use bevy_ui_component_prototypes::{
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    slider::{SliderShape, slider}, common::BarSegments
+};
 ```
 
-Modules: `button`, `popup`, `slider`, `select`, `text_field`, `toggle_switch`, `progress`, `scroll_indicator`, `toast`, `window`, and `common` (types shared by several widgets, such as `ShowsFocus` and `StateColors`).
+Modules: `button`, `popup`, `slider`, `select`, `text_field`, `toggle_switch`, `progress`, `scroll_indicator`, `toast`, `tooltip`, `window`, and `common` (types shared by several widgets, such as `ShowsFocus` and `StateColors`).
 
 ## Behavior
 
