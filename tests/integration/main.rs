@@ -2,6 +2,7 @@
 
 mod button_theme;
 mod gradient;
+mod popup_theme;
 mod probe;
 mod progress_theme;
 mod scroll_indicator_theme;

@@ -4,12 +4,13 @@
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
-    CheckedColors, CloseShape, CloseStyle, FocusRing, OptionColors, ProgressShape, ProgressStyle,
-    ProgressStyles, ProgressVariantId, ScrollIndicatorMetrics, ScrollIndicatorStyle, SelectMetrics,
-    SelectPopupStyle, SelectShape, SelectStyle, SelectionColors, SliderShape, SliderStyle,
-    StateColors, SwitchStyle, TextFieldMetrics, TextFieldShape, TextFieldStyle, Theme, TitleAlign,
-    TitleBarStyle, ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId,
-    WindowMetrics, WindowShape, WindowSide, WindowStyle,
+    CheckedColors, CloseShape, CloseStyle, FocusRing, OptionColors, PopupMetrics, PopupShape,
+    PopupStyle, ProgressShape, ProgressStyle, ProgressStyles, ProgressVariantId,
+    ScrollIndicatorMetrics, ScrollIndicatorStyle, SelectMetrics, SelectPopupStyle, SelectShape,
+    SelectStyle, SelectionColors, SliderShape, SliderStyle, StateColors, SwitchStyle,
+    TextFieldMetrics, TextFieldShape, TextFieldStyle, Theme, TitleAlign, TitleBarStyle,
+    ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId, WindowMetrics, WindowShape,
+    WindowSide, WindowStyle,
 };
 use std::collections::HashMap;
 
@@ -179,6 +180,26 @@ pub fn probe_theme() -> Theme {
             glyph_size: 11.0,
             glyph_stroke: 3.0,
             resize_grip: 11.0,
+        },
+        popup: PopupStyle {
+            scrim: Color::srgba(0.1, 0.9, 0.5, 0.4),
+            bg: Color::srgb(0.1, 0.7, 0.3),
+            border: Color::srgb(0.1, 0.7, 0.9),
+            fg: Color::srgb(0.1, 0.5, 0.7),
+            shape: PopupShape {
+                border_width: 5.0,
+                radius: 13.0,
+            },
+        },
+        popup_metrics: PopupMetrics {
+            min_width: Val::Px(333.0),
+            max_width: Val::Px(444.0),
+            padding: UiRect::all(Val::Px(17.0)),
+            row_gap: Val::Px(15.0),
+            button_gap: Val::Px(21.0),
+            button_width: Val::Px(123.0),
+            font_size: FontSize::Px(18.0),
+            z_index: 777,
         },
         font: FontSource::monospace(),
         font_smoothing: FontSmoothing::AntiAliased,

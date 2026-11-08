@@ -1,6 +1,7 @@
 #![warn(unreachable_pub)]
 mod button;
 mod common;
+mod popup;
 mod progress;
 mod scroll_indicator;
 mod select;
@@ -22,6 +23,10 @@ pub use crate::{
         choice::Choice,
         focus::{FocusIndicator, FocusRing, ShowsFocus},
         state::{CheckedColors, StateColors},
+    },
+    popup::{
+        PopupBuilder, PopupChoice, PopupChosen, PopupMetrics, PopupRoot, PopupShape, PopupStyle,
+        popup,
     },
     progress::{
         ProgressBar, ProgressBarBuilder, ProgressRange, ProgressShape, ProgressStyle,
@@ -56,6 +61,7 @@ pub use crate::{
 use crate::{
     button::ButtonStylePlugin,
     common::{focus::ShowsFocusPlugin, tab_order::TabOrderPlugin},
+    popup::PopupPlugin,
     progress::ProgressStylePlugin,
     scroll_indicator::ScrollIndicatorStylePlugin,
     select::SelectStylePlugin,
@@ -109,6 +115,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             TextFieldEntryPlugin,
             TextAreaPlugin,
             WindowStylePlugin,
+            PopupPlugin,
         ));
     }
 

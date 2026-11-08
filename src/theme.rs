@@ -1,4 +1,5 @@
 use crate::button::{ButtonSizes, ButtonStyles};
+use crate::popup::{PopupMetrics, PopupStyle};
 use crate::progress::ProgressStyles;
 use crate::scroll_indicator::{ScrollIndicatorMetrics, ScrollIndicatorStyle};
 use crate::select::{SelectMetrics, SelectStyle};
@@ -26,6 +27,8 @@ pub struct Theme {
     pub toast: ToastMetrics,
     pub window: WindowStyle,
     pub window_metrics: WindowMetrics,
+    pub popup: PopupStyle,
+    pub popup_metrics: PopupMetrics,
     pub font: FontSource,
     pub font_smoothing: FontSmoothing,
 }
