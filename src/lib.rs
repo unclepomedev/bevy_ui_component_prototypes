@@ -24,7 +24,7 @@ pub use crate::{
         focus::{FocusIndicator, FocusRing, ShowsFocus},
         state::{CheckedColors, StateColors},
     },
-    popup::{PopupMetrics, PopupShape, PopupStyle},
+    popup::{PopupBuilder, PopupMetrics, PopupRoot, PopupShape, PopupStyle, popup},
     progress::{
         ProgressBar, ProgressBarBuilder, ProgressRange, ProgressShape, ProgressStyle,
         ProgressStyles, ProgressValue, ProgressVariant, ProgressVariantId, progress_bar,
@@ -58,6 +58,7 @@ pub use crate::{
 use crate::{
     button::ButtonStylePlugin,
     common::{focus::ShowsFocusPlugin, tab_order::TabOrderPlugin},
+    popup::PopupPlugin,
     progress::ProgressStylePlugin,
     scroll_indicator::ScrollIndicatorStylePlugin,
     select::SelectStylePlugin,
@@ -111,6 +112,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             TextFieldEntryPlugin,
             TextAreaPlugin,
             WindowStylePlugin,
+            PopupPlugin,
         ));
     }
 
