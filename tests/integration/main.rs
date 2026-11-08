@@ -16,5 +16,6 @@ mod text_field_layout;
 mod text_field_theme;
 mod text_field_value;
 mod toast_theme;
+mod tooltip_theme;
 mod window_defaults;
 mod window_theme;

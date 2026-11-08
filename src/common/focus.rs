@@ -17,7 +17,7 @@ pub enum FocusIndicator {
 }
 
 impl FocusIndicator {
-    fn is_visible(self, visible: Option<&InputFocusVisible>) -> bool {
+    pub(crate) fn is_visible(self, visible: Option<&InputFocusVisible>) -> bool {
         self == FocusIndicator::Always || visible.is_some_and(|visible| visible.0)
     }
 }

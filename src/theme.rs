@@ -7,6 +7,7 @@ use crate::slider::SliderStyle;
 use crate::text_field::{TextFieldMetrics, TextFieldStyle};
 use crate::toast::{ToastMetrics, ToastStyles};
 use crate::toggle_switch::SwitchStyle;
+use crate::tooltip::{TooltipMetrics, TooltipStyle};
 use crate::window::{WindowMetrics, WindowStyle};
 use bevy::prelude::*;
 
@@ -25,6 +26,8 @@ pub struct Theme {
     pub text_field_metrics: TextFieldMetrics,
     pub toasts: ToastStyles,
     pub toast: ToastMetrics,
+    pub tooltip: TooltipStyle,
+    pub tooltip_metrics: TooltipMetrics,
     pub window: WindowStyle,
     pub window_metrics: WindowMetrics,
     pub popup: PopupStyle,

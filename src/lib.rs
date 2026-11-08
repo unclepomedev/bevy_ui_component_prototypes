@@ -6,7 +6,7 @@
 //! components and style types:
 //!
 //! - [`button`], [`slider`], [`select`], [`text_field`], [`toggle_switch`]
-//! - [`popup`], [`progress`], [`scroll_indicator`], [`toast`], [`window`]
+//! - [`popup`], [`progress`], [`scroll_indicator`], [`toast`], [`tooltip`], [`window`]
 //! - [`common`]: types shared by several widgets (focus ring, state colors, ...)
 pub mod button;
 pub mod common;
@@ -19,6 +19,7 @@ pub mod text_field;
 mod theme;
 pub mod toast;
 pub mod toggle_switch;
+pub mod tooltip;
 pub mod window;
 
 pub use crate::theme::{GlobalTheme, Theme};
@@ -36,6 +37,7 @@ use crate::{
     },
     toast::ToastPlugin,
     toggle_switch::SwitchStylePlugin,
+    tooltip::TooltipPlugin,
     window::WindowStylePlugin,
 };
 use bevy::{
@@ -61,6 +63,8 @@ use bevy::{
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
 ///
+/// A [`Tooltip`](tooltip::Tooltip) follows the pointer through Bevy's picking (`DefaultPlugins` has it) and the keyboard focus.
+///
 /// What a window asks for ([`RaiseWindow`](window::RaiseWindow), [`MoveWindow`](window::MoveWindow), [`ResizeWindow`](window::ResizeWindow), [`CloseWindow`](window::CloseWindow)) is applied by [`WindowDefaultsPlugin`](window::WindowDefaultsPlugin), which is not included.
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
@@ -80,7 +84,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             TextFieldEntryPlugin,
             TextAreaPlugin,
             WindowStylePlugin,
-            PopupPlugin,
+            (PopupPlugin, TooltipPlugin),
         ));
     }
 

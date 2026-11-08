@@ -16,6 +16,7 @@ use bevy_ui_component_prototypes::{
     text_field::{TextFieldMetrics, TextFieldShape, TextFieldStyle},
     toast::{ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId},
     toggle_switch::SwitchStyle,
+    tooltip::{TooltipMetrics, TooltipShape, TooltipStyle},
     window::{
         CloseShape, CloseStyle, TitleAlign, TitleBarStyle, WindowMetrics, WindowShape, WindowSide,
         WindowStyle,
@@ -152,6 +153,24 @@ pub fn probe_theme() -> Theme {
             fade_in: 0.5,
             fade_out: 0.25,
             default_duration: 2.0,
+        },
+        tooltip: TooltipStyle {
+            bg: Color::srgb(0.61, 0.11, 0.12),
+            fg: Color::srgb(0.62, 0.52, 0.53),
+            border: Color::srgb(0.63, 0.93, 0.94),
+            shape: TooltipShape {
+                border_width: 2.0,
+                radius: 3.0,
+            },
+        },
+        tooltip_metrics: TooltipMetrics {
+            max_width: Val::Px(171.0),
+            padding: UiRect::axes(Val::Px(5.0), Val::Px(3.0)),
+            font_size: FontSize::Px(11.0),
+            gap: 13.0,
+            delay: 0.4,
+            warmup: 0.25,
+            z_index: 77,
         },
         window: WindowStyle {
             bg: Color::srgb(0.7, 0.1, 0.1),
