@@ -14,7 +14,7 @@ use bevy::{
     },
     prelude::*,
 };
-use bevy_ui_component_prototypes::{ButtonVariant, PopupChoice, popup};
+use bevy_ui_component_prototypes::{ButtonVariant, PopupChoice, PopupRoot, popup};
 
 /// The layer of the popup the example puts in front, well above the one of the theme.
 const FRONT_Z: i32 = 1000;
@@ -68,6 +68,15 @@ fn a_button_is_named_by_its_label() {
 fn a_popup_is_a_modal_tab_group() {
     let mut app = test_app();
     let root = spawn_confirm_popup(&mut app);
+
+    assert!(app.world().get::<TabGroup>(root).unwrap().modal);
+}
+
+#[test]
+fn a_root_spawned_by_itself_is_a_modal_tab_group_too() {
+    let mut app = test_app();
+
+    let root = app.world_mut().spawn(PopupRoot).id();
 
     assert!(app.world().get::<TabGroup>(root).unwrap().modal);
 }

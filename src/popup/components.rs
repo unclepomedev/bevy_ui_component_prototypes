@@ -1,14 +1,24 @@
 use super::style::{PopupMetrics, PopupShape};
-use bevy::{input_focus::AutoFocus, picking::Pickable, prelude::*};
+use bevy::{
+    input_focus::{AutoFocus, tab_navigation::TabGroup},
+    picking::Pickable,
+    prelude::*,
+};
 
 /// Root of a modal popup: a scrim that covers its parent, centers the panel, and keeps the pointer
 /// from reaching what is behind it. Spawn it without a parent to cover the screen. Despawn it to dismiss.
 ///
-/// Tab stays inside it, also after a press on it. It takes the input focus when spawned: giving the focus back after it is despawned is up to the app.
+/// Tab stays inside it, also after a press on it. The popup that `popup()` builds takes the input focus when spawned:
+/// giving the focus back after it is despawned is up to the app.
 ///
 /// Its `GlobalZIndex` is the one it is spawned with. Without one, it takes `popup_metrics.z_index` of its theme.
 #[derive(Component, Clone, Copy, Debug, Default)]
-#[require(Node = popup_root_node(), BackgroundColor, Pickable = Pickable::default())]
+#[require(
+    Node = popup_root_node(),
+    BackgroundColor,
+    Pickable = Pickable::default(),
+    TabGroup = TabGroup::modal()
+)]
 pub struct PopupRoot;
 
 /// The card in the middle of the scrim.

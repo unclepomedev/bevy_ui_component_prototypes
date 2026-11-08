@@ -13,7 +13,6 @@ use crate::{
 };
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
-    input_focus::tab_navigation::TabGroup,
     prelude::*,
 };
 
@@ -64,7 +63,6 @@ impl PopupBuilder {
             PopupRoot,
             popup_node_role(),
             AccessibleLabel::new(message.clone()),
-            TabGroup::modal(),
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 parent.spawn(PopupPanel).with_children(|panel| {
                     panel.spawn((
