@@ -41,8 +41,8 @@ use bevy::{
     ui_widgets::ValueChange,
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SelectBuilder, SelectKey, SelectedOption, Theme, UiComponentPrototypesPlugin,
-    select,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    select::{SelectBuilder, SelectKey, SelectedOption, select},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]

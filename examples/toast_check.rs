@@ -24,8 +24,9 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*, ui_widgets::Activate};
 use bevy_ui_component_prototypes::{
-    GlobalTheme, Theme, ToastShape, ToastStack, ToastStyle, ToastStyles, ToastVariantId,
-    UiComponentPrototypesPlugin, icon_button, toast, toast_host,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    button::icon_button,
+    toast::{ToastShape, ToastStack, ToastStyle, ToastStyles, ToastVariantId, toast, toast_host},
 };
 use std::collections::HashMap;
 

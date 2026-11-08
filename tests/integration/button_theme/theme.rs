@@ -11,7 +11,10 @@ use bevy::{
     prelude::*,
     ui::{InteractionDisabled, VisualBox, widget::NodeImageMode},
 };
-use bevy_ui_component_prototypes::{ButtonVariantId, GlobalTheme, SlicedImage, Theme};
+use bevy_ui_component_prototypes::{
+    GlobalTheme, Theme,
+    button::{ButtonVariantId, SlicedImage},
+};
 
 // [T] swap the global theme
 #[test]

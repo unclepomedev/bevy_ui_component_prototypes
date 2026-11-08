@@ -6,7 +6,9 @@ use crate::{
 };
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
-    ButtonStyle, ButtonVariant, ButtonVariantId, GlobalTheme, StateColors, Theme, icon_button,
+    GlobalTheme, Theme,
+    button::{ButtonStyle, ButtonVariant, ButtonVariantId, icon_button},
+    common::StateColors,
 };
 
 const GOLD: ButtonVariantId = ButtonVariantId::new("gold");

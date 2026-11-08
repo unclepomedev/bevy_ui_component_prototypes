@@ -61,9 +61,15 @@ use bevy::{
     window::{CursorIcon, PrimaryWindow, SystemCursorIcon},
 };
 use bevy_ui_component_prototypes::{
-    SelectKey, SelectedOption, Theme, UiComponentPrototypesPlugin, WindowDefaultsPlugin,
-    WindowEdge, WindowGrip, WindowMetrics, WindowRect, WindowStyle, icon_button, scroll_indicator,
-    select, slider, window,
+    Theme, UiComponentPrototypesPlugin,
+    button::icon_button,
+    scroll_indicator::scroll_indicator,
+    select::{SelectKey, SelectedOption, select},
+    slider::slider,
+    window::{
+        WindowDefaultsPlugin, WindowEdge, WindowGrip, WindowMetrics, WindowRect, WindowStyle,
+        window,
+    },
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]

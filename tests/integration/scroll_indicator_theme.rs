@@ -11,7 +11,7 @@ use bevy::{
     ui::{ComputedNode, ScrollPosition},
     ui_widgets::ScrollArea,
 };
-use bevy_ui_component_prototypes::{GlobalTheme, scroll_indicator};
+use bevy_ui_component_prototypes::{GlobalTheme, scroll_indicator::scroll_indicator};
 
 /// A node that has a scroll area and an indicator in it, the area first.
 struct Spot {

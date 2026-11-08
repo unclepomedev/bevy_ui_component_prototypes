@@ -4,7 +4,7 @@
 //! Real pointer picking, layout, and dragging are covered by `examples/slider_check.rs`.
 
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::slider;
+use bevy_ui_component_prototypes::slider::slider;
 
 mod behavior;
 mod controlled;

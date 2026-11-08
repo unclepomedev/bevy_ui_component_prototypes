@@ -11,7 +11,7 @@ use bevy::{
     prelude::*,
     ui::{InteractionDisabled, auto_directional_navigation::AutoDirectionalNavigation},
 };
-use bevy_ui_component_prototypes::{ButtonVariantId, icon_button};
+use bevy_ui_component_prototypes::button::{ButtonVariantId, icon_button};
 
 #[test]
 fn a_custom_tab_index_is_restored_after_re_enabling() {

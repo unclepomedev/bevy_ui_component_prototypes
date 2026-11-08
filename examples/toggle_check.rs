@@ -28,7 +28,8 @@ use bevy::{
     ui_widgets::ValueChange,
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, StateColors, Theme, UiComponentPrototypesPlugin, toggle_switch,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin, common::StateColors,
+    toggle_switch::toggle_switch,
 };
 
 /// Name of the switch, shown in the status line.

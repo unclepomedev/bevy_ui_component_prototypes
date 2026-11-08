@@ -7,7 +7,11 @@ use crate::{
     support::{node, test_app},
 };
 use bevy::{picking::hover::Hovered, prelude::*, ui_widgets::SliderValue};
-use bevy_ui_component_prototypes::{BarSegments, GlobalTheme, SliderShape, Theme, slider};
+use bevy_ui_component_prototypes::{
+    GlobalTheme, Theme,
+    common::BarSegments,
+    slider::{SliderShape, slider},
+};
 
 #[test]
 fn a_segmented_rail_and_fill_are_blocks_drawn_by_gradients() {

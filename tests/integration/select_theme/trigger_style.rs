@@ -11,7 +11,7 @@ use bevy::{
     prelude::*,
     ui::InteractionDisabled,
 };
-use bevy_ui_component_prototypes::SelectedIndex;
+use bevy_ui_component_prototypes::select::SelectedIndex;
 
 #[test]
 fn the_trigger_and_its_label_are_styled_after_one_update() {

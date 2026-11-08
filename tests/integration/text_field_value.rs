@@ -7,7 +7,7 @@ use bevy::{
     text::{EditableText, TextEdit},
     ui_widgets::ValueChange,
 };
-use bevy_ui_component_prototypes::{SetFieldText, text_field};
+use bevy_ui_component_prototypes::text_field::{SetFieldText, text_field};
 
 #[derive(Resource, Default)]
 struct Seen(Vec<(Entity, String, bool)>);

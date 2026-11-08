@@ -3,7 +3,7 @@
 use super::{message, panel, spawn_popup};
 use crate::support::{passes_through, test_app};
 use bevy::{picking::Pickable, prelude::*};
-use bevy_ui_component_prototypes::PopupRoot;
+use bevy_ui_component_prototypes::popup::PopupRoot;
 
 #[test]
 fn a_popup_is_a_root_with_a_panel_that_holds_the_message() {

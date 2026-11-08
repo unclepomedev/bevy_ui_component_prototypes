@@ -8,7 +8,7 @@ use bevy::{
     ui::InteractionDisabled,
     window::PrimaryWindow,
 };
-use bevy_ui_component_prototypes::text_field;
+use bevy_ui_component_prototypes::text_field::text_field;
 
 #[test]
 fn disabling_the_field_disables_its_input_and_enabling_it_enables_the_input_again() {

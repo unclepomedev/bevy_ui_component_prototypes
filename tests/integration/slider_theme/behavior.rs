@@ -10,7 +10,7 @@ use bevy::{
     prelude::*,
     ui_widgets::{Slider, SliderOrientation, SliderRange, SliderStep, SliderValue, TrackClick},
 };
-use bevy_ui_component_prototypes::slider;
+use bevy_ui_component_prototypes::slider::slider;
 
 #[test]
 fn slider_carries_the_bevy_slider_behavior_components() {

@@ -7,7 +7,7 @@ use bevy::{
     prelude::*,
     ui_widgets::{ListBox, ListItem, MenuButton, MenuPopup},
 };
-use bevy_ui_component_prototypes::{Select, select};
+use bevy_ui_component_prototypes::select::{Select, select};
 
 #[test]
 fn a_select_is_a_root_with_a_trigger_that_takes_the_focus() {

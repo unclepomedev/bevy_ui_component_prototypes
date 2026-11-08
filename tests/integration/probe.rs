@@ -3,14 +3,23 @@
 
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
-    ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId,
-    CheckedColors, CloseShape, CloseStyle, FocusRing, OptionColors, PopupMetrics, PopupShape,
-    PopupStyle, ProgressShape, ProgressStyle, ProgressStyles, ProgressVariantId,
-    ScrollIndicatorMetrics, ScrollIndicatorStyle, SelectMetrics, SelectPopupStyle, SelectShape,
-    SelectStyle, SelectionColors, SliderShape, SliderStyle, StateColors, SwitchStyle,
-    TextFieldMetrics, TextFieldShape, TextFieldStyle, Theme, TitleAlign, TitleBarStyle,
-    ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId, WindowMetrics, WindowShape,
-    WindowSide, WindowStyle,
+    Theme,
+    button::{ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId},
+    common::{CheckedColors, FocusRing, StateColors},
+    popup::{PopupMetrics, PopupShape, PopupStyle},
+    progress::{ProgressShape, ProgressStyle, ProgressStyles, ProgressVariantId},
+    scroll_indicator::{ScrollIndicatorMetrics, ScrollIndicatorStyle},
+    select::{
+        OptionColors, SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle, SelectionColors,
+    },
+    slider::{SliderShape, SliderStyle},
+    text_field::{TextFieldMetrics, TextFieldShape, TextFieldStyle},
+    toast::{ToastMetrics, ToastShape, ToastStyle, ToastStyles, ToastVariantId},
+    toggle_switch::SwitchStyle,
+    window::{
+        CloseShape, CloseStyle, TitleAlign, TitleBarStyle, WindowMetrics, WindowShape, WindowSide,
+        WindowStyle,
+    },
 };
 use std::collections::HashMap;
 

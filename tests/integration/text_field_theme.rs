@@ -4,7 +4,7 @@
 //! Typing and the cursor are covered by `examples/text_field_check.rs`, the real layout by `text_field_layout.rs`.
 
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::text_field;
+use bevy_ui_component_prototypes::text_field::text_field;
 
 mod input;
 mod look;

@@ -2,7 +2,7 @@
 
 use crate::support::test_app;
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::{ToastHost, ToastStack, toast_host};
+use bevy_ui_component_prototypes::toast::{ToastHost, ToastStack, toast_host};
 
 #[test]
 fn the_newest_toast_goes_to_the_end_the_stack_names() {

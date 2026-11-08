@@ -29,8 +29,10 @@ use bevy::{
     ui_widgets::{Activate, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    SetFieldText, Submit, UiComponentPrototypesPlugin, WindowDefaultsPlugin, WindowRect,
-    icon_button, text_field, window,
+    UiComponentPrototypesPlugin,
+    button::icon_button,
+    text_field::{SetFieldText, Submit, text_field},
+    window::{WindowDefaultsPlugin, WindowRect, window},
 };
 
 /// Which field of the form a `TextField` is.

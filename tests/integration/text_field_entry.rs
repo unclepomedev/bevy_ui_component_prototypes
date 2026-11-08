@@ -11,7 +11,7 @@ use bevy::{
     text::{EditableText, EditableTextSystems, TextEdit},
     ui_widgets::ValueChange,
 };
-use bevy_ui_component_prototypes::{SetFieldText, Submit, text_field};
+use bevy_ui_component_prototypes::text_field::{SetFieldText, Submit, text_field};
 
 #[derive(Resource, Default)]
 struct Submitted(Vec<(Entity, String)>);

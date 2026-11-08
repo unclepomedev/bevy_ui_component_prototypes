@@ -1,62 +1,27 @@
 #![warn(unreachable_pub)]
-mod button;
-mod common;
-mod popup;
-mod progress;
-mod scroll_indicator;
-mod select;
-mod slider;
-mod text_field;
+//! Themed UI widgets for Bevy.
+//!
+//! The crate root only holds what every app touches: [`UiComponentPrototypesPlugin`],
+//! [`GlobalTheme`] and [`Theme`]. Each widget lives in its own module with its builder,
+//! components and style types:
+//!
+//! - [`button`], [`slider`], [`select`], [`text_field`], [`toggle_switch`]
+//! - [`popup`], [`progress`], [`scroll_indicator`], [`toast`], [`window`]
+//! - [`common`]: types shared by several widgets (focus ring, state colors, ...)
+pub mod button;
+pub mod common;
+pub mod popup;
+pub mod progress;
+pub mod scroll_indicator;
+pub mod select;
+pub mod slider;
+pub mod text_field;
 mod theme;
-mod toast;
-mod toggle_switch;
-mod window;
+pub mod toast;
+pub mod toggle_switch;
+pub mod window;
 
-pub use crate::{
-    button::{
-        ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonSizes, ButtonStyle,
-        ButtonStyles, ButtonVariant, ButtonVariantId, IconButton, IconButtonBuilder, SlicedImage,
-        icon_button,
-    },
-    common::{
-        bar::BarSegments,
-        choice::Choice,
-        focus::{FocusIndicator, FocusRing, ShowsFocus},
-        state::{CheckedColors, StateColors},
-    },
-    popup::{
-        PopupBuilder, PopupChoice, PopupChosen, PopupMetrics, PopupRoot, PopupShape, PopupStyle,
-        popup,
-    },
-    progress::{
-        ProgressBar, ProgressBarBuilder, ProgressRange, ProgressShape, ProgressStyle,
-        ProgressStyles, ProgressValue, ProgressVariant, ProgressVariantId, progress_bar,
-    },
-    scroll_indicator::{
-        ScrollIndicator, ScrollIndicatorMetrics, ScrollIndicatorStyle, scroll_indicator,
-    },
-    select::{
-        OptionColors, Select, SelectBuilder, SelectKey, SelectMetrics, SelectPopupStyle,
-        SelectShape, SelectStyle, SelectedIndex, SelectedOption, SelectionColors, select,
-    },
-    slider::{SliderBuilder, SliderEditing, SliderShape, SliderStyle, ValueSlider, slider},
-    text_field::{
-        SetFieldText, Submit, TextField, TextFieldBuilder, TextFieldInput, TextFieldMetrics,
-        TextFieldShape, TextFieldStyle, text_field,
-    },
-    theme::{GlobalTheme, Theme},
-    toast::{
-        Toast, ToastBuilder, ToastHost, ToastHostBuilder, ToastMetrics, ToastShape, ToastStack,
-        ToastStyle, ToastStyles, ToastVariant, ToastVariantId, toast, toast_host,
-    },
-    toggle_switch::{SwitchStyle, ToggleSwitch, ToggleSwitchBuilder, toggle_switch},
-    window::{
-        ActiveWindow, CloseShape, CloseStyle, CloseWindow, MoveWindow, RaiseWindow, ResizeWindow,
-        TitleAlign, TitleBarStyle, UiWindow, WindowBuilder, WindowContent, WindowDefaultsPlugin,
-        WindowEdge, WindowGrip, WindowLimits, WindowMetrics, WindowRect, WindowShape, WindowSide,
-        WindowStack, WindowStyle, window,
-    },
-};
+pub use crate::theme::{GlobalTheme, Theme};
 
 use crate::{
     button::ButtonStylePlugin,
@@ -96,7 +61,7 @@ use bevy::{
 /// - [`InputDispatchPlugin`] (included in `DefaultPlugins`): keyboard input to the focused entity (Tab, Enter, Space)
 /// - [`TabNavigationPlugin`]: Tab-key focus navigation
 ///
-/// What a window asks for ([`RaiseWindow`], [`MoveWindow`], [`ResizeWindow`], [`CloseWindow`]) is applied by [`WindowDefaultsPlugin`], which is not included.
+/// What a window asks for ([`RaiseWindow`](window::RaiseWindow), [`MoveWindow`](window::MoveWindow), [`ResizeWindow`](window::ResizeWindow), [`CloseWindow`](window::CloseWindow)) is applied by [`WindowDefaultsPlugin`](window::WindowDefaultsPlugin), which is not included.
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {

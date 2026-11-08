@@ -6,7 +6,10 @@ use crate::{
     support::{bg, border_color},
 };
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::{GlobalTheme, Theme, Toast, toast, toast_host};
+use bevy_ui_component_prototypes::{
+    GlobalTheme, Theme,
+    toast::{Toast, toast, toast_host},
+};
 
 #[test]
 fn elapsed_counts_the_seconds_since_the_toast_appeared() {

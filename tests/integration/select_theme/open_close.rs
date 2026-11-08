@@ -11,7 +11,7 @@ use bevy::{
     ui::{ComputedNode, ScrollPosition, UiGlobalTransform},
     ui_widgets::{MenuAction, MenuEvent, MenuFocusState, ScrollAreaPlugin, ScrollIntoView},
 };
-use bevy_ui_component_prototypes::{SelectedIndex, SelectedOption};
+use bevy_ui_component_prototypes::select::{SelectedIndex, SelectedOption};
 
 #[test]
 fn toggling_opens_the_popup_and_toggling_again_closes_it() {

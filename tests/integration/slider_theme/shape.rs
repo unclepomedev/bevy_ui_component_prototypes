@@ -6,7 +6,7 @@ use crate::{
     support::{node, test_app},
 };
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::{GlobalTheme, SliderShape, Theme};
+use bevy_ui_component_prototypes::{GlobalTheme, Theme, slider::SliderShape};
 
 #[test]
 fn the_default_shape_is_a_thin_rail_and_a_round_thumb() {

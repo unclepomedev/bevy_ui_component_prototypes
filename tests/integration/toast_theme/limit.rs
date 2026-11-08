@@ -2,7 +2,7 @@
 
 use super::{alive, elapsed, run, set_elapsed, timed_app};
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::{toast, toast_host};
+use bevy_ui_component_prototypes::toast::{toast, toast_host};
 
 #[test]
 fn a_host_keeps_its_newest_toasts_and_fades_the_oldest_out_early() {

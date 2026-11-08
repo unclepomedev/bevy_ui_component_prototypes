@@ -6,7 +6,7 @@ use crate::{
     support::{bg, focus, outline, test_app},
 };
 use bevy::{picking::hover::PickingInteraction, prelude::*, ui::InteractionDisabled};
-use bevy_ui_component_prototypes::FocusIndicator;
+use bevy_ui_component_prototypes::common::FocusIndicator;
 
 #[test]
 fn visible_focus_draws_the_ring_and_uses_the_focused_colors() {

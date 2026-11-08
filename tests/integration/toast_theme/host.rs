@@ -2,7 +2,7 @@
 
 use crate::support::{passes_through, test_app};
 use bevy::{picking::Pickable, prelude::*};
-use bevy_ui_component_prototypes::{ToastHost, ToastStack, toast_host};
+use bevy_ui_component_prototypes::toast::{ToastHost, ToastStack, toast_host};
 
 #[test]
 fn a_host_has_the_defaults_and_lets_the_pointer_through() {

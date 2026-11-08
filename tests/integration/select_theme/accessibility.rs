@@ -7,7 +7,7 @@ use super::{
 use crate::support::test_app;
 use accesskit::{HasPopup, NodeId, Role};
 use bevy::{a11y::AccessibilityNode, prelude::*, ui_widgets::MenuAction};
-use bevy_ui_component_prototypes::{SelectedIndex, SelectedOption, select};
+use bevy_ui_component_prototypes::select::{SelectedIndex, SelectedOption, select};
 
 fn named_fruit(app: &mut App) -> Entity {
     app.world_mut()

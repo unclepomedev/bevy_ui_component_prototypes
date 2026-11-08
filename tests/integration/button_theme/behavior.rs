@@ -9,7 +9,7 @@ use bevy::{
     a11y::AccessibilityNode, input_focus::tab_navigation::TabIndex,
     picking::hover::PickingInteraction, prelude::*, ui_widgets::Button,
 };
-use bevy_ui_component_prototypes::{ButtonVariantId, icon_button};
+use bevy_ui_component_prototypes::button::{ButtonVariantId, icon_button};
 
 #[test]
 fn icon_button_carries_the_bevy_button_behavior_components() {

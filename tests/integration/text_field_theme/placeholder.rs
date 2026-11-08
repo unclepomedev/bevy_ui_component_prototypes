@@ -6,7 +6,7 @@ use crate::{
     support::{node, passes_through, test_app},
 };
 use bevy::{prelude::*, text::EditableText};
-use bevy_ui_component_prototypes::text_field;
+use bevy_ui_component_prototypes::text_field::text_field;
 
 #[test]
 fn the_placeholder_shows_while_the_field_is_empty() {

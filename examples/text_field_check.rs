@@ -53,8 +53,10 @@ use bevy::{
     ui_widgets::{Activate, ValueChange},
 };
 use bevy_ui_component_prototypes::{
-    GlobalTheme, SetFieldText, TextFieldShape, TextFieldStyle, Theme, UiComponentPrototypesPlugin,
-    WindowDefaultsPlugin, WindowRect, icon_button, text_field, window,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    button::icon_button,
+    text_field::{SetFieldText, TextFieldShape, TextFieldStyle, text_field},
+    window::{WindowDefaultsPlugin, WindowRect, window},
 };
 
 #[derive(Component)]

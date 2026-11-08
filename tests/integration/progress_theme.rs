@@ -11,8 +11,12 @@ use crate::{
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, picking::Pickable, prelude::*};
 use bevy_ui_component_prototypes::{
-    BarSegments, GlobalTheme, ProgressRange, ProgressShape, ProgressValue, ProgressVariant,
-    ProgressVariantId, Theme, progress_bar,
+    GlobalTheme, Theme,
+    common::BarSegments,
+    progress::{
+        ProgressRange, ProgressShape, ProgressValue, ProgressVariant, ProgressVariantId,
+        progress_bar,
+    },
 };
 
 // ---------------------------------------------------------------------------

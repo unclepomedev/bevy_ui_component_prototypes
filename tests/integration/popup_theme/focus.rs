@@ -14,7 +14,10 @@ use bevy::{
     },
     prelude::*,
 };
-use bevy_ui_component_prototypes::{ButtonVariant, PopupChoice, PopupRoot, popup};
+use bevy_ui_component_prototypes::{
+    button::ButtonVariant,
+    popup::{PopupChoice, PopupRoot, popup},
+};
 
 /// The layer of the popup the example puts in front, well above the one of the theme.
 const FRONT_Z: i32 = 1000;

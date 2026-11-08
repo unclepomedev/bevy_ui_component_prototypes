@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     ui_widgets::{SliderRange, SliderValue},
 };
-use bevy_ui_component_prototypes::slider;
+use bevy_ui_component_prototypes::slider::slider;
 
 #[test]
 fn a_slider_is_styled_after_one_update() {

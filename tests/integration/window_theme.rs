@@ -16,8 +16,11 @@ use bevy::{
     prelude::*,
 };
 use bevy_ui_component_prototypes::{
-    ActiveWindow, CloseShape, GlobalTheme, Theme, TitleAlign, WindowContent, WindowMetrics,
-    WindowRect, WindowSide, WindowStyle, window,
+    GlobalTheme, Theme,
+    window::{
+        ActiveWindow, CloseShape, TitleAlign, WindowContent, WindowMetrics, WindowRect, WindowSide,
+        WindowStyle, window,
+    },
 };
 
 #[derive(Component)]

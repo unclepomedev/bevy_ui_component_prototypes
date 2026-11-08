@@ -6,7 +6,7 @@ use crate::{
     support::{passes_through, test_app},
 };
 use bevy::{picking::Pickable, prelude::*};
-use bevy_ui_component_prototypes::{Toast, ToastVariant, ToastVariantId, toast};
+use bevy_ui_component_prototypes::toast::{Toast, ToastVariant, ToastVariantId, toast};
 
 #[test]
 fn a_toast_carries_its_structure_and_starts_unseen() {

@@ -7,7 +7,11 @@ use bevy::{
     ui::InteractionDisabled,
 };
 use bevy_ui_component_prototypes::{
-    FocusIndicator, ShowsFocus, UiComponentPrototypesPlugin, icon_button, slider, toggle_switch,
+    UiComponentPrototypesPlugin,
+    button::icon_button,
+    common::{FocusIndicator, ShowsFocus},
+    slider::slider,
+    toggle_switch::toggle_switch,
 };
 
 #[test]

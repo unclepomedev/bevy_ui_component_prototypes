@@ -20,8 +20,9 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*, ui_widgets::Activate};
 use bevy_ui_component_prototypes::{
-    ButtonVariant, ButtonVariantId, GlobalTheme, PopupChoice, PopupChosen, PopupShape, PopupStyle,
-    Theme, UiComponentPrototypesPlugin, icon_button, popup,
+    GlobalTheme, Theme, UiComponentPrototypesPlugin,
+    button::{ButtonVariant, ButtonVariantId, icon_button},
+    popup::{PopupChoice, PopupChosen, PopupShape, PopupStyle, popup},
 };
 
 /// The stacking order is the app's to decide; this one is in front of the popups that take the theme's.

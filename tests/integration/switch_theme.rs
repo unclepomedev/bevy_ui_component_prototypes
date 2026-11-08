@@ -16,7 +16,11 @@ use bevy::{
     ui::{Checked, InteractionDisabled},
     ui_widgets::{Checkbox, CheckboxPlugin, SetChecked, ValueChange},
 };
-use bevy_ui_component_prototypes::{GlobalTheme, StateColors, Theme, ToggleSwitch, toggle_switch};
+use bevy_ui_component_prototypes::{
+    GlobalTheme, Theme,
+    common::StateColors,
+    toggle_switch::{ToggleSwitch, toggle_switch},
+};
 
 // ---------------------------------------------------------------------------
 // Behavior wiring
