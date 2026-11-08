@@ -23,11 +23,12 @@ pub(super) struct Tracker {
     /// The widget whose tooltip is shown, or waits to be.
     target: Option<Entity>,
     shown: bool,
-    waited: f32,
+    /// When the widget of `target` was first seen.
+    seen_at: f64,
     /// The widget whose tooltip was dismissed, and stays so until something else is wanted.
     dismissed: Option<Entity>,
-    /// Seconds since a tooltip was last on screen.
-    since_shown: f32,
+    /// When a tooltip was last on screen.
+    last_shown_at: f64,
 }
 
 impl Default for Tracker {
@@ -35,54 +36,45 @@ impl Default for Tracker {
         Self {
             target: None,
             shown: false,
-            waited: 0.0,
+            seen_at: 0.0,
             dismissed: None,
-            since_shown: f32::INFINITY,
+            last_shown_at: f64::NEG_INFINITY,
         }
     }
 }
 
 impl Tracker {
     /// `wants` is the widget the pointer or the focus is on. `dismiss` is set on the frame that asks to hide
-    /// the tooltip (a press, Escape). `dt` is the seconds since the last step.
+    /// the tooltip (a press, Escape). `now` is the seconds on the clock of this step.
     pub(super) fn step(
         &mut self,
         wants: Option<Entity>,
         dismiss: bool,
-        dt: f32,
+        now: f64,
         timing: impl Fn(Entity) -> Timing,
     ) -> Step {
         let wants = self.without_dismissed(wants, dismiss);
 
         let mut step = Step::default();
-        let switched = wants != self.target;
-        if switched {
+        if wants != self.target {
             step.hide = self.shown;
             self.shown = false;
             self.target = wants;
-            self.waited = 0.0;
+            self.seen_at = now;
         }
 
         if let (Some(target), false) = (self.target, self.shown) {
-            if !switched {
-                self.waited += dt;
-            }
             let timing = timing(target);
-            let delay = if self.since_shown + dt < timing.warmup {
-                0.0
-            } else {
-                timing.delay
-            };
-            if self.waited >= delay {
+            let warm = now - self.last_shown_at < f64::from(timing.warmup);
+            let delay = if warm { 0.0 } else { timing.delay };
+            if (now - self.seen_at) as f32 >= delay {
                 self.shown = true;
                 step.show = Some(target);
             }
         }
 
         if self.shown {
-            self.since_shown = 0.0;
-        } else {
-            self.since_shown += dt;
+            self.last_shown_at = now;
         }
         step
     }
@@ -101,7 +93,6 @@ impl Tracker {
     pub(super) fn lost(&mut self) {
         self.shown = false;
         self.target = None;
-        self.waited = 0.0;
     }
 }
 
@@ -122,26 +113,26 @@ mod tests {
         }
     }
 
-    fn shows(tracker: &mut Tracker, wants: Option<Entity>, dt: f32) -> Step {
-        tracker.step(wants, false, dt, timing)
+    fn shows(tracker: &mut Tracker, wants: Option<Entity>, now: f64) -> Step {
+        tracker.step(wants, false, now, timing)
     }
 
-    /// The step that brings a widget in does not count towards its wait.
+    /// The wait is counted from the step that brought the widget in.
     #[test]
-    fn the_wait_starts_on_the_step_after_the_widget_is_wanted() {
+    fn the_wait_starts_when_the_widget_is_first_wanted() {
         let mut tracker = Tracker::default();
         assert_eq!(shows(&mut tracker, Some(A), 10.0), Step::default());
-        assert_eq!(shows(&mut tracker, Some(A), 0.4), Step::default());
-        assert_eq!(shows(&mut tracker, Some(A), 0.1).show, Some(A));
+        assert_eq!(shows(&mut tracker, Some(A), 10.4), Step::default());
+        assert_eq!(shows(&mut tracker, Some(A), 10.5).show, Some(A));
     }
 
     #[test]
     fn a_tooltip_waits_for_the_delay() {
         let mut tracker = Tracker::default();
+        assert_eq!(shows(&mut tracker, Some(A), 0.0), Step::default());
         assert_eq!(shows(&mut tracker, Some(A), 0.2), Step::default());
-        assert_eq!(shows(&mut tracker, Some(A), 0.2), Step::default());
-        assert_eq!(shows(&mut tracker, Some(A), 0.2), Step::default());
-        let step = shows(&mut tracker, Some(A), 0.2);
+        assert_eq!(shows(&mut tracker, Some(A), 0.4), Step::default());
+        let step = shows(&mut tracker, Some(A), 0.5);
         assert_eq!(step.show, Some(A));
         assert!(!step.hide);
     }
@@ -161,7 +152,7 @@ mod tests {
         let mut tracker = Tracker::default();
         shows(&mut tracker, Some(A), 0.0);
         assert_eq!(shows(&mut tracker, Some(A), 0.6).show, Some(A));
-        assert_eq!(shows(&mut tracker, Some(A), 0.1), Step::default());
+        assert_eq!(shows(&mut tracker, Some(A), 0.7), Step::default());
     }
 
     #[test]
@@ -169,8 +160,8 @@ mod tests {
         let mut tracker = Tracker::default();
         shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.4);
-        assert_eq!(shows(&mut tracker, None, 0.4), Step::default());
-        assert_eq!(shows(&mut tracker, None, 1.0), Step::default());
+        assert_eq!(shows(&mut tracker, None, 0.8), Step::default());
+        assert_eq!(shows(&mut tracker, None, 1.8), Step::default());
     }
 
     #[test]
@@ -179,7 +170,7 @@ mod tests {
         shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
         assert_eq!(
-            shows(&mut tracker, None, 0.1),
+            shows(&mut tracker, None, 0.7),
             Step {
                 hide: true,
                 show: None
@@ -192,7 +183,7 @@ mod tests {
         let mut tracker = Tracker::default();
         shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
-        let step = shows(&mut tracker, Some(B), 0.016);
+        let step = shows(&mut tracker, Some(B), 0.616);
         assert!(step.hide);
         assert_eq!(step.show, Some(B));
     }
@@ -202,11 +193,11 @@ mod tests {
         let mut tracker = Tracker::default();
         shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
-        shows(&mut tracker, None, 0.1);
-        shows(&mut tracker, None, 0.5);
-        assert_eq!(shows(&mut tracker, Some(B), 0.2), Step::default());
-        assert_eq!(shows(&mut tracker, Some(B), 0.4), Step::default());
-        assert_eq!(shows(&mut tracker, Some(B), 0.2).show, Some(B));
+        shows(&mut tracker, None, 0.7);
+        shows(&mut tracker, None, 1.2);
+        assert_eq!(shows(&mut tracker, Some(B), 1.4), Step::default());
+        assert_eq!(shows(&mut tracker, Some(B), 1.8), Step::default());
+        assert_eq!(shows(&mut tracker, Some(B), 1.9).show, Some(B));
     }
 
     /// A step long enough to cross the warmup is already past it, so the next widget waits.
@@ -215,8 +206,14 @@ mod tests {
         let mut tracker = Tracker::default();
         shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
-        shows(&mut tracker, None, 0.1);
-        assert_eq!(shows(&mut tracker, Some(B), 0.5), Step::default());
+        assert_eq!(
+            shows(&mut tracker, Some(B), 1.2),
+            Step {
+                hide: true,
+                show: None
+            }
+        );
+        assert_eq!(shows(&mut tracker, Some(B), 1.8).show, Some(B));
     }
 
     #[test]
@@ -224,14 +221,14 @@ mod tests {
         let mut tracker = Tracker::default();
         shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
-        let step = tracker.step(Some(A), true, 0.1, timing);
+        let step = tracker.step(Some(A), true, 0.7, timing);
         assert!(step.hide);
-        assert_eq!(shows(&mut tracker, Some(A), 2.0), Step::default());
+        assert_eq!(shows(&mut tracker, Some(A), 2.7), Step::default());
 
-        shows(&mut tracker, None, 0.1);
-        shows(&mut tracker, None, 1.0);
-        shows(&mut tracker, Some(A), 0.0);
-        assert_eq!(shows(&mut tracker, Some(A), 0.6).show, Some(A));
+        shows(&mut tracker, None, 2.8);
+        shows(&mut tracker, None, 3.8);
+        shows(&mut tracker, Some(A), 3.9);
+        assert_eq!(shows(&mut tracker, Some(A), 4.5).show, Some(A));
     }
 
     #[test]
@@ -239,8 +236,8 @@ mod tests {
         let mut tracker = Tracker::default();
         shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.2);
-        tracker.step(Some(A), true, 0.1, timing);
-        assert_eq!(shows(&mut tracker, Some(A), 2.0), Step::default());
+        tracker.step(Some(A), true, 0.3, timing);
+        assert_eq!(shows(&mut tracker, Some(A), 2.3), Step::default());
     }
 
     #[test]
@@ -249,6 +246,6 @@ mod tests {
         shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
         tracker.lost();
-        assert_eq!(shows(&mut tracker, Some(A), 0.0).show, Some(A));
+        assert_eq!(shows(&mut tracker, Some(A), 0.7).show, Some(A));
     }
 }

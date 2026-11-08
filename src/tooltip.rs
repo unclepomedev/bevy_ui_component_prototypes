@@ -135,7 +135,7 @@ fn drive_tooltips(
     let (wanted, dismiss) = (state.wanted, state.dismiss);
     let step = state
         .tracker
-        .step(wanted, dismiss, time.delta_secs(), |entity| {
+        .step(wanted, dismiss, time.elapsed_secs_f64(), |entity| {
             let metrics = &lookup.for_entity(entity).tooltip_metrics;
             Timing {
                 delay: tooltips
