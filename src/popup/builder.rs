@@ -36,6 +36,7 @@ pub fn popup() -> PopupBuilder {
 }
 
 impl PopupBuilder {
+    /// Designed as a short message that fits within the screen; does not scroll.
     pub fn message(mut self, message: impl Into<String>) -> Self {
         self.message = message.into();
         self
