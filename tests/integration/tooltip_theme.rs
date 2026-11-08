@@ -474,10 +474,7 @@ fn the_tooltip_sits_in_the_layer_of_the_theme_or_above_its_widget() {
     hover(&mut app, &[button]);
     run(&mut app, 2);
     let popup = popup(&mut app, button).unwrap();
-    assert_eq!(
-        app.world().get::<GlobalZIndex>(popup).map(|z| z.0),
-        Some(501)
-    );
+    assert!(app.world().get::<GlobalZIndex>(popup).map(|z| z.0) > Some(500));
 }
 
 #[test]

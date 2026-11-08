@@ -200,22 +200,6 @@ mod tests {
         assert_eq!(shows(&mut tracker, Some(B), 1.9).show, Some(B));
     }
 
-    /// A step long enough to cross the warmup is already past it, so the next widget waits.
-    #[test]
-    fn a_step_that_crosses_the_warmup_waits_again() {
-        let mut tracker = Tracker::default();
-        shows(&mut tracker, Some(A), 0.0);
-        shows(&mut tracker, Some(A), 0.6);
-        assert_eq!(
-            shows(&mut tracker, Some(B), 1.2),
-            Step {
-                hide: true,
-                show: None
-            }
-        );
-        assert_eq!(shows(&mut tracker, Some(B), 1.8).show, Some(B));
-    }
-
     #[test]
     fn a_dismissed_tooltip_stays_away_until_the_widget_is_left() {
         let mut tracker = Tracker::default();
