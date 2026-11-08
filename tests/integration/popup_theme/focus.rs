@@ -169,7 +169,12 @@ fn a_press_on_the_scrim_or_the_message_keeps_the_focus_in_the_popup() {
 
     for target in [root, panel, message] {
         app.world_mut().resource_mut::<InputFocus>().clear();
-        press(&mut app, window, target);
+        app.world_mut().trigger(AcquireFocus {
+            focused_entity: target,
+            window,
+        });
+        assert_eq!(focused(&app), Some(panel));
+        app.update();
         assert_eq!(focused(&app), Some(panel));
     }
 }
