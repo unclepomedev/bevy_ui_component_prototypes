@@ -15,18 +15,23 @@ pub use self::{
     style::{PopupMetrics, PopupShape, PopupStyle},
 };
 
+use self::{
+    focus::{focus_front_popup, keep_focus_in_popup},
+    layer::sync_popup_layer,
+    sync::{sync_popup_buttons, sync_popup_style},
+};
 use bevy::{prelude::*, ui::UiSystems};
 
 pub(crate) struct PopupPlugin;
 impl Plugin for PopupPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(focus::keep_focus_in_popup).add_systems(
+        app.add_observer(keep_focus_in_popup).add_systems(
             PostUpdate,
             (
-                layer::sync_popup_layer,
-                sync::sync_popup_style,
-                sync::sync_popup_buttons,
-                focus::focus_front_popup.after(layer::sync_popup_layer),
+                sync_popup_layer,
+                sync_popup_style,
+                sync_popup_buttons,
+                focus_front_popup.after(sync_popup_layer),
             )
                 .before(UiSystems::Prepare),
         );
