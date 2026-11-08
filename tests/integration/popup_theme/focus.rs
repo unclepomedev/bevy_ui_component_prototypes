@@ -9,8 +9,8 @@ use bevy::{
     a11y::AccessibilityNode,
     ecs::system::RunSystemOnce,
     input_focus::{
-        InputFocus,
-        tab_navigation::{NavAction, TabGroup, TabIndex, TabNavigation},
+        AcquireFocus, InputFocus, on_window_acquire_focus_clear,
+        tab_navigation::{NavAction, TabGroup, TabIndex, TabNavigation, acquire_focus_tab_index},
     },
     prelude::*,
 };
@@ -169,4 +169,67 @@ fn tab_cycles_through_the_buttons_of_the_popup_and_never_reaches_what_is_behind(
     assert_eq!(navigate(&mut app, delete, NavAction::Next), keep);
     assert_eq!(navigate(&mut app, keep, NavAction::Next), delete);
     assert_eq!(navigate(&mut app, delete, NavAction::Previous), keep);
+}
+
+// ---------------------------------------------------------------------------
+// Pressing on the popup
+// ---------------------------------------------------------------------------
+
+/// An app that resolves a press like the ones of `DefaultPlugins` do: a target with a `TabIndex` takes the
+/// focus, and a press that finds none clears it at the window.
+fn pressable_app() -> (App, Entity) {
+    let mut app = test_app();
+    app.init_resource::<InputFocus>()
+        .add_observer(acquire_focus_tab_index)
+        .add_observer(on_window_acquire_focus_clear);
+    let window = app.world_mut().spawn(Window::default()).id();
+    (app, window)
+}
+
+fn press(app: &mut App, window: Entity, target: Entity) {
+    app.world_mut().trigger(AcquireFocus {
+        focused_entity: target,
+        window,
+    });
+    app.update();
+}
+
+fn focused(app: &App) -> Option<Entity> {
+    app.world().resource::<InputFocus>().get()
+}
+
+#[test]
+fn a_press_on_the_scrim_or_the_message_keeps_the_focus_in_the_popup() {
+    let (mut app, window) = pressable_app();
+    let root = spawn_confirm_popup(&mut app);
+    let panel = panel(&app, root);
+    let message = app.world().get::<Children>(panel).unwrap()[0];
+
+    for target in [root, panel, message] {
+        app.world_mut().resource_mut::<InputFocus>().clear();
+        press(&mut app, window, target);
+        assert_eq!(focused(&app), Some(panel));
+    }
+}
+
+#[test]
+fn a_press_on_a_button_focuses_the_button() {
+    let (mut app, window) = pressable_app();
+    let root = spawn_confirm_popup(&mut app);
+    let keep = buttons(&app, root)[1];
+
+    press(&mut app, window, keep);
+
+    assert_eq!(focused(&app), Some(keep));
+}
+
+#[test]
+fn a_press_outside_the_popup_still_clears_the_focus() {
+    let (mut app, window) = pressable_app();
+    spawn_confirm_popup(&mut app);
+    let outside = app.world_mut().spawn_empty().id();
+
+    press(&mut app, window, outside);
+
+    assert_eq!(focused(&app), None);
 }

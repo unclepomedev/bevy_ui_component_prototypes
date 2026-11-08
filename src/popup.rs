@@ -3,6 +3,7 @@ mod builder;
 mod choose;
 mod components;
 mod events;
+mod focus;
 mod layer;
 mod style;
 mod sync;
@@ -19,7 +20,7 @@ use bevy::{prelude::*, ui::UiSystems};
 pub(crate) struct PopupPlugin;
 impl Plugin for PopupPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.add_observer(focus::keep_focus_in_popup).add_systems(
             PostUpdate,
             (
                 layer::sync_popup_layer,
