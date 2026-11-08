@@ -1,6 +1,7 @@
 #![warn(unreachable_pub)]
 mod button;
 mod common;
+mod popup;
 mod progress;
 mod scroll_indicator;
 mod select;
@@ -23,6 +24,7 @@ pub use crate::{
         focus::{FocusIndicator, FocusRing, ShowsFocus},
         state::{CheckedColors, StateColors},
     },
+    popup::{PopupMetrics, PopupShape, PopupStyle},
     progress::{
         ProgressBar, ProgressBarBuilder, ProgressRange, ProgressShape, ProgressStyle,
         ProgressStyles, ProgressValue, ProgressVariant, ProgressVariantId, progress_bar,
