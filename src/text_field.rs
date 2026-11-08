@@ -16,7 +16,21 @@ pub use self::{
     value::SetFieldText,
 };
 
-pub(crate) use self::{
+use self::{
     area::TextAreaPlugin, entry::TextFieldEntryPlugin, sync::TextFieldStylePlugin,
     value::TextFieldValuePlugin,
 };
+
+use bevy::prelude::*;
+
+pub(crate) struct TextFieldPlugin;
+impl Plugin for TextFieldPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins((
+            TextFieldStylePlugin,
+            TextFieldValuePlugin,
+            TextFieldEntryPlugin,
+            TextAreaPlugin,
+        ));
+    }
+}

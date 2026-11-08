@@ -18,3 +18,13 @@ pub use self::{
     focus::{FocusIndicator, FocusRing, ShowsFocus},
     state::{CheckedColors, StateColors},
 };
+
+use self::{focus::ShowsFocusPlugin, tab_order::TabOrderPlugin};
+use bevy::prelude::*;
+
+pub(crate) struct CommonPlugin;
+impl Plugin for CommonPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins((TabOrderPlugin, ShowsFocusPlugin));
+    }
+}

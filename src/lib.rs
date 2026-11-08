@@ -25,19 +25,10 @@ pub mod window;
 pub use crate::theme::{GlobalTheme, Theme};
 
 use crate::{
-    button::ButtonStylePlugin,
-    common::{focus::ShowsFocusPlugin, tab_order::TabOrderPlugin},
-    popup::PopupPlugin,
-    progress::ProgressStylePlugin,
-    scroll_indicator::ScrollIndicatorStylePlugin,
-    select::SelectStylePlugin,
-    slider::SliderStylePlugin,
-    text_field::{
-        TextAreaPlugin, TextFieldEntryPlugin, TextFieldStylePlugin, TextFieldValuePlugin,
-    },
-    toast::ToastPlugin,
-    toggle_switch::SwitchStylePlugin,
-    tooltip::TooltipPlugin,
+    button::ButtonStylePlugin, common::CommonPlugin, popup::PopupPlugin,
+    progress::ProgressStylePlugin, scroll_indicator::ScrollIndicatorStylePlugin,
+    select::SelectStylePlugin, slider::SliderStylePlugin, text_field::TextFieldPlugin,
+    toast::ToastPlugin, toggle_switch::SwitchStylePlugin, tooltip::TooltipPlugin,
     window::WindowStylePlugin,
 };
 use bevy::{
@@ -73,18 +64,15 @@ impl Plugin for UiComponentPrototypesPlugin {
             ButtonStylePlugin,
             SwitchStylePlugin,
             SliderStylePlugin,
-            TabOrderPlugin,
-            ShowsFocusPlugin,
+            CommonPlugin,
             ToastPlugin,
             ProgressStylePlugin,
             SelectStylePlugin,
             ScrollIndicatorStylePlugin,
-            TextFieldStylePlugin,
-            TextFieldValuePlugin,
-            TextFieldEntryPlugin,
-            TextAreaPlugin,
+            TextFieldPlugin,
             WindowStylePlugin,
-            (PopupPlugin, TooltipPlugin),
+            PopupPlugin,
+            TooltipPlugin,
         ));
     }
 
