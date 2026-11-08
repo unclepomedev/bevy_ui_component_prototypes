@@ -21,6 +21,23 @@ pub(crate) struct PopupPanel;
 #[derive(Component, Clone, Copy, Debug)]
 pub(crate) struct PopupMessage;
 
+/// The row that holds the buttons.
+#[derive(Component, Clone, Copy, Debug)]
+pub(crate) struct PopupButtons;
+
+/// Which button of a popup the user chose.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PopupChoice {
+    Confirm,
+    Cancel,
+}
+
+/// A button of a popup. Activating it makes the popup emit `PopupChosen` with its `choice`.
+#[derive(Component, Clone, Copy, Debug)]
+pub(crate) struct PopupButton {
+    pub(crate) choice: PopupChoice,
+}
+
 fn popup_root_node() -> Node {
     Node {
         position_type: PositionType::Absolute,
@@ -42,6 +59,14 @@ pub(crate) fn popup_panel_node(metrics: &PopupMetrics, shape: &PopupShape) -> No
         row_gap: metrics.row_gap,
         border: UiRect::all(Val::Px(shape.border_width)),
         border_radius: BorderRadius::all(Val::Px(shape.radius)),
+        ..default()
+    }
+}
+
+pub(crate) fn popup_buttons_node(metrics: &PopupMetrics) -> Node {
+    Node {
+        align_items: AlignItems::Center,
+        column_gap: metrics.button_gap,
         ..default()
     }
 }

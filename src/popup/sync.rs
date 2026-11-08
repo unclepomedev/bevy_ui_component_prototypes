@@ -1,4 +1,6 @@
-use super::components::{PopupMessage, PopupPanel, PopupRoot, popup_panel_node};
+use super::components::{
+    PopupButton, PopupButtons, PopupMessage, PopupPanel, PopupRoot, popup_panel_node,
+};
 use crate::{Theme, common::theme_lookup::ThemeLookup};
 use bevy::prelude::*;
 
@@ -75,5 +77,29 @@ fn write_font(font: &mut Mut<TextFont>, theme: &Theme) {
     }
     if font.font_size != theme.popup_metrics.font_size {
         font.font_size = theme.popup_metrics.font_size;
+    }
+}
+
+// Disjoint, because both write `Node`.
+type ButtonNodes<'w, 's> =
+    Query<'w, 's, (Entity, &'static mut Node), (With<PopupButton>, Without<PopupButtons>)>;
+
+/// Writes the gap between the buttons and the width of each button.
+pub(super) fn sync_popup_buttons(
+    lookup: ThemeLookup,
+    mut rows: Query<(Entity, &mut Node), With<PopupButtons>>,
+    mut buttons: ButtonNodes,
+) {
+    for (entity, mut node) in &mut rows {
+        let gap = lookup.for_entity(entity).popup_metrics.button_gap;
+        if node.column_gap != gap {
+            node.column_gap = gap;
+        }
+    }
+    for (entity, mut node) in &mut buttons {
+        let width = lookup.for_entity(entity).popup_metrics.button_width;
+        if node.width != width {
+            node.width = width;
+        }
     }
 }

@@ -1,18 +1,36 @@
-use super::components::{PopupMessage, PopupPanel, PopupRoot};
-use crate::common::picking::pass_through;
+use super::{
+    choose::choose_on_activate,
+    components::{
+        PopupButton, PopupButtons, PopupChoice, PopupMessage, PopupPanel, PopupRoot,
+        popup_buttons_node,
+    },
+    style::PopupMetrics,
+};
+use crate::{
+    button::{ButtonVariant, icon_button},
+    common::picking::pass_through,
+};
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     prelude::*,
 };
 
-pub struct PopupBuilder {
-    message: String,
+struct ButtonSpec {
+    label: String,
+    choice: PopupChoice,
+    variant: ButtonVariant,
 }
 
-/// A popup with an empty message.
+pub struct PopupBuilder {
+    message: String,
+    buttons: Vec<ButtonSpec>,
+}
+
+/// A popup with an empty message and no buttons. Without a button, the user cannot dismiss it.
 pub fn popup() -> PopupBuilder {
     PopupBuilder {
         message: String::new(),
+        buttons: Vec::new(),
     }
 }
 
@@ -22,8 +40,24 @@ impl PopupBuilder {
         self
     }
 
+    /// Adds a button after the ones added before it. Activating it makes the popup emit
+    /// [`PopupChosen`](super::PopupChosen) with `choice`.
+    pub fn button(
+        mut self,
+        label: impl Into<String>,
+        choice: PopupChoice,
+        variant: impl Into<ButtonVariant>,
+    ) -> Self {
+        self.buttons.push(ButtonSpec {
+            label: label.into(),
+            choice,
+            variant: variant.into(),
+        });
+        self
+    }
+
     pub fn build(self) -> impl Bundle {
-        let Self { message } = self;
+        let Self { message, buttons } = self;
         (
             PopupRoot,
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
@@ -35,8 +69,34 @@ impl PopupBuilder {
                         TextColor(Color::NONE),
                         pass_through(),
                     ));
+                    if !buttons.is_empty() {
+                        spawn_buttons(panel, buttons);
+                    }
                 });
             })),
         )
     }
+}
+
+fn spawn_buttons(panel: &mut RelatedSpawner<ChildOf>, buttons: Vec<ButtonSpec>) {
+    panel
+        .spawn((
+            PopupButtons,
+            popup_buttons_node(&PopupMetrics::default()),
+            pass_through(),
+        ))
+        .with_children(|row| {
+            for ButtonSpec {
+                label,
+                choice,
+                variant,
+            } in buttons
+            {
+                row.spawn((
+                    icon_button().label(label).variant(variant).build(),
+                    PopupButton { choice },
+                ))
+                .observe(choose_on_activate);
+            }
+        });
 }

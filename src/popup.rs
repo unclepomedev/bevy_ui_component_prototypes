@@ -1,12 +1,15 @@
 mod builder;
+mod choose;
 mod components;
+mod events;
 mod layer;
 mod style;
 mod sync;
 
 pub use self::{
     builder::{PopupBuilder, popup},
-    components::PopupRoot,
+    components::{PopupChoice, PopupRoot},
+    events::PopupChosen,
     style::{PopupMetrics, PopupShape, PopupStyle},
 };
 
@@ -17,7 +20,12 @@ impl Plugin for PopupPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             PostUpdate,
-            (layer::sync_popup_layer, sync::sync_popup_style).before(UiSystems::Prepare),
+            (
+                layer::sync_popup_layer,
+                sync::sync_popup_style,
+                sync::sync_popup_buttons,
+            )
+                .before(UiSystems::Prepare),
         );
     }
 }

@@ -24,7 +24,10 @@ pub use crate::{
         focus::{FocusIndicator, FocusRing, ShowsFocus},
         state::{CheckedColors, StateColors},
     },
-    popup::{PopupBuilder, PopupMetrics, PopupRoot, PopupShape, PopupStyle, popup},
+    popup::{
+        PopupBuilder, PopupChoice, PopupChosen, PopupMetrics, PopupRoot, PopupShape, PopupStyle,
+        popup,
+    },
     progress::{
         ProgressBar, ProgressBarBuilder, ProgressRange, ProgressShape, ProgressStyle,
         ProgressStyles, ProgressValue, ProgressVariant, ProgressVariantId, progress_bar,
