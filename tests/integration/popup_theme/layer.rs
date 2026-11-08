@@ -49,3 +49,15 @@ fn the_layer_of_the_theme_follows_a_change_of_the_theme() {
 
     assert_eq!(layer(&app, root), Some(999));
 }
+
+#[test]
+fn a_popup_whose_layer_was_removed_takes_the_one_of_its_theme_again() {
+    let mut app = test_app();
+    let root = spawn_popup(&mut app, "Quit?");
+    app.update();
+
+    app.world_mut().entity_mut(root).remove::<GlobalZIndex>();
+    app.update();
+
+    assert_eq!(layer(&app, root), Some(probe_theme().popup_metrics.z_index));
+}

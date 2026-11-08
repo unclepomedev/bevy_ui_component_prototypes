@@ -7,9 +7,9 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub(super) struct ThemedLayer;
 
-type Unlayered = (With<PopupRoot>, Without<GlobalZIndex>, Without<ThemedLayer>);
+type Unlayered = (With<PopupRoot>, Without<GlobalZIndex>);
 
-/// Gives a root without a layer the one of its theme, and keeps it there.
+/// Gives a root without a layer the one of its theme, also one that lost its layer, and keeps it there.
 pub(super) fn sync_popup_layer(
     lookup: ThemeLookup,
     unlayered: Query<Entity, Unlayered>,
