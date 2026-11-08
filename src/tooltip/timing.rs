@@ -52,15 +52,11 @@ impl Tracker {
         dt: f32,
         timing: impl Fn(Entity) -> Timing,
     ) -> Step {
-        if dismiss {
-            self.dismissed = wants.or(self.target);
-        } else if self.dismissed != wants {
-            self.dismissed = None;
-        }
-        let wants = wants.filter(|wants| Some(*wants) != self.dismissed);
+        let wants = self.without_dismissed(wants, dismiss);
 
         let mut step = Step::default();
-        if wants != self.target {
+        let switched = wants != self.target;
+        if switched {
             step.hide = self.shown;
             self.shown = false;
             self.target = wants;
@@ -68,7 +64,9 @@ impl Tracker {
         }
 
         if let (Some(target), false) = (self.target, self.shown) {
-            self.waited += dt;
+            if !switched {
+                self.waited += dt;
+            }
             let timing = timing(target);
             let delay = if self.since_shown < timing.warmup {
                 0.0
@@ -87,6 +85,16 @@ impl Tracker {
             self.since_shown += dt;
         }
         step
+    }
+
+    /// The widget that wants a tooltip, unless it is the one dismissed and not yet left.
+    fn without_dismissed(&mut self, wants: Option<Entity>, dismiss: bool) -> Option<Entity> {
+        if dismiss {
+            self.dismissed = wants.or(self.target);
+        } else if self.dismissed != wants {
+            self.dismissed = None;
+        }
+        wants.filter(|wants| Some(*wants) != self.dismissed)
     }
 
     /// The tooltip on screen is gone without the tracker asking (its widget was despawned).
@@ -118,9 +126,19 @@ mod tests {
         tracker.step(wants, false, dt, timing)
     }
 
+    /// The step that brings a widget in does not count towards its wait.
+    #[test]
+    fn the_wait_starts_on_the_step_after_the_widget_is_wanted() {
+        let mut tracker = Tracker::default();
+        assert_eq!(shows(&mut tracker, Some(A), 10.0), Step::default());
+        assert_eq!(shows(&mut tracker, Some(A), 0.4), Step::default());
+        assert_eq!(shows(&mut tracker, Some(A), 0.1).show, Some(A));
+    }
+
     #[test]
     fn a_tooltip_waits_for_the_delay() {
         let mut tracker = Tracker::default();
+        assert_eq!(shows(&mut tracker, Some(A), 0.2), Step::default());
         assert_eq!(shows(&mut tracker, Some(A), 0.2), Step::default());
         assert_eq!(shows(&mut tracker, Some(A), 0.2), Step::default());
         let step = shows(&mut tracker, Some(A), 0.2);
@@ -129,8 +147,19 @@ mod tests {
     }
 
     #[test]
+    fn a_tooltip_without_a_delay_shows_at_once() {
+        let mut tracker = Tracker::default();
+        let timing = |_| Timing {
+            delay: 0.0,
+            warmup: 0.3,
+        };
+        assert_eq!(tracker.step(Some(A), false, 0.1, timing).show, Some(A));
+    }
+
+    #[test]
     fn it_shows_once() {
         let mut tracker = Tracker::default();
+        shows(&mut tracker, Some(A), 0.0);
         assert_eq!(shows(&mut tracker, Some(A), 0.6).show, Some(A));
         assert_eq!(shows(&mut tracker, Some(A), 0.1), Step::default());
     }
@@ -138,6 +167,7 @@ mod tests {
     #[test]
     fn leaving_before_the_delay_shows_nothing() {
         let mut tracker = Tracker::default();
+        shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.4);
         assert_eq!(shows(&mut tracker, None, 0.4), Step::default());
         assert_eq!(shows(&mut tracker, None, 1.0), Step::default());
@@ -146,6 +176,7 @@ mod tests {
     #[test]
     fn leaving_hides_what_is_shown() {
         let mut tracker = Tracker::default();
+        shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
         assert_eq!(
             shows(&mut tracker, None, 0.1),
@@ -159,6 +190,7 @@ mod tests {
     #[test]
     fn the_next_widget_shows_at_once_inside_the_warmup() {
         let mut tracker = Tracker::default();
+        shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
         let step = shows(&mut tracker, Some(B), 0.016);
         assert!(step.hide);
@@ -168,16 +200,19 @@ mod tests {
     #[test]
     fn the_next_widget_waits_again_after_the_warmup() {
         let mut tracker = Tracker::default();
+        shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
         shows(&mut tracker, None, 0.1);
         shows(&mut tracker, None, 0.5);
         assert_eq!(shows(&mut tracker, Some(B), 0.2), Step::default());
-        assert_eq!(shows(&mut tracker, Some(B), 0.4).show, Some(B));
+        assert_eq!(shows(&mut tracker, Some(B), 0.4), Step::default());
+        assert_eq!(shows(&mut tracker, Some(B), 0.2).show, Some(B));
     }
 
     #[test]
     fn a_dismissed_tooltip_stays_away_until_the_widget_is_left() {
         let mut tracker = Tracker::default();
+        shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
         let step = tracker.step(Some(A), true, 0.1, timing);
         assert!(step.hide);
@@ -185,12 +220,14 @@ mod tests {
 
         shows(&mut tracker, None, 0.1);
         shows(&mut tracker, None, 1.0);
+        shows(&mut tracker, Some(A), 0.0);
         assert_eq!(shows(&mut tracker, Some(A), 0.6).show, Some(A));
     }
 
     #[test]
     fn dismissing_while_waiting_cancels_the_wait() {
         let mut tracker = Tracker::default();
+        shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.2);
         tracker.step(Some(A), true, 0.1, timing);
         assert_eq!(shows(&mut tracker, Some(A), 2.0), Step::default());
@@ -199,6 +236,7 @@ mod tests {
     #[test]
     fn a_lost_tooltip_can_show_again() {
         let mut tracker = Tracker::default();
+        shows(&mut tracker, Some(A), 0.0);
         shows(&mut tracker, Some(A), 0.6);
         tracker.lost();
         assert_eq!(shows(&mut tracker, Some(A), 0.0).show, Some(A));
