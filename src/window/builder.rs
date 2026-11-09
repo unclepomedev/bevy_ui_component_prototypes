@@ -16,6 +16,7 @@ use bevy::{
     input_focus::tab_navigation::{TabGroup, TabIndex},
     picking::hover::PickingInteraction,
     prelude::*,
+    ui_widgets::Button as WidgetButton,
 };
 
 type Extra = Box<dyn FnOnce(&mut EntityWorldMut) + Send + Sync>;
@@ -141,7 +142,7 @@ fn spawn_close(bar: &mut RelatedSpawner<ChildOf>, style: &WindowStyle, metrics: 
         close_node(metrics, style),
         BackgroundColor(Color::NONE),
         PickingInteraction::default(),
-        bevy::ui_widgets::Button,
+        WidgetButton,
         TabIndex(CLOSE_TAB_INDEX),
         KeyboardNavigable,
         hidden_outline(),
