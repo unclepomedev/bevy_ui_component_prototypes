@@ -10,8 +10,8 @@ const POPUP_LAYER: i32 = 300;
 /// Tab stays inside it, also after a press on it. The input focus is kept in the front popup that `popup()` builds.
 /// Giving the focus back after the last one is despawned is up to the app.
 ///
-/// Its `GlobalZIndex` is the one it is spawned with, or 300 without one: above the windows of a default
-/// `WindowDefaultsPlugin`, which start at 10 and rise by 10.
+/// Its `GlobalZIndex` is the one it is spawned with, or a default above the windows of a default
+/// [`WindowDefaultsPlugin`](crate::window::WindowDefaultsPlugin) without one.
 #[derive(Component, Clone, Copy, Debug, Default)]
 #[require(
     Node = popup_root_node(),
