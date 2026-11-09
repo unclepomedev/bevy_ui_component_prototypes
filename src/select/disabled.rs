@@ -1,17 +1,16 @@
 use super::{
-    components::{Select, SelectRow, SelectTrigger},
+    components::{Select, SelectTrigger},
     open::CloseList,
     trigger::sync_select_style,
 };
 use crate::common::style_targets::drain_removed;
-use bevy::{a11y::AccessibilityNode, prelude::*, ui::InteractionDisabled};
+use bevy::{prelude::*, ui::InteractionDisabled};
 
 pub(super) struct SelectDisabledPlugin;
 impl Plugin for SelectDisabledPlugin {
     fn build(&self, app: &mut App) {
         // Before the trigger is styled, so that it is gray in the same frame.
-        app.add_systems(PostUpdate, forward_disabled.before(sync_select_style))
-            .add_systems(PostUpdate, sync_disabled_node.after(forward_disabled));
+        app.add_systems(PostUpdate, forward_disabled.before(sync_select_style));
     }
 }
 
@@ -42,26 +41,5 @@ fn forward_disabled(
             commands.entity(trigger).try_insert(InteractionDisabled);
         }
         commands.trigger(CloseList { select });
-    }
-}
-
-type DisableableNodes<'w, 's> = Query<
-    'w,
-    's,
-    (&'static mut AccessibilityNode, Has<InteractionDisabled>),
-    Or<(With<SelectTrigger>, With<SelectRow>)>,
->;
-
-/// Tells a screen reader which of the parts that can be disabled are: the trigger, and the rows of the list.
-/// Writes only what differs.
-fn sync_disabled_node(mut nodes: DisableableNodes) {
-    for (mut node, disabled) in &mut nodes {
-        if node.is_disabled() != disabled {
-            if disabled {
-                node.set_disabled();
-            } else {
-                node.clear_disabled();
-            }
-        }
     }
 }
