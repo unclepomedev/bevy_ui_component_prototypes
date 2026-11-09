@@ -7,7 +7,10 @@ use bevy::{
     ui::OverrideClip,
     ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide},
 };
-use std::{fmt, sync::Arc};
+use std::{
+    fmt::{Debug, Formatter, Result as FmtResult},
+    sync::Arc,
+};
 
 /// How close to the window edge a tooltip may go, in pixels.
 const WINDOW_MARGIN: f32 = 4.0;
@@ -85,8 +88,8 @@ impl LabelBundle {
     }
 }
 
-impl fmt::Debug for LabelBundle {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Debug for LabelBundle {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str("LabelBundle")
     }
 }
@@ -122,15 +125,11 @@ pub(crate) fn spawn_popup(commands: &mut Commands, target: Entity, tooltip: &Too
     let popup = commands
         .spawn((TooltipPopup { target }, ChildOf(target)))
         .id();
-    let mut label = commands.spawn((
-        TooltipLabel,
-        Text::new(String::new()),
-        pass_through(),
-        ChildOf(popup),
-    ));
+    let mut label = commands.spawn((TooltipLabel, pass_through(), ChildOf(popup)));
     if let Some(bundle) = &tooltip.label {
-        (bundle.0)(&mut label);
+        bundle.0(&mut label);
     }
+    label.insert_if_new(Text::new(String::new()));
     popup
 }
 

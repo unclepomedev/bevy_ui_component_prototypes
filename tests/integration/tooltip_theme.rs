@@ -143,6 +143,22 @@ fn a_bundle_gives_the_label_its_words_each_time_the_tooltip_shows() {
     assert_eq!(popup_text(&app, second), "From a bundle");
 }
 
+/// A component that makes its own `Text`, as a bundle may.
+#[derive(Component, Clone)]
+#[require(Text = Text::new("Made by the component"))]
+struct Words;
+
+#[test]
+fn a_text_that_a_component_of_the_bundle_makes_is_kept() {
+    let mut app = timed_app(0.5);
+    let button = spawn_button(&mut app, Tooltip::bundle(Words));
+    hover(&mut app, &[button]);
+    run(&mut app, 4);
+
+    let popup = popup(&mut app, button).expect("the tooltip shows");
+    assert_eq!(popup_text(&app, popup), "Made by the component");
+}
+
 #[test]
 fn the_sync_leaves_the_words_of_a_bundle_alone_but_styles_them() {
     let mut app = timed_app(0.5);
