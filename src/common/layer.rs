@@ -1,7 +1,7 @@
 /// The layer of a popup that opens inside the content of a widget: `gap` above the nearest ancestor
 /// that has a `GlobalZIndex`, or above layer 0 when none has.
 pub(crate) fn layer_above(ancestor: Option<i32>, gap: i32) -> i32 {
-    ancestor.unwrap_or(0).saturating_add(gap)
+    ancestor.unwrap_or(0).saturating_add(gap.max(1))
 }
 
 // ============================================================================================
@@ -25,5 +25,12 @@ mod tests {
     #[test]
     fn it_stops_at_the_top() {
         assert_eq!(layer_above(Some(i32::MAX), 5), i32::MAX);
+    }
+
+    #[test]
+    fn a_gap_below_one_still_puts_it_above() {
+        assert_eq!(layer_above(Some(30), 0), 31);
+        assert_eq!(layer_above(Some(30), -4), 31);
+        assert_eq!(layer_above(None, 0), 1);
     }
 }
