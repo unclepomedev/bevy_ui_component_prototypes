@@ -399,10 +399,12 @@ fn a_click_that_focused_the_widget_leaves_the_tooltip_to_the_pointer_under_alway
     run(&mut app, 2);
     assert!(popup(&mut app, button).is_some());
 
-    focus(&mut app, button, false);
+    // Start from visible keyboard focus; a press then hides it, as Bevy's click-to-focus does.
+    focus(&mut app, button, true);
     let mut mouse = ButtonInput::<MouseButton>::default();
     mouse.press(MouseButton::Left);
     app.insert_resource(mouse);
+    app.insert_resource(InputFocusVisible(false));
     run(&mut app, 1);
     assert_eq!(popup(&mut app, button), None);
 
@@ -423,6 +425,17 @@ fn a_click_that_focused_the_widget_leaves_the_tooltip_to_the_pointer_under_alway
         popup(&mut app, button).is_some(),
         "it shows again once left"
     );
+}
+
+#[test]
+fn a_visible_keyboard_focus_shows_the_tooltip_under_always() {
+    let mut app = timed_app(0.5);
+    app.insert_resource(FocusIndicator::Always);
+    let button = spawn_button(&mut app, Tooltip::new("Save"));
+    focus(&mut app, button, true);
+
+    run(&mut app, 4);
+    assert!(popup(&mut app, button).is_some());
 }
 
 #[test]
