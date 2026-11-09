@@ -6,10 +6,9 @@ use super::{
 };
 use crate::{
     Theme,
-    common::{state::VisualState, style_targets::drain_removed, theme_lookup::ThemeLookup},
+    common::{state::VisualState, theme_lookup::ThemeLookup},
 };
 use bevy::{
-    a11y::AccessibilityNode,
     input_focus::{AcquireFocus, FocusCause, InputFocus, InputFocusSystems},
     prelude::*,
     text::TextCursorStyle,
@@ -22,7 +21,6 @@ impl Plugin for TextFieldStylePlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(focus_input_on_press)
             .add_systems(PostUpdate, sync_text_field.before(UiSystems::Prepare))
-            .add_systems(PostUpdate, forward_label)
             .add_systems(
                 PreUpdate,
                 release_disabled_input.before(InputFocusSystems::Dispatch),
@@ -218,37 +216,5 @@ fn write_font(font: &mut Mut<TextFont>, theme: &Theme) {
     }
     if font.font_size != theme.text_field_metrics.font_size {
         font.font_size = theme.text_field_metrics.font_size;
-    }
-}
-
-type LabelledFields<'w, 's> = Query<
-    'w,
-    's,
-    (Entity, &'static AccessibleLabel, &'static Children),
-    (With<TextField>, Changed<AccessibleLabel>),
->;
-
-/// Puts the name the app gave to the field on the input, which is what takes the focus and what a screen
-/// reader reads. The field itself does not keep a node, which would carry the name a second time.
-fn forward_label(
-    labelled: LabelledFields,
-    fields: Query<(&Children, Has<AccessibleLabel>), With<TextField>>,
-    inputs: Query<(), With<TextFieldInput>>,
-    mut removed: RemovedComponents<AccessibleLabel>,
-    mut commands: Commands,
-) {
-    for entity in drain_removed(&mut removed) {
-        // A field that got another label in the same frame keeps one.
-        if let Ok((children, false)) = fields.get(entity)
-            && let Some(input) = input_in(children, &inputs)
-        {
-            commands.entity(input).try_remove::<AccessibleLabel>();
-        }
-    }
-    for (field, label, children) in &labelled {
-        if let Some(input) = input_in(children, &inputs) {
-            commands.entity(input).try_insert(label.clone());
-            commands.entity(field).try_remove::<AccessibilityNode>();
-        }
     }
 }

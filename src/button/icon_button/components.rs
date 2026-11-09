@@ -10,8 +10,7 @@ use bevy::{
 /// A themed button with an optional icon and a text label.
 ///
 /// Behavior comes from [`Button`]: it emits [`bevy::ui_widgets::Activate`] on click and on Enter/Space while focused,
-/// uses [`bevy::ui::InteractionDisabled`], and exposes a button role to accessibility tools.
-/// Text placed next to the button is not associated with it: give the button a name for screen readers with `AccessibleLabel`.
+/// and uses [`bevy::ui::InteractionDisabled`].
 /// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
 /// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
 ///

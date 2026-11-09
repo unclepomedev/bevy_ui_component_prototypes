@@ -90,8 +90,8 @@ fn setup(mut commands: Commands) {
         });
 }
 
-/// The label is a sibling `Text`: the bar is the rail and the fill only. Screen readers do not pair
-/// the two, so the bar gets an `AccessibleLabel` of its own. The bar takes the full width of the box it is put in.
+/// The label is a sibling `Text`: the bar is the rail and the fill only. The bar takes the full width of
+/// the box it is put in.
 fn spawn_row(
     root: &mut ChildSpawnerCommands,
     label: &'static str,
@@ -116,7 +116,7 @@ fn spawn_row(
             ..default()
         })
         .with_children(|slot| {
-            slot.spawn((bar, AccessibleLabel::new(label), extra));
+            slot.spawn((bar, extra));
         });
     });
 }
@@ -146,7 +146,7 @@ fn spawn_hp_row(root: &mut ChildSpawnerCommands) {
             ..default()
         })
         .with_children(|slot| {
-            slot.spawn((bar, AccessibleLabel::new("HP"), Hp));
+            slot.spawn((bar, Hp));
         });
     });
 }
@@ -187,7 +187,7 @@ fn spawn_blocks_panel(root: &mut ChildSpawnerCommands) {
                 ..default()
             })
             .with_children(|slot| {
-                slot.spawn((progress_bar().build(), AccessibleLabel::new("Blocks"), Auto));
+                slot.spawn((progress_bar().build(), Auto));
             });
     });
 }

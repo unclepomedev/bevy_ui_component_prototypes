@@ -24,6 +24,3 @@ check:
     cargo check --examples
     RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 c: check
-
-dep:
-    cargo tree -i accesskit

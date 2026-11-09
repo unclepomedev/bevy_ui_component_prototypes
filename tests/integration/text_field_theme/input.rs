@@ -53,50 +53,6 @@ fn a_field_that_is_spawned_disabled_has_a_disabled_input() {
 }
 
 #[test]
-fn the_name_of_the_field_goes_to_the_input() {
-    let mut app = test_app();
-    let field = spawn_field(&mut app);
-    app.update();
-
-    app.world_mut()
-        .entity_mut(field)
-        .insert(AccessibleLabel::new("Your name"));
-    app.update();
-
-    let label = app
-        .world()
-        .get::<AccessibleLabel>(input(&app, field))
-        .unwrap();
-    assert_eq!(label.0, "Your name");
-    assert!(
-        app.world()
-            .get::<bevy::a11y::AccessibilityNode>(field)
-            .is_none()
-    );
-}
-
-#[test]
-fn removing_the_name_of_the_field_removes_it_from_the_input() {
-    let mut app = test_app();
-    let field = spawn_field(&mut app);
-    app.world_mut()
-        .entity_mut(field)
-        .insert(AccessibleLabel::new("Your name"));
-    app.update();
-
-    app.world_mut()
-        .entity_mut(field)
-        .remove::<AccessibleLabel>();
-    app.update();
-
-    assert!(
-        app.world()
-            .get::<AccessibleLabel>(input(&app, field))
-            .is_none()
-    );
-}
-
-#[test]
 fn pressing_on_the_frame_focuses_the_input() {
     let mut app = test_app();
     let window = app.world_mut().spawn(PrimaryWindow).id();

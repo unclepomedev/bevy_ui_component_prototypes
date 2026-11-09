@@ -2,14 +2,13 @@
 
 use super::{
     Fruit, Requests, app_that_logs_requests, fruit_select, list, menu_event, popup, report_row,
-    rows, spawn_fruit, text, trigger, trigger_node, visibility,
+    rows, spawn_fruit, text, trigger, visibility,
 };
 use crate::{
     probe::probe_theme,
     support::{bg, test_app},
 };
 use bevy::{
-    a11y::AccessibilityNode,
     input_focus::{
         InputFocus,
         tab_navigation::{NavAction, TabIndex},
@@ -89,19 +88,6 @@ fn disabling_an_open_select_closes_its_list_and_gives_the_focus_back() {
 }
 
 #[test]
-fn a_disabled_trigger_is_disabled_for_a_screen_reader() {
-    let mut app = test_app();
-    let root = app
-        .world_mut()
-        .spawn((fruit_select(), InteractionDisabled))
-        .id();
-
-    app.update();
-
-    assert!(trigger_node(&app, root).is_disabled());
-}
-
-#[test]
 fn an_option_that_is_disabled_has_a_disabled_row() {
     let mut app = test_app();
     let root = app
@@ -150,28 +136,6 @@ fn a_disabled_row_stays_gray_where_the_highlight_is() {
     let style = probe_theme().select;
     assert_eq!(bg(&app, rows[1]), style.option_bg.unselected.disabled);
     assert_eq!(bg(&app, rows[0]), style.option_bg.unselected.normal);
-}
-
-#[test]
-fn a_disabled_row_is_disabled_for_a_screen_reader() {
-    let mut app = test_app();
-    let root = app
-        .world_mut()
-        .spawn(fruit_select_with_banana_disabled())
-        .id();
-
-    app.update();
-
-    let flags: Vec<bool> = rows(&app, root)
-        .iter()
-        .map(|row| {
-            app.world()
-                .get::<AccessibilityNode>(*row)
-                .unwrap()
-                .is_disabled()
-        })
-        .collect();
-    assert_eq!(flags, [false, true, false]);
 }
 
 #[test]

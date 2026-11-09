@@ -20,8 +20,7 @@ use bevy::{
 ///
 /// The shape comes from the theme's `SliderStyle::shape`.
 ///
-/// The width follows the parent layout (`100%`). A text placed next to the slider is not
-/// associated with it: give the slider a name for screen readers with `AccessibleLabel`.
+/// The width follows the parent layout (`100%`).
 ///
 /// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
 /// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.

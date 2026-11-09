@@ -112,12 +112,7 @@ fn spawn_row(root: &mut ChildSpawnerCommands, label: &'static str, on: bool, ext
                 ..default()
             },
         ));
-        let mut switch = row.spawn((
-            toggle_switch().build(),
-            AccessibleLabel::new(label),
-            Tag(label),
-            extra,
-        ));
+        let mut switch = row.spawn((toggle_switch().build(), Tag(label), extra));
         if on {
             switch.insert(Checked);
         }
@@ -146,12 +141,7 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
                 ..default()
             },
         ));
-        panel.spawn((
-            toggle_switch().build(),
-            AccessibleLabel::new("Scoped (own Theme)"),
-            Checked,
-            Tag("Scoped"),
-        ));
+        panel.spawn((toggle_switch().build(), Checked, Tag("Scoped")));
     });
 }
 

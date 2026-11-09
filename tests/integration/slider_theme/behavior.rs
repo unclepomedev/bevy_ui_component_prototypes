@@ -2,9 +2,7 @@
 
 use super::spawn_slider;
 use crate::support::{outline, test_app};
-use accesskit::Role;
 use bevy::{
-    a11y::AccessibilityNode,
     input_focus::tab_navigation::TabIndex,
     picking::hover::Hovered,
     prelude::*,
@@ -22,12 +20,6 @@ fn slider_carries_the_bevy_slider_behavior_components() {
     // Clicking the rail has to move the value there, and the width must not decide the orientation.
     assert_eq!(behavior.track_click, TrackClick::Snap);
     assert_eq!(behavior.orientation, SliderOrientation::Horizontal);
-    assert_eq!(
-        world
-            .get::<AccessibilityNode>(slider)
-            .map(|node| node.role()),
-        Some(Role::Slider)
-    );
     assert!(world.get::<Hovered>(slider).is_some());
     assert_eq!(world.get::<TabIndex>(slider).map(|t| t.0), Some(0));
     // `Outline::default()` would be a visible white line; the ring must start hidden.

@@ -8,9 +8,7 @@ use super::{
     value::{ReportedText, fit_text},
 };
 use crate::{common::picking::pass_through, scroll_indicator::scroll_indicator};
-use accesskit::{Node as AccessKitNode, Role};
 use bevy::{
-    a11y::AccessibilityNode,
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     prelude::*,
     text::{EditableText, TextReadWriteMode},
@@ -183,10 +181,7 @@ fn add_input_options(input: &mut EntityWorldMut, visible_width: Option<f32>, are
         input.insert(sized_input_node());
     }
     if area {
-        input.insert((
-            TextLayout::new(Justify::Left, LineBreak::WordBoundary),
-            AccessibilityNode::from(AccessKitNode::new(Role::MultilineTextInput)),
-        ));
+        input.insert(TextLayout::new(Justify::Left, LineBreak::WordBoundary));
     }
 }
 

@@ -1866,9 +1866,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_ui_component_prototypes"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
- "accesskit",
  "bevy",
  "bevy_asset_loader",
 ]

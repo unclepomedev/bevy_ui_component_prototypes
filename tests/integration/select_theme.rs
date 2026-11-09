@@ -4,7 +4,6 @@
 
 use crate::support::test_app;
 use bevy::{
-    a11y::AccessibilityNode,
     camera::NormalizedRenderTarget,
     picking::{
         backend::HitData,
@@ -18,7 +17,6 @@ use bevy::{
 };
 use bevy_ui_component_prototypes::select::{SelectedIndex, select};
 
-mod accessibility;
 mod choose;
 mod disabled;
 mod highlight;
@@ -141,12 +139,6 @@ fn shown(app: &App, root: Entity) -> Option<Entity> {
     app.world()
         .get::<Children>(content(app, root))
         .and_then(|children| children.first().copied())
-}
-
-fn trigger_node(app: &App, root: Entity) -> &AccessibilityNode {
-    app.world()
-        .get::<AccessibilityNode>(trigger(app, root))
-        .unwrap()
 }
 
 fn index(app: &App, root: Entity) -> Option<usize> {
