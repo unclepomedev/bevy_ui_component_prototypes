@@ -13,7 +13,7 @@
 //!      Enter or Space activates the one that has the focus.
 //!   3. [4] shows a long message: it wraps at the width of the theme and the panel grows taller.
 //!   4. [5] shows two popups: the second one is spawned later but is behind the first, because the first has
-//!      a `GlobalZIndex` of its own and the second takes the one of the theme. Close the front one to reach
+//!      a `GlobalZIndex` of its own and the second takes the default one. Close the front one to reach
 //!      the other.
 //!   5. [T] swaps the global theme between the default one and a terminal one (square, outlined,
 //!      monospace). A popup that is on screen takes the new look as it is.

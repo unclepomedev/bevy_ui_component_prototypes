@@ -4,6 +4,7 @@ pub(crate) mod choice;
 pub(crate) mod color;
 pub(crate) mod focus;
 pub(crate) mod font_size;
+pub(crate) mod layer;
 pub(crate) mod layout;
 pub(crate) mod picking;
 pub(crate) mod spacing;

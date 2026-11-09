@@ -58,7 +58,7 @@ impl Tooltip {
 #[derive(Component, Clone, Copy)]
 #[require(
     Popover = placement(PopoverSide::default(), &TooltipMetrics::default()),
-    GlobalZIndex = GlobalZIndex(TooltipMetrics::default().z_index),
+    GlobalZIndex = GlobalZIndex(TooltipMetrics::default().layer_gap),
     OverrideClip,
     Pickable = pass_through(),
     BackgroundColor = BackgroundColor(Color::NONE),

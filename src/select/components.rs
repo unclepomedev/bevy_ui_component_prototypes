@@ -172,7 +172,7 @@ pub(crate) struct SelectArrow;
     // `MenuPopup` asks for the menu role; this is only a wrapper around the list.
     AccessibilityNode = popup_accessibility(),
     Popover = popup_placement(&SelectMetrics::default()),
-    GlobalZIndex = GlobalZIndex(SelectMetrics::default().popup_z_index),
+    GlobalZIndex = GlobalZIndex(SelectMetrics::default().layer_gap),
     OverrideClip,
     Visibility = Visibility::Hidden,
     BackgroundColor = BackgroundColor(Color::NONE),

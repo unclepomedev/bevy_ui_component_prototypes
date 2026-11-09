@@ -1,7 +1,7 @@
 use super::components::{
     Tooltip, TooltipLabel, TooltipPopup, placement, popup_accessibility, popup_node,
 };
-use crate::common::theme_lookup::ThemeLookup;
+use crate::common::{layer::layer_above, theme_lookup::ThemeLookup};
 use bevy::{
     a11y::AccessibilityNode, ecs::query::QueryData, prelude::*, ui_widgets::popover::Popover,
 };
@@ -31,7 +31,7 @@ pub(super) fn sync_popup_boxes(
     }
 }
 
-/// Puts each tooltip on screen in the layer of its theme, or above the widget it is for.
+/// Puts each tooltip on screen `layer_gap` above the nearest layer that holds the widget it is for.
 pub(super) fn sync_popup_layers(
     lookup: ThemeLookup,
     layers: Query<&GlobalZIndex, Without<TooltipPopup>>,
@@ -40,11 +40,11 @@ pub(super) fn sync_popup_layers(
 ) {
     for (entity, popup, mut z) in &mut popups {
         let metrics = lookup.for_entity(popup.target).tooltip_metrics;
-        let above = parents
+        let ancestor = parents
             .iter_ancestors(entity)
             .find_map(|ancestor| layers.get(ancestor).ok())
-            .map_or(i32::MIN, |layer| layer.0.saturating_add(1));
-        z.set_if_neq(GlobalZIndex(above.max(metrics.z_index)));
+            .map(|layer| layer.0);
+        z.set_if_neq(GlobalZIndex(layer_above(ancestor, metrics.layer_gap)));
     }
 }
 

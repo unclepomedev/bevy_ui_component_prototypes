@@ -450,7 +450,7 @@ fn changing_the_tooltip_changes_what_is_on_screen() {
 }
 
 #[test]
-fn the_tooltip_sits_in_the_layer_of_the_theme_or_above_its_widget() {
+fn the_tooltip_sits_the_gap_of_the_theme_above_the_layer_that_holds_its_widget() {
     let mut app = timed_app(0.5);
     let (_, themed) = shown(&mut app, Tooltip::new("Save"));
     assert_eq!(
@@ -474,7 +474,10 @@ fn the_tooltip_sits_in_the_layer_of_the_theme_or_above_its_widget() {
     hover(&mut app, &[button]);
     run(&mut app, 2);
     let popup = popup(&mut app, button).unwrap();
-    assert!(app.world().get::<GlobalZIndex>(popup).map(|z| z.0) > Some(500));
+    assert_eq!(
+        app.world().get::<GlobalZIndex>(popup).map(|z| z.0),
+        Some(500 + 77)
+    );
 }
 
 #[test]

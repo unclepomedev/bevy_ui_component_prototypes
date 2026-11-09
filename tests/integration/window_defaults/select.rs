@@ -1,6 +1,14 @@
 //! A select in a window: its popup is above the window.
 
 use super::*;
+use bevy_ui_component_prototypes::{GlobalTheme, Theme};
+
+/// Windows with the default theme: its gap for a popup is smaller than the step between two windows.
+fn app_with_default_theme() -> App {
+    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
+    app.insert_resource(GlobalTheme(Theme::default()));
+    app
+}
 
 fn spawn_window_with_select(app: &mut App) -> Entity {
     app.world_mut()
@@ -37,7 +45,7 @@ fn popup_in(app: &mut App, window: Entity) -> Entity {
 
 #[test]
 fn the_popup_of_a_select_in_a_window_is_one_layer_above_the_window_and_escapes_its_clip() {
-    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
+    let mut app = app_with_default_theme();
     let [a, b] = [(); 2].map(|_| spawn_window_with_select(&mut app));
     app.update();
     app.update();
@@ -51,7 +59,7 @@ fn the_popup_of_a_select_in_a_window_is_one_layer_above_the_window_and_escapes_i
 
 #[test]
 fn the_popup_follows_its_window_when_the_window_is_raised() {
-    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
+    let mut app = app_with_default_theme();
     let [a, b] = [(); 2].map(|_| spawn_window_with_select(&mut app));
     app.update();
 

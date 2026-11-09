@@ -170,9 +170,9 @@ pub struct SelectMetrics {
     pub popup_padding: UiRect,
     /// Space between the trigger and the popup, in pixels.
     pub popup_gap: f32,
-    /// The popup's `GlobalZIndex` when no ancestor has one.
-    /// Otherwise, it uses the nearest ancestor's value plus one.
-    pub popup_z_index: i32,
+    /// How far above its nearest ancestor with a `GlobalZIndex` the popup sits.
+    /// Counted from layer 0 when no ancestor has one.
+    pub layer_gap: i32,
     /// How many options the list shows at most; with more, it scrolls. At least one.
     pub max_visible_options: usize,
 }
@@ -188,7 +188,7 @@ impl Default for SelectMetrics {
             option_padding: UiRect::horizontal(Val::Px(16.0)),
             popup_padding: UiRect::all(Val::Px(4.0)),
             popup_gap: 4.0,
-            popup_z_index: 50,
+            layer_gap: 1,
             max_visible_options: 8,
         }
     }

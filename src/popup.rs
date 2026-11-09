@@ -4,7 +4,6 @@ mod choose;
 mod components;
 mod events;
 mod focus;
-mod layer;
 mod style;
 mod sync;
 
@@ -17,7 +16,6 @@ pub use self::{
 
 use self::{
     focus::{focus_front_popup, keep_focus_in_popup},
-    layer::sync_popup_layer,
     sync::{sync_popup_buttons, sync_popup_style},
 };
 use bevy::{prelude::*, ui::UiSystems};
@@ -27,13 +25,7 @@ impl Plugin for PopupPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(keep_focus_in_popup).add_systems(
             PostUpdate,
-            (
-                sync_popup_layer,
-                sync_popup_style,
-                sync_popup_buttons,
-                focus_front_popup.after(sync_popup_layer),
-            )
-                .before(UiSystems::Prepare),
+            (sync_popup_style, sync_popup_buttons, focus_front_popup).before(UiSystems::Prepare),
         );
     }
 }

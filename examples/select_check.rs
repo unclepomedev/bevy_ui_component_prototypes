@@ -278,9 +278,9 @@ fn swap_global_theme(mut global: ResMut<GlobalTheme>, mut swapped: Local<bool>) 
 /// The global theme of this example. When `swapped`, the select box is orange, so that the change is easy to see.
 fn theme_for(swapped: bool) -> Theme {
     let mut theme = Theme::default();
-    // Where the open lists are in the stacking order (`GlobalZIndex`). They have to be in front of the rows that
-    // come after their select; the default does that already, and this is how to change it.
-    theme.select_metrics.popup_z_index = 10;
+    // How far above what holds them the open lists sit in the stacking order (`GlobalZIndex`). They have to be in
+    // front of the rows that come after their select; the default does that already, and this is how to change it.
+    theme.select_metrics.layer_gap = 10;
     if swapped {
         let bg = &mut theme.select.trigger.bg;
         bg.normal = Color::srgb(0.85, 0.45, 0.10);
