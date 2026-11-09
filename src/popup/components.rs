@@ -1,16 +1,21 @@
 use super::style::{PopupMetrics, PopupShape};
 use bevy::{input_focus::tab_navigation::TabGroup, picking::Pickable, prelude::*};
 
+/// The `GlobalZIndex` of a popup unless the spawner sets one.
+const POPUP_LAYER: i32 = 300;
+
 /// Root of a modal popup: a scrim that covers its parent, centers the panel, and keeps the pointer
 /// from reaching what is behind it. Spawn it without a parent to cover the screen. Despawn it to dismiss.
 ///
 /// Tab stays inside it, also after a press on it. The input focus is kept in the front popup that `popup()` builds.
 /// Giving the focus back after the last one is despawned is up to the app.
 ///
-/// Its `GlobalZIndex` is the one it is spawned with. Without one, it takes `popup_metrics.z_index` of its theme.
+/// Its `GlobalZIndex` is the one it is spawned with, or 300 without one: above the windows of a default
+/// `WindowDefaultsPlugin`, which start at 10 and rise by 10.
 #[derive(Component, Clone, Copy, Debug, Default)]
 #[require(
     Node = popup_root_node(),
+    GlobalZIndex = GlobalZIndex(POPUP_LAYER),
     BackgroundColor,
     Pickable = Pickable::default(),
     TabGroup = TabGroup::modal()

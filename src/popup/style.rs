@@ -63,8 +63,6 @@ pub struct PopupMetrics {
     /// The width of each button.
     pub button_width: Val,
     pub font_size: FontSize,
-    /// The `GlobalZIndex` of the popup unless the spawner sets one.
-    pub z_index: i32,
 }
 
 impl Default for PopupMetrics {
@@ -77,8 +75,6 @@ impl Default for PopupMetrics {
             button_gap: SPACING_LG,
             button_width: Val::Px(180.0),
             font_size: FONT_SIZE_MD,
-            // Above the windows of a default `WindowDefaultsPlugin`, which start at 10 and rise by 10.
-            z_index: 300,
         }
     }
 }

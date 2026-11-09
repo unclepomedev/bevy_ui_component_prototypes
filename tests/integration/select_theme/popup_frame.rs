@@ -136,7 +136,7 @@ fn a_theme_change_moves_the_popup_away_from_the_select() {
 }
 
 #[test]
-fn the_popup_takes_its_place_in_the_stacking_order_from_the_theme() {
+fn without_an_ancestor_layer_the_popup_is_the_gap_of_the_theme_above_layer_zero() {
     let mut app = test_app();
     let root = spawn_fruit(&mut app);
     app.update();
@@ -144,7 +144,7 @@ fn the_popup_takes_its_place_in_the_stacking_order_from_the_theme() {
     assert_eq!(z_index(&app, popup), 42);
 
     let mut theme = probe_theme();
-    theme.select_metrics.popup_z_index = 7;
+    theme.select_metrics.layer_gap = 7;
     app.insert_resource(GlobalTheme(theme));
     app.update();
 
@@ -152,7 +152,8 @@ fn the_popup_takes_its_place_in_the_stacking_order_from_the_theme() {
 }
 
 #[test]
-fn the_popup_is_one_above_the_nearest_ancestor_with_a_layer() {
+fn the_popup_is_the_gap_above_the_nearest_ancestor_with_a_layer() {
+    let gap = probe_theme().select_metrics.layer_gap;
     let mut app = test_app();
     let outer = app
         .world_mut()
@@ -165,15 +166,15 @@ fn the_popup_is_one_above_the_nearest_ancestor_with_a_layer() {
     let root = spawn_fruit_under(&mut app, panel);
 
     app.update();
-    assert_eq!(z_index(&app, popup(&app, root)), 8);
+    assert_eq!(z_index(&app, popup(&app, root)), 7 + gap);
 
     app.world_mut().entity_mut(panel).insert(GlobalZIndex(20));
     app.update();
-    assert_eq!(z_index(&app, popup(&app, root)), 21);
+    assert_eq!(z_index(&app, popup(&app, root)), 20 + gap);
 }
 
 #[test]
-fn an_ancestor_layer_wins_over_the_theme_value() {
+fn the_gap_above_an_ancestor_layer_follows_the_theme() {
     let mut app = test_app();
     let panel = app
         .world_mut()
@@ -183,11 +184,11 @@ fn an_ancestor_layer_wins_over_the_theme_value() {
     app.update();
 
     let mut theme = probe_theme();
-    theme.select_metrics.popup_z_index = 99;
+    theme.select_metrics.layer_gap = 99;
     app.insert_resource(GlobalTheme(theme));
     app.update();
 
-    assert_eq!(z_index(&app, popup(&app, root)), 8);
+    assert_eq!(z_index(&app, popup(&app, root)), 7 + 99);
 }
 
 #[test]

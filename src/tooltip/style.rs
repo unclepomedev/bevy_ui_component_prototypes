@@ -55,8 +55,9 @@ pub struct TooltipMetrics {
     /// Seconds after a tooltip has hidden during which the next one shows without waiting,
     /// so that moving along a row of widgets does not wait at every one. `0.0` turns it off.
     pub warmup: f32,
-    /// The layer of a tooltip, unless the widget sits in a layer above it. See [`GlobalZIndex`].
-    pub z_index: i32,
+    /// How far above its nearest ancestor with a [`GlobalZIndex`] the tooltip sits.
+    /// Counted from layer 0 when no ancestor has one.
+    pub layer_gap: i32,
 }
 
 impl Default for TooltipMetrics {
@@ -68,7 +69,7 @@ impl Default for TooltipMetrics {
             gap: 6.0,
             delay: 0.5,
             warmup: 0.3,
-            z_index: 100,
+            layer_gap: 2,
         }
     }
 }

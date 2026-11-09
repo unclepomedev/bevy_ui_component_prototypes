@@ -107,7 +107,7 @@ pub fn probe_theme() -> Theme {
             option_padding: UiRect::all(Val::Px(6.0)),
             popup_padding: UiRect::all(Val::Px(3.0)),
             popup_gap: 7.0,
-            popup_z_index: 42,
+            layer_gap: 42,
             max_visible_options: 2,
         },
         scroll_indicator: ScrollIndicatorStyle {
@@ -170,7 +170,7 @@ pub fn probe_theme() -> Theme {
             gap: 13.0,
             delay: 0.4,
             warmup: 0.25,
-            z_index: 77,
+            layer_gap: 77,
         },
         window: WindowStyle {
             bg: Color::srgb(0.7, 0.1, 0.1),
@@ -227,7 +227,6 @@ pub fn probe_theme() -> Theme {
             button_gap: Val::Px(21.0),
             button_width: Val::Px(123.0),
             font_size: FontSize::Px(18.0),
-            z_index: 777,
         },
         font: FontSource::monospace(),
         font_smoothing: FontSmoothing::AntiAliased,
