@@ -13,8 +13,8 @@ use bevy::{
     ui_widgets::popover::{Popover, PopoverSide},
 };
 use bevy_ui_component_prototypes::{
-    Theme, button::icon_button, text_field::text_field, toggle_switch::toggle_switch,
-    tooltip::Tooltip,
+    Theme, button::icon_button, common::FocusIndicator, text_field::text_field,
+    toggle_switch::toggle_switch, tooltip::Tooltip,
 };
 use std::time::Duration;
 
@@ -387,6 +387,72 @@ fn a_focus_a_click_gave_shows_nothing() {
     app.insert_resource(InputFocusVisible(true));
     run(&mut app, 2);
     assert!(popup(&mut app, button).is_some());
+}
+
+/// The game of this bug draws the focus ring always, and a click gives the widget the focus.
+#[test]
+fn a_click_that_focused_the_widget_leaves_the_tooltip_to_the_pointer_under_always() {
+    let mut app = timed_app(0.5);
+    app.insert_resource(FocusIndicator::Always);
+    let button = spawn_button(&mut app, Tooltip::new("Save"));
+    hover(&mut app, &[button]);
+    run(&mut app, 2);
+    assert!(popup(&mut app, button).is_some());
+
+    // Start from visible keyboard focus; a press then hides it, as Bevy's click-to-focus does.
+    focus(&mut app, button, true);
+    let mut mouse = ButtonInput::<MouseButton>::default();
+    mouse.press(MouseButton::Left);
+    app.insert_resource(mouse);
+    app.insert_resource(InputFocusVisible(false));
+    run(&mut app, 1);
+    assert_eq!(popup(&mut app, button), None);
+
+    app.world_mut()
+        .resource_mut::<ButtonInput<MouseButton>>()
+        .clear();
+    hover(&mut app, &[]);
+    run(&mut app, 4);
+    assert_eq!(
+        popup(&mut app, button),
+        None,
+        "the focus is not the pointer"
+    );
+
+    hover(&mut app, &[button]);
+    run(&mut app, 4);
+    assert!(
+        popup(&mut app, button).is_some(),
+        "it shows again once left"
+    );
+}
+
+#[test]
+fn a_visible_keyboard_focus_shows_the_tooltip_under_always() {
+    let mut app = timed_app(0.5);
+    app.insert_resource(FocusIndicator::Always);
+    let button = spawn_button(&mut app, Tooltip::new("Save"));
+    focus(&mut app, button, true);
+
+    run(&mut app, 4);
+    assert!(popup(&mut app, button).is_some());
+}
+
+#[test]
+fn the_focus_a_click_gave_comes_back_as_no_tooltip_under_always() {
+    let mut app = timed_app(0.5);
+    app.insert_resource(FocusIndicator::Always);
+    let clicked = spawn_button(&mut app, Tooltip::new("clicked"));
+    let other = spawn_button(&mut app, Tooltip::new("other"));
+    focus(&mut app, clicked, false);
+
+    hover(&mut app, &[other]);
+    run(&mut app, 4);
+    assert!(popup(&mut app, other).is_some());
+
+    hover(&mut app, &[]);
+    run(&mut app, 4);
+    assert_eq!(popup(&mut app, clicked), None);
 }
 
 #[test]

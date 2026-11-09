@@ -1,5 +1,4 @@
 use super::components::Tooltip;
-use crate::common::focus::FocusIndicator;
 use bevy::{
     ecs::system::SystemParam,
     input_focus::{InputFocus, InputFocusVisible},
@@ -31,7 +30,6 @@ pub(super) fn ask_for_tooltip(
     pointer: MousePointer,
     focus: Option<Res<InputFocus>>,
     focus_visible: Option<Res<InputFocusVisible>>,
-    indicator: Res<FocusIndicator>,
     tooltips: Query<&Tooltip>,
     parents: Query<&ChildOf>,
     mut wanted: ResMut<Wanted>,
@@ -40,7 +38,9 @@ pub(super) fn ask_for_tooltip(
     let focused = focus
         .as_deref()
         .and_then(InputFocus::get)
-        .filter(|_| indicator.is_visible(focus_visible.as_deref()))
+        // The focus is asked only while it is the keyboard's: `FocusIndicator::Always` draws a ring for a click too,
+        // but a widget the pointer left is not a widget the user is on.
+        .filter(|_| focus_visible.as_deref().is_some_and(|visible| visible.0))
         .and_then(|entity| owner(entity, &tooltips, &parents));
 
     wanted.widget = hovered.or(focused);
