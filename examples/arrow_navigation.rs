@@ -145,7 +145,6 @@ fn toggle() -> impl Bundle {
     (
         toggle_switch().build(),
         AutoDirectionalNavigation::default(),
-        AccessibleLabel::new("Toggle"),
         Tag("Toggle"),
     )
 }
@@ -155,7 +154,6 @@ fn disabled_toggle() -> impl Bundle {
     (
         toggle_switch().build(),
         AutoDirectionalNavigation::default(),
-        AccessibleLabel::new("Disabled toggle"),
         InteractionDisabled,
         Checked,
     )
@@ -165,7 +163,6 @@ fn range_slider() -> impl Bundle {
     (
         slider().range(0.0, 100.0).step(10.0).value(50.0).build(),
         AutoDirectionalNavigation::default(),
-        AccessibleLabel::new("Slider"),
         Tag("Slider"),
     )
 }

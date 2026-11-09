@@ -6,8 +6,8 @@ use crate::{
     support::{outline, test_app},
 };
 use bevy::{
-    a11y::AccessibilityNode, input_focus::tab_navigation::TabIndex,
-    picking::hover::PickingInteraction, prelude::*, ui_widgets::Button,
+    input_focus::tab_navigation::TabIndex, picking::hover::PickingInteraction, prelude::*,
+    ui_widgets::Button,
 };
 use bevy_ui_component_prototypes::button::{ButtonVariantId, icon_button};
 
@@ -18,7 +18,6 @@ fn icon_button_carries_the_bevy_button_behavior_components() {
 
     let world = app.world();
     assert!(world.get::<Button>(button).is_some());
-    assert!(world.get::<AccessibilityNode>(button).is_some());
     assert!(world.get::<PickingInteraction>(button).is_some());
     assert_eq!(world.get::<TabIndex>(button).map(|t| t.0), Some(0));
     // `Outline::default()` would be a visible white line; the ring must start hidden.

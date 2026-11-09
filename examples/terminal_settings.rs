@@ -260,7 +260,6 @@ fn spawn_volume_row(commands: &mut Commands, panel: Entity) {
             .step(VOLUME_STEP)
             .value(80.0)
             .build(),
-        AccessibleLabel::new("Volume"),
         FirstFocus,
         AutoDirectionalNavigation::default(),
         ChildOf(slot),

@@ -132,9 +132,8 @@ fn setup(mut commands: Commands) {
         });
 }
 
-/// The label is a sibling `Text`: the crate's slider is the rail, fill and thumb only. Screen readers
-/// do not pair the two, so the slider gets an `AccessibleLabel` of its own. The slider takes the full
-/// width of the box it is put in.
+/// The label is a sibling `Text`: the crate's slider is the rail, fill and thumb only. The slider takes
+/// the full width of the box it is put in.
 fn spawn_row(
     root: &mut ChildSpawnerCommands,
     label: &'static str,
@@ -160,12 +159,7 @@ fn spawn_row(
             ..default()
         })
         .with_children(|slot| {
-            slot.spawn((
-                builder.build(),
-                AccessibleLabel::new(label),
-                Tag(label),
-                extra,
-            ));
+            slot.spawn((builder.build(), Tag(label), extra));
         });
     });
 }
@@ -198,11 +192,7 @@ fn spawn_scoped_panel(root: &mut ChildSpawnerCommands) {
                 ..default()
             })
             .with_children(|slot| {
-                slot.spawn((
-                    slider().value(0.5).build(),
-                    AccessibleLabel::new("Scoped (own Theme)"),
-                    Tag("Scoped"),
-                ));
+                slot.spawn((slider().value(0.5).build(), Tag("Scoped")));
             });
     });
 }
@@ -240,11 +230,7 @@ fn spawn_shaped_panel(root: &mut ChildSpawnerCommands) {
                 ..default()
             })
             .with_children(|slot| {
-                slot.spawn((
-                    slider().value(0.5).build(),
-                    AccessibleLabel::new("Square, no thumb"),
-                    Tag("Square"),
-                ));
+                slot.spawn((slider().value(0.5).build(), Tag("Square")));
             });
     });
 }

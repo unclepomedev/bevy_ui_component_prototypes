@@ -1,4 +1,4 @@
-//! Tests of the keyboard and the screen reader: where Tab goes, and what a popup is called.
+//! Tests of the keyboard: where Tab goes.
 
 use super::{
     buttons::{buttons, spawn_confirm_popup},

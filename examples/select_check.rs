@@ -202,7 +202,7 @@ fn spawn_row(root: &mut ChildSpawnerCommands, name: &'static str, widget: impl B
             ..default()
         })
         .with_children(|slot| {
-            slot.spawn((widget, AccessibleLabel::new(name)));
+            slot.spawn(widget);
         });
     });
 }
