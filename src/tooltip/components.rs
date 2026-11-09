@@ -1,12 +1,15 @@
 use super::style::{TooltipMetrics, TooltipShape};
 use crate::common::picking::pass_through;
-use accesskit::{Node as AccessKitNode, Role};
 use bevy::{
-    a11y::AccessibilityNode,
+    ecs::system::EntityCommands,
     picking::Pickable,
     prelude::*,
     ui::OverrideClip,
     ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide},
+};
+use std::{
+    fmt::{Debug, Formatter, Result as FmtResult},
+    sync::Arc,
 };
 
 /// How close to the window edge a tooltip may go, in pixels.
@@ -20,11 +23,13 @@ const WINDOW_MARGIN: f32 = 4.0;
 /// - The keyboard focus counts as long as its indicator is visible (see `FocusIndicator`).
 /// - Only the nearest `Tooltip` up from the hovered or focused entity shows, so a child can have its own.
 /// - A disabled widget still shows its tooltip: that is the place to say why it is disabled.
-/// - Changing the component changes the tooltip on screen. Where the entity has an `AccessibilityNode`, the text
-///   is also its description, so that screen readers get it without hovering.
+/// - Changing the component changes the tooltip on screen.
 ///
 /// Add the component by itself; the crate spawns the tooltip as a child of the widget when it shows,
 /// and despawns it when it hides.
+///
+/// For a text that has to follow something the app owns (the language, say), give the label a bundle
+/// with [`Tooltip::bundle`] instead of a string.
 #[derive(Component, Clone, Debug, PartialEq)]
 pub struct Tooltip {
     pub text: String,
@@ -32,6 +37,7 @@ pub struct Tooltip {
     pub side: PopoverSide,
     /// Seconds to wait before showing. `None` takes the theme's `delay`.
     pub delay: Option<f32>,
+    label: Option<LabelBundle>,
 }
 
 impl Tooltip {
@@ -40,7 +46,23 @@ impl Tooltip {
             text: text.into(),
             side: PopoverSide::default(),
             delay: None,
+            label: None,
         }
+    }
+
+    /// A tooltip whose text is left to `bundle`, which is added to the label each time the tooltip shows.
+    /// Give it a `Text`, or a component that makes one. The crate still sets the color and the font of the
+    /// text, but not its words, and `text` stays empty.
+    pub fn bundle(bundle: impl Bundle + Clone) -> Self {
+        Self {
+            label: Some(LabelBundle::new(bundle)),
+            ..Self::new(String::new())
+        }
+    }
+
+    /// Whether the words come from a bundle, so that `text` is not written over them.
+    pub(crate) fn has_bundle(&self) -> bool {
+        self.label.is_some()
     }
 
     pub fn side(mut self, side: PopoverSide) -> Self {
@@ -54,6 +76,30 @@ impl Tooltip {
     }
 }
 
+/// What the label of a tooltip is given when it shows. Two are equal when one is the clone of the other.
+#[derive(Clone)]
+struct LabelBundle(Arc<dyn Fn(&mut EntityCommands) + Send + Sync>);
+
+impl LabelBundle {
+    fn new(bundle: impl Bundle + Clone) -> Self {
+        Self(Arc::new(move |label| {
+            label.insert(bundle.clone());
+        }))
+    }
+}
+
+impl Debug for LabelBundle {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str("LabelBundle")
+    }
+}
+
+impl PartialEq for LabelBundle {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+
 /// The box that shows a tooltip. The child of the widget it is for.
 #[derive(Component, Clone, Copy)]
 #[require(
@@ -63,7 +109,6 @@ impl Tooltip {
     Pickable = pass_through(),
     BackgroundColor = BackgroundColor(Color::NONE),
     BorderColor = BorderColor::all(Color::NONE),
-    AccessibilityNode = popup_accessibility(""),
     Node = popup_node(&TooltipMetrics::default(), &TooltipShape::default())
 )]
 pub(crate) struct TooltipPopup {
@@ -75,15 +120,17 @@ pub(crate) struct TooltipPopup {
 #[derive(Component, Clone, Copy, Default)]
 pub(crate) struct TooltipLabel;
 
-/// Spawns the tooltip of `target` as its child, ready for the sync to give it its look and its text.
-pub(crate) fn spawn_popup(commands: &mut Commands, target: Entity) -> Entity {
-    commands
-        .spawn((
-            TooltipPopup { target },
-            ChildOf(target),
-            children![(TooltipLabel, Text::new(String::new()), pass_through())],
-        ))
-        .id()
+/// Spawns the tooltip `tooltip` of `target` as its child, ready for the sync to give it its look and its text.
+pub(crate) fn spawn_popup(commands: &mut Commands, target: Entity, tooltip: &Tooltip) -> Entity {
+    let popup = commands
+        .spawn((TooltipPopup { target }, ChildOf(target)))
+        .id();
+    let mut label = commands.spawn((TooltipLabel, pass_through(), ChildOf(popup)));
+    if let Some(bundle) = &tooltip.label {
+        bundle.0(&mut label);
+    }
+    label.insert_if_new(Text::new(String::new()));
+    popup
 }
 
 /// The popup floats over what is below it, shrunk to its text.
@@ -115,13 +162,6 @@ pub(crate) fn placement(side: PopoverSide, metrics: &TooltipMetrics) -> Popover 
     }
 }
 
-/// A tooltip for a screen reader, with the text it shows.
-pub(crate) fn popup_accessibility(text: &str) -> AccessibilityNode {
-    let mut node = AccessKitNode::new(Role::Tooltip);
-    node.set_label(text);
-    AccessibilityNode(node)
-}
-
 // ============================================================================================
 // UNIT TESTS
 // ============================================================================================
@@ -135,6 +175,21 @@ mod tests {
         assert_eq!(tooltip.text, "Save");
         assert_eq!(tooltip.side, PopoverSide::Bottom);
         assert_eq!(tooltip.delay, None);
+    }
+
+    #[test]
+    fn a_tooltip_of_a_bundle_has_no_text_of_its_own() {
+        let tooltip = Tooltip::bundle(Text::new("Save"));
+        assert_eq!(tooltip.text, "");
+        assert!(tooltip.has_bundle());
+        assert!(!Tooltip::new("Save").has_bundle());
+    }
+
+    #[test]
+    fn a_clone_is_equal_to_its_tooltip_but_another_bundle_is_not() {
+        let tooltip = Tooltip::bundle(Text::new("Save"));
+        assert_eq!(tooltip, tooltip.clone());
+        assert_ne!(tooltip, Tooltip::bundle(Text::new("Save")));
     }
 
     #[test]

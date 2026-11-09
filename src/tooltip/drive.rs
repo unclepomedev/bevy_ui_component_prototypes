@@ -55,7 +55,9 @@ pub(super) fn drive_tooltips(
     {
         commands.entity(popup).try_despawn();
     }
-    if let Some(target) = step.show {
-        state.popup = Some(spawn_popup(&mut commands, target));
+    if let Some(target) = step.show
+        && let Ok(tooltip) = tooltips.get(target)
+    {
+        state.popup = Some(spawn_popup(&mut commands, target, tooltip));
     }
 }

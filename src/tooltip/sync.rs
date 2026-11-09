@@ -1,10 +1,6 @@
-use super::components::{
-    Tooltip, TooltipLabel, TooltipPopup, placement, popup_accessibility, popup_node,
-};
+use super::components::{Tooltip, TooltipLabel, TooltipPopup, placement, popup_node};
 use crate::common::{layer::layer_above, theme_lookup::ThemeLookup};
-use bevy::{
-    a11y::AccessibilityNode, ecs::query::QueryData, prelude::*, ui_widgets::popover::Popover,
-};
+use bevy::{ecs::query::QueryData, prelude::*, ui_widgets::popover::Popover};
 
 /// Gives the box of each tooltip on screen its colors, its shape and its place.
 pub(super) fn sync_popup_boxes(
@@ -24,10 +20,6 @@ pub(super) fn sync_popup_boxes(
         row.bg.set_if_neq(BackgroundColor(style.bg));
         row.border.set_if_neq(BorderColor::all(style.border));
         write_layout(&mut row.node, &popup_node(&metrics, &style.shape));
-
-        if row.accessibility.0.label() != Some(tooltip.text.as_str()) {
-            *row.accessibility = popup_accessibility(&tooltip.text);
-        }
     }
 }
 
@@ -64,7 +56,7 @@ pub(super) fn sync_popup_labels(
         };
         let theme = lookup.for_entity(popup.target);
 
-        if text.0 != tooltip.text {
+        if !tooltip.has_bundle() && text.0 != tooltip.text {
             text.0.clone_from(&tooltip.text);
         }
         color.set_if_neq(TextColor(theme.tooltip.fg));
@@ -105,5 +97,4 @@ pub(super) struct PopupBox {
     bg: &'static mut BackgroundColor,
     border: &'static mut BorderColor,
     node: &'static mut Node,
-    accessibility: &'static mut AccessibilityNode,
 }
