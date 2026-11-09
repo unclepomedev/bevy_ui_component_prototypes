@@ -3,20 +3,17 @@ use super::{
     variant::ProgressVariant,
 };
 use crate::common::picking::pass_through;
-use accesskit::{Node as AccessKitNode, Role};
-use bevy::{a11y::AccessibilityNode, picking::Pickable, prelude::*};
+use bevy::{picking::Pickable, prelude::*};
 
 /// A themed horizontal bar: a rail and a filled part of it that follows a value.
 ///
 /// It is controlled and has no input: change [`ProgressValue`] (and [`ProgressRange`]) and the look follows.
 /// Colors and shape come from the theme; pick a look with [`ProgressVariant`].
-/// Text placed next to the bar is not associated with it: give the bar a name with `AccessibleLabel`.
 #[derive(Component)]
 #[require(
     ProgressValue,
     ProgressRange,
     ProgressVariant,
-    AccessibilityNode(AccessKitNode::new(Role::ProgressIndicator)),
     Pickable = pass_through(),
     Node = progress_node(&ProgressShape::default().geometry())
 )]

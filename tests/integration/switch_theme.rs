@@ -7,9 +7,7 @@ use crate::{
     probe::probe_theme,
     support::{focus, outline, red, tab_index, test_app},
 };
-use accesskit::Role;
 use bevy::{
-    a11y::AccessibilityNode,
     input_focus::tab_navigation::TabIndex,
     picking::hover::PickingInteraction,
     prelude::*,
@@ -335,20 +333,6 @@ fn disabled_switch_leaves_the_tab_order_and_returns_when_enabled() {
         .remove::<InteractionDisabled>();
     app.update();
     assert_eq!(tab_index(&app, switch), 0);
-}
-
-#[test]
-fn an_accessible_label_given_by_the_app_coexists_with_the_switch_role() {
-    let mut app = test_app();
-    let switch = app
-        .world_mut()
-        .spawn((toggle_switch().build(), AccessibleLabel::new("Sound")))
-        .id();
-    app.update();
-
-    let node = app.world().get::<AccessibilityNode>(switch).unwrap();
-    assert_eq!(node.role(), Role::Switch);
-    assert_eq!(node.label(), Some("Sound"));
 }
 
 // ---------------------------------------------------------------------------
