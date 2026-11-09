@@ -27,8 +27,7 @@ impl Plugin for WindowStylePlugin {
         app.add_systems(
             PostUpdate,
             (sync_window_rect, sync_window_style).before(UiSystems::Prepare),
-        )
-        .add_systems(PostUpdate, super::accessibility::name_window);
+        );
     }
 }
 

@@ -6,7 +6,6 @@ use super::{
 };
 use crate::support::test_app;
 use bevy::{
-    a11y::AccessibilityNode,
     ecs::system::RunSystemOnce,
     input_focus::{
         AcquireFocus, InputFocus, on_window_acquire_focus_clear,
@@ -24,12 +23,6 @@ const FRONT_Z: i32 = 1000;
 /// A layer below it, like the one the theme gives.
 const BEHIND_Z: i32 = 300;
 
-fn label_of(app: &App, entity: Entity) -> Option<String> {
-    app.world()
-        .get::<AccessibleLabel>(entity)
-        .map(|label| label.0.clone())
-}
-
 /// Without the visibility plugins nothing is ever propagated, and Tab navigation skips hidden entities.
 fn show_all(app: &mut App, entities: &[Entity]) {
     for entity in entities {
@@ -46,27 +39,6 @@ fn navigate(app: &mut App, from: Entity, action: NavAction) -> Entity {
         })
         .unwrap()
         .expect("tab navigation finds a target")
-}
-
-#[test]
-fn a_popup_is_a_modal_dialog_named_by_its_message() {
-    let mut app = test_app();
-    let root = spawn_confirm_popup(&mut app);
-
-    let node = app.world().get::<AccessibilityNode>(root).unwrap();
-    assert_eq!(node.role(), accesskit::Role::Dialog);
-    assert!(node.is_modal());
-    assert_eq!(label_of(&app, root).as_deref(), Some("Delete?"));
-}
-
-#[test]
-fn a_button_is_named_by_its_label() {
-    let mut app = test_app();
-    let root = spawn_confirm_popup(&mut app);
-
-    let buttons = buttons(&app, root);
-    assert_eq!(label_of(&app, buttons[0]).as_deref(), Some("Delete"));
-    assert_eq!(label_of(&app, buttons[1]).as_deref(), Some("Keep"));
 }
 
 #[test]

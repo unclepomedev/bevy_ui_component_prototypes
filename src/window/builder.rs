@@ -1,9 +1,8 @@
 use super::{
-    accessibility::{CLOSE_TAB_INDEX, window_node_role},
     close::close_on_activate,
     components::{
-        UiWindow, WindowContent, WindowGrip, WindowPart, WindowRect, WindowTitle, close_node,
-        content_node, glyph_bar_node, glyph_bar_transform, glyph_box_node, grip_node,
+        CLOSE_TAB_INDEX, UiWindow, WindowContent, WindowGrip, WindowPart, WindowRect, WindowTitle,
+        close_node, content_node, glyph_bar_node, glyph_bar_transform, glyph_box_node, grip_node,
         title_bar_node, title_box_node, title_node,
     },
     drag::drag_title_bar,
@@ -69,7 +68,6 @@ impl WindowBuilder {
         } = self;
         (
             UiWindow,
-            window_node_role(),
             // Tab goes through the windows one after the other, each in its own order.
             TabGroup::new(0),
             rect,
@@ -144,7 +142,6 @@ fn spawn_close(bar: &mut RelatedSpawner<ChildOf>, style: &WindowStyle, metrics: 
         BackgroundColor(Color::NONE),
         PickingInteraction::default(),
         bevy::ui_widgets::Button,
-        AccessibleLabel::new("Close"),
         TabIndex(CLOSE_TAB_INDEX),
         KeyboardNavigable,
         hidden_outline(),

@@ -1,4 +1,3 @@
-mod accessibility;
 mod builder;
 mod close;
 mod components;

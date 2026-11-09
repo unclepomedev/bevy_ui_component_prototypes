@@ -15,7 +15,7 @@ use bevy::{
 /// The text is in the child marked [`TextFieldInput`], as `EditableText`. Its entity is the one that has
 /// the input focus. The frame itself is not focusable, but pressing on it focuses the input.
 ///
-/// `InteractionDisabled` and `AccessibleLabel` go on the field: they are forwarded to the input. A disabled
+/// `InteractionDisabled` goes on the field: it is forwarded to the input. A disabled
 /// field takes no focus, no selection and no copy; `read_only` is for a text that can be copied.
 ///
 /// The field reports its text as [`bevy::ui_widgets::ValueChange<String>`] with the field as `source`: while

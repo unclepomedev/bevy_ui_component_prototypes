@@ -116,6 +116,9 @@ pub(crate) fn title_bar_node(
     }
 }
 
+/// The tab index of the close button: after everything in the window.
+pub(super) const CLOSE_TAB_INDEX: i32 = i32::MAX;
+
 pub(crate) fn close_node(metrics: &WindowMetrics, style: &WindowStyle) -> Node {
     Node {
         width: px(metrics.close_width),

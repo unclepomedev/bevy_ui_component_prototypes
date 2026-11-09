@@ -1,5 +1,4 @@
 use super::{
-    accessibility::popup_node_role,
     choose::choose_on_activate,
     components::{
         PopupButton, PopupButtons, PopupChoice, PopupMessage, PopupPanel, PopupRoot,
@@ -62,8 +61,6 @@ impl PopupBuilder {
         let Self { message, buttons } = self;
         (
             PopupRoot,
-            popup_node_role(),
-            AccessibleLabel::new(message.clone()),
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 parent.spawn(PopupPanel).with_children(|panel| {
                     panel.spawn((
@@ -97,8 +94,7 @@ fn spawn_buttons(panel: &mut RelatedSpawner<ChildOf>, buttons: Vec<ButtonSpec>) 
             } in buttons
             {
                 row.spawn((
-                    icon_button().label(label.clone()).variant(variant).build(),
-                    AccessibleLabel::new(label),
+                    icon_button().label(label).variant(variant).build(),
                     PopupButton { choice },
                 ))
                 .observe(choose_on_activate);
