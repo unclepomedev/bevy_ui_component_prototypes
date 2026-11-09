@@ -15,6 +15,7 @@
 //!   6. Tab moves the keyboard focus along the buttons: the tooltip of the focused one appears next to its focus ring.
 //!      After a click the ring is hidden and so is the tooltip of the focus.
 //!   7. [T] swaps the global theme: the tooltips change their colors and wait for a different time.
+//!   8. "Bundle" shows a tooltip whose label comes from a bundle, with the words the bundle gives it.
 
 use bevy::{
     input::common_conditions::input_just_pressed,
@@ -85,6 +86,10 @@ fn setup(mut commands: Commands) {
                 row.spawn((
                     icon_button().label("Instant").build(),
                     Tooltip::new("No wait").delay(0.0),
+                ));
+                row.spawn((
+                    icon_button().label("Bundle").build(),
+                    Tooltip::bundle(Text::new("Words from a bundle")),
                 ));
             });
             root.spawn((

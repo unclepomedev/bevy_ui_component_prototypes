@@ -56,7 +56,7 @@ pub(super) fn sync_popup_labels(
         };
         let theme = lookup.for_entity(popup.target);
 
-        if text.0 != tooltip.text {
+        if !tooltip.has_bundle() && text.0 != tooltip.text {
             text.0.clone_from(&tooltip.text);
         }
         color.set_if_neq(TextColor(theme.tooltip.fg));

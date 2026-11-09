@@ -126,6 +126,40 @@ fn the_delay_of_a_tooltip_replaces_the_one_of_the_theme() {
 }
 
 #[test]
+fn a_bundle_gives_the_label_its_words_each_time_the_tooltip_shows() {
+    let mut app = timed_app(0.5);
+    let button = spawn_button(&mut app, Tooltip::bundle(Text::new("From a bundle")));
+    hover(&mut app, &[button]);
+
+    run(&mut app, 4);
+    let first = popup(&mut app, button).expect("the tooltip shows");
+    assert_eq!(popup_text(&app, first), "From a bundle");
+
+    hover(&mut app, &[]);
+    run(&mut app, 1);
+    hover(&mut app, &[button]);
+    run(&mut app, 4);
+    let second = popup(&mut app, button).expect("it shows again");
+    assert_eq!(popup_text(&app, second), "From a bundle");
+}
+
+#[test]
+fn the_sync_leaves_the_words_of_a_bundle_alone_but_styles_them() {
+    let mut app = timed_app(0.5);
+    let button = spawn_button(&mut app, Tooltip::bundle(Text::new("Words")));
+    hover(&mut app, &[button]);
+    run(&mut app, 4);
+
+    let popup = popup(&mut app, button).unwrap();
+    let label = popup_label(&app, popup);
+    assert_eq!(popup_text(&app, popup), "Words");
+    assert_eq!(
+        app.world().get::<TextColor>(label).unwrap().0,
+        Color::srgb(0.62, 0.52, 0.53)
+    );
+}
+
+#[test]
 fn leaving_the_widget_hides_the_tooltip() {
     let mut app = timed_app(0.5);
     let button = spawn_button(&mut app, Tooltip::new("Save"));
