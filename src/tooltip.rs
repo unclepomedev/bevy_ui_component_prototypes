@@ -1,5 +1,4 @@
 mod components;
-mod describe;
 mod drive;
 mod style;
 mod sync;
@@ -12,7 +11,6 @@ pub use self::{
 };
 
 use self::{
-    describe::{clear_description, describe_targets},
     drive::{TooltipState, drive_tooltips, forget_lost_popup},
     sync::{sync_popup_boxes, sync_popup_labels, sync_popup_layers},
     wanted::{Wanted, ask_for_tooltip, watch_dismiss},
@@ -36,14 +34,7 @@ impl Plugin for TooltipPlugin {
             )
             .add_systems(
                 PostUpdate,
-                (
-                    sync_popup_boxes,
-                    sync_popup_layers,
-                    sync_popup_labels,
-                    describe_targets,
-                )
-                    .before(UiSystems::Prepare),
-            )
-            .add_observer(clear_description);
+                (sync_popup_boxes, sync_popup_layers, sync_popup_labels).before(UiSystems::Prepare),
+            );
     }
 }

@@ -4,9 +4,7 @@
 //! `examples/tooltip_check.rs`.
 
 use crate::support::{bg, border_color, focus, node, passes_through, test_app};
-use accesskit::{Node as AccessKitNode, Role};
 use bevy::{
-    a11y::AccessibilityNode,
     ecs::entity::EntityHashMap,
     input_focus::{InputFocus, InputFocusVisible},
     picking::{Pickable, backend::HitData, hover::HoverMap, pointer::PointerId},
@@ -516,92 +514,4 @@ fn other_widgets_get_a_tooltip_too() {
     assert_eq!(popup(&mut app, switch), None);
     let popup = popup(&mut app, field).expect("a text field shows it too");
     assert_eq!(popup_text(&app, popup), "Name");
-}
-
-#[test]
-fn the_text_is_the_description_of_the_widget_and_the_name_of_the_tooltip() {
-    let mut app = timed_app(0.5);
-    let (button, popup) = shown(&mut app, Tooltip::new("Save"));
-
-    let world = app.world();
-    assert_eq!(
-        world
-            .get::<AccessibilityNode>(button)
-            .unwrap()
-            .0
-            .description(),
-        Some("Save")
-    );
-    assert_eq!(
-        world.get::<AccessibilityNode>(popup).unwrap().0.label(),
-        Some("Save")
-    );
-}
-
-#[test]
-fn removing_the_tooltip_takes_its_description_back() {
-    let mut app = timed_app(0.5);
-    let button = spawn_button(&mut app, Tooltip::new("Save"));
-    run(&mut app, 1);
-    let description = |app: &App| {
-        app.world()
-            .get::<AccessibilityNode>(button)
-            .unwrap()
-            .0
-            .description()
-            .map(str::to_owned)
-    };
-    assert_eq!(description(&app), Some("Save".to_owned()));
-
-    app.world_mut().entity_mut(button).remove::<Tooltip>();
-    run(&mut app, 1);
-    assert_eq!(description(&app), None);
-}
-
-#[test]
-fn a_description_someone_else_wrote_stays_when_the_tooltip_goes() {
-    let mut app = timed_app(0.5);
-    let button = spawn_button(&mut app, Tooltip::new("Save"));
-    run(&mut app, 1);
-    app.world_mut()
-        .get_mut::<AccessibilityNode>(button)
-        .unwrap()
-        .0
-        .set_description("Written by the app");
-
-    app.world_mut().entity_mut(button).remove::<Tooltip>();
-    run(&mut app, 1);
-    let world = app.world();
-    assert_eq!(
-        world
-            .get::<AccessibilityNode>(button)
-            .unwrap()
-            .0
-            .description(),
-        Some("Written by the app")
-    );
-}
-
-#[test]
-fn a_node_that_arrives_after_the_tooltip_gets_the_description() {
-    let mut app = timed_app(0.5);
-    let widget = app
-        .world_mut()
-        .spawn((Node::default(), Tooltip::new("Late")))
-        .id();
-    run(&mut app, 2);
-
-    app.world_mut()
-        .entity_mut(widget)
-        .insert(AccessibilityNode::from(AccessKitNode::new(Role::Button)));
-    run(&mut app, 1);
-    let world = app.world();
-    assert_eq!(
-        world
-            .get::<AccessibilityNode>(widget)
-            .unwrap()
-            .0
-            .description(),
-        Some("Late")
-    );
 }

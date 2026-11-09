@@ -1,8 +1,6 @@
 use super::style::{TooltipMetrics, TooltipShape};
 use crate::common::picking::pass_through;
-use accesskit::{Node as AccessKitNode, Role};
 use bevy::{
-    a11y::AccessibilityNode,
     picking::Pickable,
     prelude::*,
     ui::OverrideClip,
@@ -20,8 +18,7 @@ const WINDOW_MARGIN: f32 = 4.0;
 /// - The keyboard focus counts as long as its indicator is visible (see `FocusIndicator`).
 /// - Only the nearest `Tooltip` up from the hovered or focused entity shows, so a child can have its own.
 /// - A disabled widget still shows its tooltip: that is the place to say why it is disabled.
-/// - Changing the component changes the tooltip on screen. Where the entity has an `AccessibilityNode`, the text
-///   is also its description, so that screen readers get it without hovering.
+/// - Changing the component changes the tooltip on screen.
 ///
 /// Add the component by itself; the crate spawns the tooltip as a child of the widget when it shows,
 /// and despawns it when it hides.
@@ -63,7 +60,6 @@ impl Tooltip {
     Pickable = pass_through(),
     BackgroundColor = BackgroundColor(Color::NONE),
     BorderColor = BorderColor::all(Color::NONE),
-    AccessibilityNode = popup_accessibility(""),
     Node = popup_node(&TooltipMetrics::default(), &TooltipShape::default())
 )]
 pub(crate) struct TooltipPopup {
@@ -113,13 +109,6 @@ pub(crate) fn placement(side: PopoverSide, metrics: &TooltipMetrics) -> Popover 
             .collect(),
         window_margin: WINDOW_MARGIN,
     }
-}
-
-/// A tooltip for a screen reader, with the text it shows.
-pub(crate) fn popup_accessibility(text: &str) -> AccessibilityNode {
-    let mut node = AccessKitNode::new(Role::Tooltip);
-    node.set_label(text);
-    AccessibilityNode(node)
 }
 
 // ============================================================================================
