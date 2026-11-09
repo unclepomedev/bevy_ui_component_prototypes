@@ -20,7 +20,8 @@ const WINDOW_MARGIN: f32 = 4.0;
 ///
 /// - The tooltip shows after a delay (the theme's, or [`Tooltip::delay`]) and hides when the pointer leaves,
 ///   when the focus moves away, when a pointer button is pressed, or when Escape is pressed.
-/// - The keyboard focus counts as long as its indicator is visible (see `FocusIndicator`).
+/// - The keyboard focus counts as long as Bevy's `InputFocusVisible` is set: a click hides it, a key shows it
+///   again. `FocusIndicator` does not matter here.
 /// - Only the nearest `Tooltip` up from the hovered or focused entity shows, so a child can have its own.
 /// - A disabled widget still shows its tooltip: that is the place to say why it is disabled.
 /// - Changing the component changes the tooltip on screen.
