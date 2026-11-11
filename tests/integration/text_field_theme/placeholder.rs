@@ -5,7 +5,7 @@ use crate::{
     probe::probe_theme,
     support::{node, passes_through, test_app},
 };
-use bevy::{prelude::*, text::EditableText};
+use bevy::{prelude::*, text::EditableText, ui::InteractionDisabled};
 use bevy_ui_component_prototypes::text_field::text_field;
 
 #[test]
@@ -76,4 +76,24 @@ fn the_placeholder_sits_at_the_padding_and_lets_the_pointer_through() {
     assert!(passes_through(
         app.world().get::<Pickable>(placeholder).unwrap()
     ));
+}
+
+#[test]
+fn a_disabled_field_shows_no_placeholder_and_shows_it_again_once_enabled() {
+    let mut app = test_app();
+    let field = spawn_field(&mut app);
+    app.update();
+    assert_eq!(node(&app, placeholder(&app, field)).display, Display::Flex);
+
+    app.world_mut()
+        .entity_mut(field)
+        .insert(InteractionDisabled);
+    app.update();
+    assert_eq!(node(&app, placeholder(&app, field)).display, Display::None);
+
+    app.world_mut()
+        .entity_mut(field)
+        .remove::<InteractionDisabled>();
+    app.update();
+    assert_eq!(node(&app, placeholder(&app, field)).display, Display::Flex);
 }

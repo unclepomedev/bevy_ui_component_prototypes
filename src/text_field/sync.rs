@@ -103,7 +103,12 @@ fn sync_text_field(
             &theme.text_field.look(inputs.state, inputs.ring_visible),
             theme,
         );
-        sync_placeholders(&mut parts.placeholders, kids, inputs.empty, theme);
+        sync_placeholders(
+            &mut parts.placeholders,
+            kids,
+            inputs.empty && !field.disabled,
+            theme,
+        );
     }
 }
 
@@ -170,14 +175,14 @@ fn sync_inputs(
     found
 }
 
-/// Shows the placeholder while the field is `empty`, and writes its color and font.
-fn sync_placeholders(placeholders: &mut Placeholders, kids: &Children, empty: bool, theme: &Theme) {
+/// Shows the placeholder while `shown`, and writes its color and font.
+fn sync_placeholders(placeholders: &mut Placeholders, kids: &Children, shown: bool, theme: &Theme) {
     for kid in kids {
         let Ok(mut placeholder) = placeholders.get_mut(*kid) else {
             continue;
         };
         let mut node = placeholder_node(&theme.text_field_metrics);
-        node.display = if empty { Display::Flex } else { Display::None };
+        node.display = if shown { Display::Flex } else { Display::None };
         placeholder.node.set_if_neq(node);
         placeholder
             .color
