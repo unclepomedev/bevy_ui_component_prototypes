@@ -4,6 +4,7 @@ use crate::progress::ProgressStyles;
 use crate::scroll_indicator::{ScrollIndicatorMetrics, ScrollIndicatorStyle};
 use crate::select::{SelectMetrics, SelectStyle};
 use crate::slider::SliderStyle;
+use crate::stepper::StepperStyle;
 use crate::text_field::{TextFieldMetrics, TextFieldStyle};
 use crate::toast::{ToastMetrics, ToastStyles};
 use crate::toggle_switch::SwitchStyle;
@@ -17,6 +18,7 @@ pub struct Theme {
     pub button_sizes: ButtonSizes,
     pub switch: SwitchStyle,
     pub slider: SliderStyle,
+    pub stepper: StepperStyle,
     pub progress: ProgressStyles,
     pub select: SelectStyle,
     pub select_metrics: SelectMetrics,
