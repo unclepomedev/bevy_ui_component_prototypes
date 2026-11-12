@@ -123,7 +123,7 @@ pub(crate) fn arrow_glyph(shape: &StepperShape, button: StepperButton) -> (Node,
 fn arrow_degrees(button: StepperButton) -> f32 {
     match button {
         StepperButton::Prev => 135.0,
-        StepperButton::Next => 45.0,
+        StepperButton::Next => -45.0,
     }
 }
 
