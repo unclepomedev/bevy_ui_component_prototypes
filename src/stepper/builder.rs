@@ -28,6 +28,7 @@ pub fn stepper() -> StepperBuilder {
         marks: Vec::new(),
         label: None,
         compact: false,
+        inline: false,
         prev_icon: None,
         next_icon: None,
     }
@@ -42,6 +43,7 @@ pub struct StepperBuilder {
     marks: Vec<usize>,
     label: Option<Vec<Extra>>,
     compact: bool,
+    inline: bool,
     prev_icon: Option<Handle<Image>>,
     next_icon: Option<Handle<Image>>,
 }
@@ -95,6 +97,13 @@ impl StepperBuilder {
         self
     }
 
+    /// Puts the buttons on either side of the cells, in one row, and drops the label.
+    /// Has no effect on a [`compact`](Self::compact) stepper, which has no cells to put between them.
+    pub fn inline(mut self) -> Self {
+        self.inline = true;
+        self
+    }
+
     /// Replaces the arrow of the previous button.
     pub fn prev_icon(mut self, icon: Handle<Image>) -> Self {
         self.prev_icon = Some(icon);
@@ -117,17 +126,25 @@ impl StepperBuilder {
             marks,
             label,
             compact,
+            inline,
             prev_icon,
             next_icon,
         } = self;
+        let inline = inline && !compact;
         let shape = StepperShape::default();
         (
-            Stepper::new(wrap, fill),
+            Stepper::new(wrap, fill, inline),
             StepperValue::new(value),
             StepperSteps::new(steps),
             StepperMarks::new(marks),
-            stepper_node(&shape),
+            stepper_node(&shape, inline),
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
+                if inline {
+                    spawn_button(parent, &shape, StepperButton::Prev, prev_icon);
+                    spawn_track(parent, &shape, steps, true);
+                    spawn_button(parent, &shape, StepperButton::Next, next_icon);
+                    return;
+                }
                 parent
                     .spawn((StepperPart::Header, header_node(&shape)))
                     .with_children(|header| {
@@ -138,7 +155,7 @@ impl StepperBuilder {
                         spawn_button(header, &shape, StepperButton::Next, next_icon);
                     });
                 if !compact {
-                    spawn_track(parent, &shape, steps);
+                    spawn_track(parent, &shape, steps, false);
                 }
             })),
         )
@@ -189,9 +206,14 @@ fn spawn_label(parent: &mut RelatedSpawner<ChildOf>, extras: Vec<Extra>) {
     }
 }
 
-fn spawn_track(parent: &mut RelatedSpawner<ChildOf>, shape: &StepperShape, steps: usize) {
+fn spawn_track(
+    parent: &mut RelatedSpawner<ChildOf>,
+    shape: &StepperShape,
+    steps: usize,
+    inline: bool,
+) {
     parent
-        .spawn((StepperPart::Track, track_node(shape)))
+        .spawn((StepperPart::Track, track_node(shape, inline)))
         .with_children(|track| {
             for index in 0..steps {
                 track
@@ -237,6 +259,35 @@ mod tests {
         let mut world = spawn(stepper().steps(5).compact());
         assert_eq!(count::<StepperCell>(&mut world), 0);
         assert_eq!(count::<StepperButton>(&mut world), 2);
+    }
+
+    #[test]
+    fn an_inline_stepper_has_the_buttons_beside_the_cells_and_no_header_or_label() {
+        let mut world = spawn(stepper().steps(4).label_bundle(Caption).inline());
+        assert_eq!(count::<StepperCell>(&mut world), 4);
+        assert_eq!(count::<StepperButton>(&mut world), 2);
+        assert_eq!(count::<StepperLabel>(&mut world), 0);
+        // The track, the 4 marks and the 2 arrows.
+        assert_eq!(count::<StepperPart>(&mut world), 1 + 4 + 2);
+
+        // The buttons and the track are the children of the stepper itself.
+        let body = world
+            .query_filtered::<Entity, With<Stepper>>()
+            .single(&world)
+            .unwrap();
+        let children = world.get::<Children>(body).unwrap();
+        assert_eq!(children.len(), 3);
+        assert!(world.get::<StepperButton>(children[0]).is_some());
+        assert!(world.get::<StepperButton>(children[2]).is_some());
+        assert!(world.get::<Stepper>(body).unwrap().is_inline());
+    }
+
+    #[test]
+    fn inline_has_no_effect_on_a_compact_stepper() {
+        let mut world = spawn(stepper().steps(4).compact().inline());
+        assert_eq!(count::<StepperCell>(&mut world), 0);
+        let body = world.query::<&Stepper>().single(&world).unwrap();
+        assert!(!body.is_inline());
     }
 
     #[test]

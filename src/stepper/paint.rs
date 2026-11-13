@@ -19,6 +19,7 @@ pub(super) struct Look<'a> {
     pub(super) current: usize,
     pub(super) fill: Option<StepperFill>,
     pub(super) marks: &'a StepperMarks,
+    pub(super) inline: bool,
     /// The state of the stepper as a whole. A cell or a button has its own on top of it.
     pub(super) state: VisualState,
 }
@@ -81,7 +82,7 @@ impl StepperPaint<'_, '_> {
                         part.node.set_if_neq(header_node(shape));
                     }
                     StepperPart::Track => {
-                        part.node.set_if_neq(track_node(shape));
+                        part.node.set_if_neq(track_node(shape, look.inline));
                     }
                     StepperPart::Mark | StepperPart::Arrow => {}
                 }
@@ -97,6 +98,7 @@ struct CellRow {
     interaction: &'static PickingInteraction,
     disabled: Has<InteractionDisabled>,
     bg: &'static mut BackgroundColor,
+    border: &'static mut BorderColor,
     node: &'static mut Node,
     children: Option<&'static Children>,
 }
@@ -131,6 +133,8 @@ fn write_cell(cell: &mut CellRowItem, parts: &mut Query<PartRow, PartFilter>, lo
     let progress = CellProgress::of(index, look.current);
     cell.bg
         .set_if_neq(BackgroundColor(style.cell(progress, look.fill, state)));
+    cell.border
+        .set_if_neq(BorderColor::all(style.cell_border(state)));
     cell.node.set_if_neq(cell_node(&style.shape));
 
     let mark = if look.marks.contains(index) {
