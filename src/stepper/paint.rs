@@ -134,7 +134,7 @@ fn write_cell(cell: &mut CellRowItem, parts: &mut Query<PartRow, PartFilter>, lo
     cell.node.set_if_neq(cell_node(&style.shape));
 
     let mark = if look.marks.contains(index) {
-        style.mark(look.state)
+        style.mark(state)
     } else {
         Color::NONE
     };

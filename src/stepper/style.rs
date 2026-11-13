@@ -55,7 +55,7 @@ pub struct StepperStyle {
     pub arrow: StateColors,
     /// The text between the buttons.
     pub label: StateColors,
-    /// The marks under the cells.
+    /// The marks under the cells, in the state of their cell.
     pub mark: StateColors,
     /// Around the stepper while it owns the visible focus indicator; never shown when disabled.
     pub focus_ring: FocusRing,

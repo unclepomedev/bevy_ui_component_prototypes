@@ -137,3 +137,20 @@ fn a_single_position_shows_its_cell_as_current() {
         probe_theme().stepper.current.normal
     );
 }
+
+#[test]
+fn a_mark_follows_the_state_of_its_cell() {
+    let mut app = test_app();
+    let stepper = spawn_stepper(&mut app, stepper().steps(3).marks([2]));
+    app.update();
+    let cell = cells(&app, stepper)[2];
+    let style = probe_theme().stepper;
+    assert_eq!(color_of(&app, mark(&app, cell)), style.mark.normal);
+
+    app.world_mut()
+        .entity_mut(cell)
+        .insert(PickingInteraction::Hovered);
+    app.update();
+
+    assert_eq!(color_of(&app, mark(&app, cell)), style.mark.hovered);
+}
