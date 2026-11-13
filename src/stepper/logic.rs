@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 /// Which cells of a stepper are lit.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum StepperFill {
@@ -20,9 +22,9 @@ impl CellProgress {
     /// `current` must already be in range (see [`clamp_index`]).
     pub(crate) fn of(index: usize, current: usize) -> Self {
         match index.cmp(&current) {
-            std::cmp::Ordering::Less => Self::Passed,
-            std::cmp::Ordering::Equal => Self::Current,
-            std::cmp::Ordering::Greater => Self::Upcoming,
+            Ordering::Less => Self::Passed,
+            Ordering::Equal => Self::Current,
+            Ordering::Greater => Self::Upcoming,
         }
     }
 

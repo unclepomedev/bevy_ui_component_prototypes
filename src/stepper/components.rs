@@ -12,6 +12,7 @@ use bevy::{
     ui::InteractionDisabled,
     ui_widgets::Button,
 };
+use std::iter::once as iter_once;
 
 /// The number of positions a stepper is meant for. More is allowed, but the cells get narrow.
 pub const RECOMMENDED_MAX_STEPS: usize = 20;
@@ -188,7 +189,7 @@ pub(crate) struct StepperOwners<'w, 's> {
 impl StepperOwners<'_, '_> {
     /// The stepper `entity` is, or is a part of.
     pub(crate) fn of(&self, entity: Entity) -> Option<Entity> {
-        std::iter::once(entity)
+        iter_once(entity)
             .chain(self.parents.iter_ancestors(entity))
             .find(|candidate| self.steppers.contains(*candidate))
     }
