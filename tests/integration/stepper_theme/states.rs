@@ -83,6 +83,23 @@ fn the_marks_follow_the_stepper_marks() {
 }
 
 #[test]
+fn a_mark_follows_the_state_of_its_cell() {
+    let mut app = test_app();
+    let stepper = spawn_stepper(&mut app, stepper().steps(3).marks([2]));
+    app.update();
+    let cell = cells(&app, stepper)[2];
+    let style = probe_theme().stepper;
+    assert_eq!(color_of(&app, mark(&app, cell)), style.mark.normal);
+
+    app.world_mut()
+        .entity_mut(cell)
+        .insert(PickingInteraction::Hovered);
+    app.update();
+
+    assert_eq!(color_of(&app, mark(&app, cell)), style.mark.hovered);
+}
+
+#[test]
 fn the_label_takes_the_theme_color_and_dims_when_disabled() {
     let mut app = test_app();
     let stepper = spawn_stepper(&mut app, stepper().steps(3).label_bundle(Caption));
@@ -136,21 +153,4 @@ fn a_single_position_shows_its_cell_as_current() {
         color_of(&app, cells[0]),
         probe_theme().stepper.current.normal
     );
-}
-
-#[test]
-fn a_mark_follows_the_state_of_its_cell() {
-    let mut app = test_app();
-    let stepper = spawn_stepper(&mut app, stepper().steps(3).marks([2]));
-    app.update();
-    let cell = cells(&app, stepper)[2];
-    let style = probe_theme().stepper;
-    assert_eq!(color_of(&app, mark(&app, cell)), style.mark.normal);
-
-    app.world_mut()
-        .entity_mut(cell)
-        .insert(PickingInteraction::Hovered);
-    app.update();
-
-    assert_eq!(color_of(&app, mark(&app, cell)), style.mark.hovered);
 }

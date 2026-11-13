@@ -145,6 +145,21 @@ mod tests {
     }
 
     #[test]
+    fn the_arrow_tips_point_to_their_own_sides() {
+        // The tip is the bottom right corner of the square, where its two borders meet.
+        // With y pointing down, a clockwise rotation by an angle moves (1, 1) to this.
+        let tip = |button| {
+            let (sin, cos) = arrow_degrees(button).to_radians().sin_cos();
+            (cos - sin, sin + cos)
+        };
+
+        let (x, y) = tip(StepperButton::Prev);
+        assert!(x < -1.0 && y.abs() < 1e-5, "{x}, {y}");
+        let (x, y) = tip(StepperButton::Next);
+        assert!(x > 1.0 && y.abs() < 1e-5, "{x}, {y}");
+    }
+
+    #[test]
     fn the_track_reserves_the_room_the_marks_hang_in() {
         let shape = StepperShape::default();
         let track = track_node(&shape);
