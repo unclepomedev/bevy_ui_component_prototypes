@@ -11,7 +11,9 @@ mod width;
 
 pub use self::{
     builder::{StepperBuilder, stepper},
-    components::{RECOMMENDED_MAX_STEPS, Stepper, StepperMarks, StepperSteps, StepperValue},
+    components::{
+        RECOMMENDED_MAX_STEPS, Stepper, StepperCell, StepperMarks, StepperSteps, StepperValue,
+    },
     input::stepper_self_update,
     logic::StepperFill,
     style::{StepperShape, StepperStyle},
