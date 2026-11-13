@@ -9,6 +9,7 @@ mod scroll_indicator_theme;
 mod select_theme;
 mod shows_focus;
 mod slider_theme;
+mod stepper_theme;
 mod support;
 mod switch_theme;
 mod text_field_entry;

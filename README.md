@@ -17,7 +17,7 @@ use bevy_ui_component_prototypes::{
 };
 ```
 
-Modules: `button`, `popup`, `slider`, `select`, `text_field`, `toggle_switch`, `progress`, `scroll_indicator`, `toast`, `tooltip`, `window`, and `common` (types shared by several widgets, such as `ShowsFocus` and `StateColors`).
+Modules: `button`, `popup`, `slider`, `stepper`, `select`, `text_field`, `toggle_switch`, `progress`, `scroll_indicator`, `toast`, `tooltip`, `window`, and `common` (types shared by several widgets, such as `ShowsFocus` and `StateColors`).
 
 ## Behavior
 

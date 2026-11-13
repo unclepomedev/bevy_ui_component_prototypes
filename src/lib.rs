@@ -5,7 +5,7 @@
 //! [`GlobalTheme`] and [`Theme`]. Each widget lives in its own module with its builder,
 //! components and style types:
 //!
-//! - [`button`], [`slider`], [`select`], [`text_field`], [`toggle_switch`]
+//! - [`button`], [`slider`], [`stepper`], [`select`], [`text_field`], [`toggle_switch`]
 //! - [`popup`], [`progress`], [`scroll_indicator`], [`toast`], [`tooltip`], [`window`]
 //! - [`common`]: types shared by several widgets (focus ring, state colors, ...)
 pub mod button;
@@ -15,6 +15,7 @@ pub mod progress;
 pub mod scroll_indicator;
 pub mod select;
 pub mod slider;
+pub mod stepper;
 pub mod text_field;
 mod theme;
 pub mod toast;
@@ -25,10 +26,18 @@ pub mod window;
 pub use crate::theme::{GlobalTheme, Theme};
 
 use crate::{
-    button::ButtonStylePlugin, common::CommonPlugin, popup::PopupPlugin,
-    progress::ProgressStylePlugin, scroll_indicator::ScrollIndicatorStylePlugin,
-    select::SelectStylePlugin, slider::SliderStylePlugin, text_field::TextFieldPlugin,
-    toast::ToastPlugin, toggle_switch::SwitchStylePlugin, tooltip::TooltipPlugin,
+    button::ButtonStylePlugin,
+    common::CommonPlugin,
+    popup::PopupPlugin,
+    progress::ProgressStylePlugin,
+    scroll_indicator::ScrollIndicatorStylePlugin,
+    select::SelectStylePlugin,
+    slider::SliderStylePlugin,
+    stepper::{StepperInputPlugin, StepperStylePlugin},
+    text_field::TextFieldPlugin,
+    toast::ToastPlugin,
+    toggle_switch::SwitchStylePlugin,
+    tooltip::TooltipPlugin,
     window::WindowStylePlugin,
 };
 use bevy::{
@@ -50,6 +59,7 @@ use bevy::{
 /// | button | [`ButtonPlugin`] |
 /// | toggle switch | [`CheckboxPlugin`] |
 /// | slider | [`SliderPlugin`] |
+/// | stepper | [`ButtonPlugin`] |
 /// | select | [`ListBoxPlugin`], [`MenuPlugin`], [`PopoverPlugin`], [`ScrollAreaPlugin`] |
 /// | text field | [`TextInputPlugin`] |
 /// | tooltip | [`PopoverPlugin`], and Bevy's picking for the pointer |
@@ -66,6 +76,8 @@ impl Plugin for UiComponentPrototypesPlugin {
             ButtonStylePlugin,
             SwitchStylePlugin,
             SliderStylePlugin,
+            StepperStylePlugin,
+            StepperInputPlugin,
             CommonPlugin,
             ToastPlugin,
             ProgressStylePlugin,
