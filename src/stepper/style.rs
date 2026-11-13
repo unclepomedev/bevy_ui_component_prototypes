@@ -20,6 +20,8 @@ pub struct StepperShape {
     pub gap: f32,
     /// Corner radius of the cells and the buttons.
     pub radius: f32,
+    /// Width of the border of a cell; none when 0.
+    pub border_width: f32,
     /// Width and height of the mark under a cell.
     pub mark_size: f32,
     /// Which cells are lit, unless the stepper picks its own.
@@ -33,6 +35,7 @@ impl Default for StepperShape {
             min_cell_width: 16.0,
             gap: 4.0,
             radius: 4.0,
+            border_width: 0.0,
             mark_size: 4.0,
             fill: StepperFill::default(),
         }
@@ -49,6 +52,8 @@ pub struct StepperStyle {
     pub current: StateColors,
     /// Cells after the current one.
     pub upcoming: StateColors,
+    /// The border of every cell, which shows once [`StepperShape::border_width`] is above 0.
+    pub cell_border: StateColors,
     /// Background of the previous and next buttons.
     pub button: StateColors,
     /// The arrows on the buttons.
@@ -81,6 +86,7 @@ impl Default for StepperStyle {
             passed: cell(AFFIRM_PRESSED, AFFIRM_NORMAL, AFFIRM_PRESSED, BG_PRESSED),
             current: cell(AFFIRM_NORMAL, AFFIRM_HOVERED, AFFIRM_PRESSED, BG_PRESSED),
             upcoming: cell(BG_NORMAL, BG_HOVERED, BG_PRESSED, DISABLED),
+            cell_border: cell(TEXT_MUTED, TEXT_MAIN, TEXT_MAIN, DISABLED),
             button: StateColors {
                 focused: BG_HOVERED,
                 ..cell(BG_NORMAL, BG_HOVERED, BG_PRESSED, DISABLED)
@@ -119,6 +125,10 @@ impl StepperStyle {
             CellProgress::Passed | CellProgress::Upcoming => &self.upcoming,
         };
         colors.pick(state)
+    }
+
+    pub(crate) fn cell_border(&self, state: VisualState) -> Color {
+        self.cell_border.pick(state)
     }
 
     pub(crate) fn arrow(&self, state: VisualState) -> ArrowLook {
@@ -211,6 +221,16 @@ mod tests {
         let look = style.arrow(VisualState::Disabled);
         assert_eq!(look.background, style.button.disabled);
         assert_eq!(look.arrow, style.arrow.disabled);
+    }
+
+    #[test]
+    fn a_cell_border_follows_the_visual_state_and_is_off_by_default() {
+        let style = StepperStyle::default();
+        assert_eq!(style.shape.border_width, 0.0);
+        assert_eq!(
+            style.cell_border(VisualState::Hovered),
+            style.cell_border.hovered
+        );
     }
 
     #[test]

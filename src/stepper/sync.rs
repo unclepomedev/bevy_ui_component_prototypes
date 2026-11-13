@@ -3,6 +3,7 @@ use super::{
         Stepper, StepperButton, StepperCell, StepperMarks, StepperOwners, StepperValue, StepperView,
     },
     disabled::sync_part_disabled,
+    nodes::lay_out,
     paint::{Look, StepperPaint},
     width::warn_narrow_cells,
 };
@@ -61,16 +62,15 @@ fn sync_stepper_style(
         stepper
             .outline
             .set_if_neq(Outline::new(ring.width, ring.offset, ring.color));
-        let gap = px(style.shape.gap);
-        if stepper.node.row_gap != gap {
-            stepper.node.row_gap = gap;
-        }
+        let inline = stepper.view.is_inline();
+        lay_out(&mut stepper.node, &style.shape, inline);
 
         let look = Look {
             theme,
             current: stepper.view.current(),
             fill: stepper.view.fill(),
             marks: stepper.marks,
+            inline,
             state,
         };
         paint.apply(entity, &look);

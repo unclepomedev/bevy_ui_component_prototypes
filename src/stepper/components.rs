@@ -35,6 +35,9 @@ pub const RECOMMENDED_MAX_STEPS: usize = 20;
 ///
 /// The width follows the parent layout (`100%`).
 ///
+/// An inline stepper has the buttons on either side of the cells in one row and no label,
+/// where the others have the buttons above them.
+///
 /// It has no parts of its own: build it with [`stepper`](super::stepper) rather than adding this
 /// component alone.
 ///
@@ -49,16 +52,22 @@ pub const RECOMMENDED_MAX_STEPS: usize = 20;
     TabIndex(0),
     KeyboardNavigable,
     Outline = hidden_outline(),
-    Node = stepper_node(&StepperShape::default())
+    Node = stepper_node(&StepperShape::default(), false)
 )]
 pub struct Stepper {
     wrap: bool,
     fill: Option<StepperFill>,
+    inline: bool,
 }
 
 impl Stepper {
-    pub(crate) fn new(wrap: bool, fill: Option<StepperFill>) -> Self {
-        Self { wrap, fill }
+    pub(crate) fn new(wrap: bool, fill: Option<StepperFill>, inline: bool) -> Self {
+        Self { wrap, fill, inline }
+    }
+
+    /// Whether the buttons are on either side of the cells, in one row.
+    pub fn is_inline(&self) -> bool {
+        self.inline
     }
 
     /// Whether stepping past an end continues from the other end.
@@ -163,6 +172,10 @@ impl StepperViewItem<'_, '_> {
         self.disabled
     }
 
+    pub(crate) fn is_inline(&self) -> bool {
+        self.stepper.is_inline()
+    }
+
     /// The fill this stepper chose; `None` follows the theme.
     pub(crate) fn fill(&self) -> Option<StepperFill> {
         self.stepper.fill()
@@ -236,7 +249,7 @@ pub(crate) struct StepperLabel;
 /// The part of a stepper a style system writes to.
 #[derive(Component, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum StepperPart {
-    /// The row with the buttons and the label.
+    /// The row with the buttons and the label. An inline stepper has none.
     Header,
     /// The row of cells.
     Track,
@@ -280,7 +293,7 @@ mod tests {
         let mut world = World::new();
         let stepper = |wrap| {
             (
-                Stepper::new(wrap, None),
+                Stepper::new(wrap, None, false),
                 StepperValue::new(99),
                 StepperSteps::new(10),
             )
