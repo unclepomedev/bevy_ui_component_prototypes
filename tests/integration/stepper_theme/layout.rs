@@ -6,7 +6,11 @@ use crate::{
     support::{node, red, test_app},
 };
 use bevy::prelude::*;
-use bevy_ui_component_prototypes::{GlobalTheme, common::StateColors, stepper::stepper};
+use bevy_ui_component_prototypes::{
+    GlobalTheme,
+    common::StateColors,
+    stepper::{StepperCell, stepper},
+};
 
 #[test]
 fn an_inline_stepper_is_a_row_with_the_theme_gap() {
@@ -83,4 +87,31 @@ fn a_cell_has_the_border_of_the_theme() {
 
 fn border_of(app: &App, entity: Entity) -> Color {
     app.world().get::<BorderColor>(entity).unwrap().top
+}
+
+#[test]
+fn a_cell_is_found_by_its_position_and_keeps_the_child_an_app_gave_it() {
+    let mut app = test_app();
+    spawn_stepper(&mut app, stepper().steps(5).inline());
+    app.update();
+
+    let mut cells = app.world_mut().query::<(Entity, &StepperCell)>();
+    let found: Vec<_> = cells
+        .iter(app.world())
+        .map(|(entity, cell)| (cell.index(), entity))
+        .collect();
+    assert_eq!(found.len(), 5);
+    let (_, last) = *found.iter().find(|(index, _)| *index == 4).unwrap();
+
+    let decoration = app
+        .world_mut()
+        .spawn((BackgroundColor(red()), ChildOf(last)))
+        .id();
+    let mut theme = probe_theme();
+    theme.stepper.shape.cell_height = 40.0;
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+
+    assert_eq!(color_of(&app, decoration), red());
+    assert!(children_of(&app, last).contains(&decoration));
 }

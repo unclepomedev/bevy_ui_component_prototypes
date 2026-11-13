@@ -209,9 +209,12 @@ impl StepperOwners<'_, '_> {
 }
 
 /// A cell of a stepper: pressing it requests its position.
+///
+/// An app finds the cell of a position by this component, for example to decorate it with a child.
+/// The stepper paints the cell itself and the mark under it, and leaves any other child alone.
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
 #[require(Button, PickingInteraction)]
-pub(crate) struct StepperCell {
+pub struct StepperCell {
     index: usize,
 }
 
@@ -220,7 +223,8 @@ impl StepperCell {
         Self { index }
     }
 
-    pub(crate) fn index(self) -> usize {
+    /// The position this cell stands for.
+    pub fn index(self) -> usize {
         self.index
     }
 }
