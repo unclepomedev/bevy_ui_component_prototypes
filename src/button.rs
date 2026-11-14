@@ -106,13 +106,25 @@ struct StyleTargets<'w, 's> {
     changed: ChangedButtons<'w, 's>,
     all: Query<'w, 's, Entity, (With<Button>, With<ButtonVariant>)>,
     removed_disabled: RemovedComponents<'w, 's, InteractionDisabled>,
+    // A label that stops keeping its size is resized by the button that owns it.
+    removed_keep_size: RemovedComponents<'w, 's, KeepFontSize>,
+    parents: Query<'w, 's, &'static ChildOf>,
+    owners: Query<'w, 's, (), With<Button>>,
 }
 
 impl StyleTargets<'_, '_> {
     /// Every button after a theme change, otherwise only the ones that changed
     /// (including both ends of a focus move).
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
-        let removed = drain_removed(&mut self.removed_disabled);
+        let mut removed = drain_removed(&mut self.removed_disabled);
+        for label in drain_removed(&mut self.removed_keep_size) {
+            // The nearest button above the label. A despawned label has no parent: nothing to restyle.
+            let owner = self
+                .parents
+                .iter_ancestors(label)
+                .find(|ancestor| self.owners.contains(*ancestor));
+            removed.extend(owner);
+        }
         pick_targets(
             resync,
             self.all.iter(),
