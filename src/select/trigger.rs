@@ -115,7 +115,6 @@ pub(super) fn sync_select_style(
     }
 }
 
-/// What the sync reads from a trigger and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 pub(super) struct TriggerRow {
@@ -127,7 +126,6 @@ pub(super) struct TriggerRow {
     node: &'static mut Node,
 }
 
-/// Finds the triggers whose look may have changed from the last run.
 #[derive(SystemParam)]
 pub(super) struct SelectTargets<'w, 's> {
     changed: ChangedTriggers<'w, 's>,

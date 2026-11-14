@@ -50,7 +50,6 @@ impl Plugin for ButtonStylePlugin {
     }
 }
 
-/// Resolves each button's look from its theme and state and writes it to the button and its content.
 fn sync_button_style(
     mut lookup: ThemeLookup,
     mut ring: FocusRingTracker,
@@ -102,7 +101,6 @@ pub(crate) fn write_button_colors(
     ));
 }
 
-/// Finds the buttons whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct StyleTargets<'w, 's> {
     changed: ChangedButtons<'w, 's>,
@@ -168,7 +166,6 @@ pub(crate) struct ButtonParts<'w, 's> {
 }
 
 impl ButtonParts<'_, '_> {
-    /// Draws the image surface of `style` and styles the content, for the `look` the button has now.
     pub(crate) fn paint(
         &mut self,
         button: Entity,
@@ -184,10 +181,9 @@ impl ButtonParts<'_, '_> {
     }
 }
 
-// Without the icon, which the content writes a `Node` of its own to.
+// Icon buttons are left out: their content writes the `Node`.
 type ButtonQuery<'w, 's> = Query<'w, 's, ButtonRow, (With<Button>, Without<ButtonIcon>)>;
 
-/// What the sync reads from a button and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct ButtonRow {

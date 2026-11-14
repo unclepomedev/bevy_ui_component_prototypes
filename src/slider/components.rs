@@ -60,7 +60,6 @@ pub(crate) fn slider_node(geometry: &SliderGeometry) -> Node {
 }
 
 pub(crate) fn rail_node(geometry: &SliderGeometry) -> Node {
-    // The rail spans the whole width, centered vertically.
     Node {
         position_type: PositionType::Absolute,
         left: px(0),

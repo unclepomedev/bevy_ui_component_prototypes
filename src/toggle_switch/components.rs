@@ -37,7 +37,6 @@ pub struct ToggleSwitch;
 pub(crate) struct SwitchThumb;
 
 /// The thumb rests at the start edge when off and at the end edge when on.
-/// Flex alignment instead of pixel offsets keeps it correct for any track size.
 pub(crate) fn thumb_side(checked: bool) -> JustifyContent {
     if checked {
         JustifyContent::End

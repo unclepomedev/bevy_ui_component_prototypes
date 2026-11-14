@@ -220,7 +220,6 @@ struct TitleRow {
     layout: &'static mut TextLayout,
 }
 
-/// Finds the windows whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct WindowTargets<'w, 's> {
     added: Query<'w, 's, Entity, Added<UiWindow>>,

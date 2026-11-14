@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
-/// The widgets whose look has to be rewritten the current frame.
-/// `removed`, read with [`drain_removed`].
+/// Picks the widgets to restyle this frame: all of them on a `resync`, otherwise those that
+/// changed, those in `removed` (read with [`drain_removed`]) and those whose focus ring moved.
 pub(crate) fn pick_targets(
     resync: bool,
     all: impl IntoIterator<Item = Entity>,

@@ -8,7 +8,6 @@ use bevy::{
     ui::InteractionDisabled,
 };
 
-/// Finds the text fields whose look may have changed from the last run.
 #[derive(SystemParam)]
 pub(super) struct FieldTargets<'w, 's> {
     changed: ChangedFields<'w, 's>,

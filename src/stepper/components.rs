@@ -99,7 +99,6 @@ pub struct StepperValue {
 }
 
 impl StepperValue {
-    /// The value at `index`.
     pub fn new(index: usize) -> Self {
         Self { index }
     }
@@ -121,7 +120,6 @@ impl StepperSteps {
         Self { count }
     }
 
-    /// The number of positions.
     pub fn get(self) -> usize {
         self.count
     }
@@ -176,7 +174,6 @@ impl StepperViewItem<'_, '_> {
         self.stepper.is_inline()
     }
 
-    /// The fill this stepper chose; `None` follows the theme.
     pub(crate) fn fill(&self) -> Option<StepperFill> {
         self.stepper.fill()
     }
@@ -223,13 +220,11 @@ impl StepperCell {
         Self { index }
     }
 
-    /// The position this cell stands for.
     pub fn index(self) -> usize {
         self.index
     }
 }
 
-/// The previous and the next button of a stepper.
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
 #[require(Button, PickingInteraction)]
 pub(crate) enum StepperButton {
@@ -255,17 +250,11 @@ pub(crate) struct StepperLabel;
 pub(crate) enum StepperPart {
     /// The row with the buttons and the label. An inline stepper has none.
     Header,
-    /// The row of cells.
     Track,
-    /// The mark under a cell.
     Mark,
-    /// The arrow drawn on a button.
     Arrow,
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

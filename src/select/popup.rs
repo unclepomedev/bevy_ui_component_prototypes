@@ -170,7 +170,6 @@ fn write_row_layout(node: &mut Mut<Node>, want: &Node) {
     }
 }
 
-/// What the sync reads from a row and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct OptionRow {
@@ -182,7 +181,6 @@ struct OptionRow {
     node: &'static mut Node,
 }
 
-/// Finds the rows whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct RowTargets<'w, 's> {
     changed: ChangedRows<'w, 's>,

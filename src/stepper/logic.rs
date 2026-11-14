@@ -85,9 +85,6 @@ fn changed(current: usize, requested: usize) -> Option<usize> {
     (requested != current).then_some(requested)
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -18,7 +18,6 @@ use std::sync::Arc;
 
 const ARROW_SIZE: f32 = 10.0;
 const ARROW_STROKE: f32 = 2.0;
-/// How close to the window edge the popup may go, in pixels.
 const WINDOW_MARGIN: f32 = 8.0;
 
 /// What the value of an option must be: `Clone + PartialEq + Send + Sync + 'static`.
@@ -70,7 +69,6 @@ pub(crate) struct SelectLabels {
     pub(crate) placeholder: Option<LabelSpawner>,
 }
 
-/// Triggers the choice of the option at a position, given the select and the position.
 pub(crate) type EmitChoice = Arc<dyn Fn(&mut Commands, Entity, usize) + Send + Sync>;
 
 /// Emits the choice of the option at a position: a `ValueChange<V>` from the select. The type of the
@@ -153,7 +151,6 @@ pub(crate) struct SelectTrigger;
 #[derive(Component, Clone, Copy, Default)]
 pub(crate) struct SelectContent;
 
-/// The chevron at the end of the trigger.
 #[derive(Component, Clone, Copy, Default)]
 pub(crate) struct SelectArrow;
 
@@ -178,7 +175,6 @@ pub(crate) struct SelectPopup;
 #[require(ListBox, ScrollArea, TabIndex(0), Node = list_node(&SelectMetrics::default()))]
 pub(crate) struct SelectList;
 
-/// One option of the list. `index` is its position among the options.
 #[derive(Component, Clone, Copy)]
 #[require(
     ListItem,
@@ -198,8 +194,6 @@ pub(crate) fn select_node() -> Node {
     }
 }
 
-/// The popup floats over what is below it; the size and the shape come from the theme.
-/// It is as wide as the select at least.
 pub(crate) fn popup_node(metrics: &SelectMetrics, shape: &SelectShape) -> Node {
     Node {
         position_type: PositionType::Absolute,
@@ -245,7 +239,6 @@ pub(crate) fn row_node(metrics: &SelectMetrics) -> Node {
     }
 }
 
-/// The trigger is a button that fills the select, with the label at one end and the chevron at the other.
 pub(crate) fn trigger_node(metrics: &SelectMetrics, shape: &ButtonShape) -> Node {
     Node {
         width: percent(100),

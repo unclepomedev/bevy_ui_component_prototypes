@@ -33,7 +33,7 @@ pub(super) fn sync_part_disabled(
     )>,
     mut commands: Commands,
 ) {
-    // Removals are read every run: of the parts too, which are not ours to follow.
+    // Drain every removal, those on the parts too, which this system ignores.
     let enabled = drain_removed(&mut enabled)
         .into_iter()
         .filter(|entity| steppers.contains(*entity));

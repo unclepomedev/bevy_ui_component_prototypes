@@ -27,7 +27,6 @@ impl Plugin for SwitchStylePlugin {
     }
 }
 
-/// Resolves each switch's look from its theme and state and writes it to the track and the thumb.
 fn sync_switch_style(
     mut lookup: ThemeLookup,
     mut ring: FocusRingTracker,
@@ -71,7 +70,6 @@ fn sync_switch_style(
     }
 }
 
-/// Finds the switches whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct SwitchTargets<'w, 's> {
     changed: ChangedSwitches<'w, 's>,
@@ -113,7 +111,6 @@ type ChangedSwitches<'w, 's> = Query<
 
 type SwitchQuery<'w, 's> = Query<'w, 's, SwitchRow, With<ToggleSwitch>>;
 
-/// What the sync reads from a switch and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct SwitchRow {

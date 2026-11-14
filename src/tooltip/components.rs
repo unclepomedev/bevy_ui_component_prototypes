@@ -12,7 +12,6 @@ use std::{
     sync::Arc,
 };
 
-/// How close to the window edge a tooltip may go, in pixels.
 const WINDOW_MARGIN: f32 = 4.0;
 
 /// A text that appears next to a widget while the pointer rests on it, or while it holds the visible
@@ -21,7 +20,7 @@ const WINDOW_MARGIN: f32 = 4.0;
 /// - The tooltip shows after a delay (the theme's, or [`Tooltip::delay`]) and hides when the pointer leaves,
 ///   when the focus moves away, when a pointer button is pressed, or when Escape is pressed.
 /// - The keyboard focus counts as long as Bevy's `InputFocusVisible` is set: a click hides it, a key shows it
-///   again. `FocusIndicator` does not matter here.
+///   again.
 /// - Only the nearest `Tooltip` up from the hovered or focused entity shows, so a child can have its own.
 /// - A disabled widget still shows its tooltip: that is the place to say why it is disabled.
 /// - Changing the component changes the tooltip on screen.
@@ -113,7 +112,6 @@ impl PartialEq for LabelBundle {
     Node = popup_node(&TooltipMetrics::default(), &TooltipShape::default())
 )]
 pub(crate) struct TooltipPopup {
-    /// The widget the tooltip is for.
     pub(crate) target: Entity,
 }
 
@@ -134,7 +132,6 @@ pub(crate) fn spawn_popup(commands: &mut Commands, target: Entity, tooltip: &Too
     popup
 }
 
-/// The popup floats over what is below it, shrunk to its text.
 pub(crate) fn popup_node(metrics: &TooltipMetrics, shape: &TooltipShape) -> Node {
     Node {
         position_type: PositionType::Absolute,
@@ -163,9 +160,6 @@ pub(crate) fn placement(side: PopoverSide, metrics: &TooltipMetrics) -> Popover 
     }
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

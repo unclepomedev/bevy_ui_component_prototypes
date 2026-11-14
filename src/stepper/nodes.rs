@@ -1,13 +1,11 @@
 use super::{components::StepperButton, style::StepperShape};
 use bevy::prelude::*;
 
-// How far a mark sits below its cell.
 const MARK_GAP: f32 = 3.0;
 // The share of the cell height taken by the side of the square an arrow is cut from.
 // The arrow is that square's corner turned 45 degrees, so it reaches about 1.4 times the side.
 const ARROW_SHARE: f32 = 0.3;
 const ARROW_STROKE: f32 = 2.0;
-// The share of the cell height taken by a replacement icon on a button.
 const ICON_SHARE: f32 = 0.6;
 // The visible half of the turned square sits to one side of its center, so it is moved back by this share of the side.
 const ARROW_NUDGE: f32 = 0.2;
@@ -163,9 +161,6 @@ fn arrow_degrees(button: StepperButton) -> f32 {
     }
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

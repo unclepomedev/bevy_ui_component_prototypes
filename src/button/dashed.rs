@@ -8,12 +8,10 @@ use bevy::{
 /// A white frame made of dashes, as an image for [`SlicedImage::tiled`].
 ///
 /// A button style draws it as its `surface`, so the frame is tinted by `bg` per state and is
-/// stretched to any size of button while its dashes stay as they are. The image is made here,
-/// so no art file is needed.
+/// stretched to any size of button while its dashes stay as they are.
 ///
-/// It is a square of three corners a side. One edge piece is one period of the dashes: a dash of
-/// [`dash`](Self::dash) pixels and a gap of the rest. The last gap of an edge is filled, so
-/// each corner closes. Draw it with a nearest sampler, which [`image`](Self::image) sets.
+/// One edge piece is one period of the dashes: a dash of [`dash`](Self::dash) pixels and a gap
+/// of the rest. Draw it with a nearest sampler, which [`image`](Self::image) sets.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DashedFrame {
     /// The side of a corner, and the period of the dashes, in pixels. At least 2.
@@ -92,9 +90,6 @@ impl DashedFrame {
     }
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

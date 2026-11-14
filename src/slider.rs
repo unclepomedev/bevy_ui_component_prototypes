@@ -63,7 +63,6 @@ fn sync_slider_style(
     }
 }
 
-/// What the sync reads from a slider.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct SliderRow {
@@ -175,7 +174,6 @@ fn write_thumb(
     }
 }
 
-/// What the sync reads from a part of a slider.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct PartRow {
@@ -198,7 +196,6 @@ fn write_bar(node: &mut Mut<Node>, want: &Node) {
     }
 }
 
-/// Finds the sliders whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct SliderTargets<'w, 's> {
     changed: ChangedSliders<'w, 's>,

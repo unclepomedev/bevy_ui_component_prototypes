@@ -88,7 +88,6 @@ fn write_layout(node: &mut Mut<Node>, want: &Node) {
     }
 }
 
-/// What the sync reads from the box of a tooltip and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 pub(super) struct PopupBox {

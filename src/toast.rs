@@ -158,7 +158,6 @@ fn write_font(font: &mut Mut<TextFont>, theme: &Theme, metrics: &ToastMetrics) {
     }
 }
 
-/// What the sync reads from a toast and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct ToastRow {
