@@ -109,6 +109,9 @@ pub struct ButtonStyle {
     pub shape: ButtonShape,
     /// `None` draws `bg` as a plain background.
     pub surface: Option<SlicedImage>,
+    /// With a `surface`, the color under it, which shows where the image is transparent.
+    /// `None` leaves that transparent. Without a `surface`, `bg` is the background and this is unused.
+    pub fill: Option<StateColors>,
 }
 
 impl ButtonStyle {
@@ -125,6 +128,7 @@ impl ButtonStyle {
                 ..ButtonShape::default()
             },
             surface: None,
+            fill: None,
         }
     }
 }
@@ -178,6 +182,7 @@ impl Default for ButtonStyles {
             },
             shape: ButtonShape::default(),
             surface: None,
+            fill: None,
         };
         let neutral = solid(BG_NORMAL, BG_HOVERED, BG_PRESSED);
         Self {
@@ -204,7 +209,7 @@ impl Default for ButtonStyles {
 /// What a button looks like in one state, resolved from a [`ButtonStyle`].
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct ButtonLook {
-    /// Color of the node's own background (transparent when an image surface is drawn).
+    /// Color of the node's own background: `fill` when an image surface is drawn.
     pub(crate) background: Color,
     /// Color multiplied into the image surface.
     pub(crate) tint: Color,
@@ -220,10 +225,10 @@ impl ButtonStyle {
     pub(crate) fn look(&self, state: VisualState, focused: bool) -> ButtonLook {
         let tint = self.bg.pick(state);
         ButtonLook {
-            background: if self.surface.is_some() {
-                Color::NONE
-            } else {
-                tint
+            background: match (&self.surface, &self.fill) {
+                (None, _) => tint,
+                (Some(_), Some(fill)) => fill.pick(state),
+                (Some(_), None) => Color::NONE,
             },
             tint,
             border: self.border.pick(state),
@@ -273,6 +278,23 @@ mod tests {
         let look = style.look(VisualState::Pressed, false);
         assert_eq!(look.background, Color::NONE);
         assert_eq!(look.tint, style.bg.pressed);
+    }
+
+    #[test]
+    fn a_fill_is_the_background_under_the_image_only() {
+        let mut style = style(surface());
+        let fill = StateColors::uniform(Color::srgb(0.1, 0.2, 0.3));
+        style.fill = Some(fill);
+        assert_eq!(
+            style.look(VisualState::Hovered, false).background,
+            fill.hovered
+        );
+
+        style.surface = None;
+        assert_eq!(
+            style.look(VisualState::Hovered, false).background,
+            style.bg.hovered
+        );
     }
 
     #[test]

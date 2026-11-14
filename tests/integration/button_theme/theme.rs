@@ -81,6 +81,31 @@ fn surface_theme_tints_the_image_and_keeps_the_background_transparent() {
 }
 
 #[test]
+fn a_fill_is_the_background_under_the_image_and_follows_the_state() {
+    let mut theme = surface_theme();
+    for style in theme.buttons.named.values_mut() {
+        style.fill = Some(style.border);
+    }
+    let fill = primary(&theme).fill.expect("the primary style has a fill");
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(theme));
+    let button = spawn_primary(&mut app);
+    app.update();
+    assert_eq!(bg(&app, button), fill.normal);
+
+    app.world_mut()
+        .entity_mut(button)
+        .insert(PickingInteraction::Hovered);
+    app.update();
+    assert_eq!(bg(&app, button), fill.hovered);
+    // The image is still tinted by `bg`, not by the fill.
+    assert_eq!(
+        image_node(&app, button).unwrap().color,
+        primary(&surface_theme()).bg.hovered
+    );
+}
+
+#[test]
 fn swapping_to_a_theme_without_surface_removes_the_image_and_restores_the_background() {
     let mut app = test_app();
     app.insert_resource(GlobalTheme(surface_theme()));
