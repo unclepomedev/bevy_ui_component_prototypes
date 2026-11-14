@@ -61,6 +61,20 @@ impl ProgressRange {
 #[derive(Component, Clone, Copy, Debug, Default, PartialEq)]
 pub struct ProgressSegments(pub Option<BarSegments>);
 
+impl ProgressSegments {
+    /// `count` blocks with `gap` between them, as a share of one pitch. See [`BarSegments::gap`].
+    pub fn blocks(count: u32, gap: f32) -> Self {
+        Self(Some(BarSegments { count, gap }))
+    }
+
+    /// Leaves the choice to the theme: the same as having no [`ProgressSegments`].
+    ///
+    /// A bar built with [`progress_bar`](super::progress_bar) always has the component, and this is
+    /// its value unless `segments` was called. (A bundle cannot hold an optional component, so
+    /// the choice is inside it.)
+    pub const THEME: Self = Self(None);
+}
+
 /// The filled part of a [`ProgressBar`].
 #[derive(Component, Clone, Copy, Default)]
 pub(crate) struct ProgressFill;

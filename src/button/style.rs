@@ -19,6 +19,25 @@ pub struct SlicedImage {
     pub slicer: TextureSlicer,
 }
 
+impl SlicedImage {
+    /// A frame image whose corners are `corner` pixels square and whose edges repeat.
+    ///
+    /// The edge pieces are tiled at their own size, not stretched, so a pattern drawn along an edge
+    /// (dashes, say) keeps its period. The middle is stretched. See [`DashedFrame`](super::DashedFrame)
+    /// for an image made for this.
+    pub fn tiled(image: Handle<Image>, corner: f32) -> Self {
+        Self {
+            image,
+            slicer: TextureSlicer {
+                border: BorderRect::all(corner),
+                center_scale_mode: SliceScaleMode::Stretch,
+                sides_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
+                max_corner_scale: 1.0,
+            },
+        }
+    }
+}
+
 /// Border width and corner radius of a button, in pixels.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ButtonShape {
@@ -83,6 +102,8 @@ pub struct ButtonStyle {
     /// Background color. With a `surface`, it tints the image instead, and the node's own background stays transparent.
     pub bg: StateColors,
     pub fg: StateColors,
+    /// The color of the content marked [`ButtonAccent`](super::ButtonAccent). `None` leaves it to `fg`.
+    pub accent: Option<StateColors>,
     pub border: StateColors,
     pub focus_ring: FocusRing,
     pub shape: ButtonShape,
@@ -96,6 +117,7 @@ impl ButtonStyle {
         Self {
             bg: StateColors::uniform(Color::NONE),
             fg,
+            accent: None,
             border: StateColors::uniform(Color::NONE),
             focus_ring: FocusRing::NONE,
             shape: ButtonShape {
@@ -140,6 +162,7 @@ impl Default for ButtonStyles {
                 disabled: DISABLED,
                 focused: h,
             },
+            accent: None,
             fg: StateColors {
                 normal: TEXT_MAIN,
                 hovered: TEXT_MAIN,
@@ -187,6 +210,8 @@ pub(crate) struct ButtonLook {
     pub(crate) tint: Color,
     pub(crate) border: Color,
     pub(crate) fg: Color,
+    /// Color of the content marked `ButtonAccent`; `fg` when the style has no accent.
+    pub(crate) accent: Color,
     pub(crate) ring: FocusRing,
 }
 
@@ -203,6 +228,9 @@ impl ButtonStyle {
             tint,
             border: self.border.pick(state),
             fg: self.fg.pick(state),
+            accent: self
+                .accent
+                .map_or_else(|| self.fg.pick(state), |accent| accent.pick(state)),
             ring: if focused && state != VisualState::Disabled {
                 self.focus_ring
             } else {
@@ -294,6 +322,24 @@ mod tests {
             assert_eq!(look.border, Color::NONE);
             assert_eq!(look.ring, FocusRing::NONE);
             assert_eq!(look.fg, fg.pick(state));
+            assert_eq!(look.accent, fg.pick(state)); // no accent: it follows `fg`
         }
+    }
+
+    #[test]
+    fn the_accent_has_its_own_colors_when_the_style_gives_them() {
+        let mut style = style(None);
+        let accent = StateColors {
+            normal: Color::srgb(0.0, 0.9, 0.9),
+            hovered: Color::srgb(0.1, 0.9, 0.9),
+            pressed: Color::srgb(0.2, 0.9, 0.9),
+            disabled: Color::srgb(0.3, 0.9, 0.9),
+            focused: Color::srgb(0.4, 0.9, 0.9),
+        };
+        style.accent = Some(accent);
+
+        let look = style.look(VisualState::Pressed, false);
+        assert_eq!(look.accent, accent.pressed);
+        assert_eq!(look.fg, style.fg.pressed);
     }
 }

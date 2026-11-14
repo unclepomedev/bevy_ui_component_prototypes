@@ -8,6 +8,7 @@ use bevy_ui_component_prototypes::{
     button::{ButtonStyle, ButtonVariantId, icon_button},
 };
 
+mod accent;
 mod behavior;
 mod focus;
 mod initial_style;

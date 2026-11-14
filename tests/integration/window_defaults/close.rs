@@ -1,6 +1,7 @@
 //! Closing a window: by the request and by the close button.
 
 use super::*;
+use bevy::ui_widgets::Button as WidgetButton;
 
 #[test]
 fn a_close_request_despawns_the_window_and_the_others_move_down() {
@@ -82,5 +83,5 @@ fn the_close_button_is_a_button_for_the_assistive_technology() {
     app.update();
     let close = close_button(&app, a);
 
-    assert!(app.world().get::<bevy::ui_widgets::Button>(close).is_some());
+    assert!(app.world().get::<WidgetButton>(close).is_some());
 }
