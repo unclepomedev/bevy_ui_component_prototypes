@@ -1,4 +1,5 @@
 use super::{components::StepperButton, style::StepperShape};
+use crate::common::layout::write_changed;
 use bevy::prelude::*;
 
 const MARK_GAP: f32 = 3.0;
@@ -33,12 +34,14 @@ pub(crate) fn stepper_node(shape: &StepperShape, inline: bool) -> Node {
 /// Writes the fields of the root that the layout decides and leaves the rest to the app.
 pub(crate) fn lay_out(node: &mut Mut<Node>, shape: &StepperShape, inline: bool) {
     let wanted = stepper_node(shape, inline);
-    let mut next = node.clone();
-    next.flex_direction = wanted.flex_direction;
-    next.align_items = wanted.align_items;
-    next.row_gap = wanted.row_gap;
-    next.column_gap = wanted.column_gap;
-    node.set_if_neq(next);
+    write_changed!(
+        node,
+        wanted,
+        flex_direction,
+        align_items,
+        row_gap,
+        column_gap
+    );
 }
 
 pub(crate) fn header_node(shape: &StepperShape) -> Node {

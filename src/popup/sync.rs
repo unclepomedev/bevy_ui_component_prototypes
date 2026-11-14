@@ -1,7 +1,10 @@
 use super::components::{
     PopupButton, PopupButtons, PopupMessage, PopupPanel, PopupRoot, popup_panel_node,
 };
-use crate::{Theme, common::theme_lookup::ThemeLookup};
+use crate::{
+    Theme,
+    common::{layout::write_changed, theme_lookup::ThemeLookup},
+};
 use bevy::prelude::*;
 
 // Disjoint, because both write `BackgroundColor`.
@@ -48,24 +51,16 @@ pub(super) fn sync_popup_style(
 
 /// Writes the size, the spacing, the border, and the corners, only where they changed.
 fn write_layout(node: &mut Mut<Node>, want: &Node) {
-    if node.min_width != want.min_width {
-        node.min_width = want.min_width;
-    }
-    if node.max_width != want.max_width {
-        node.max_width = want.max_width;
-    }
-    if node.padding != want.padding {
-        node.padding = want.padding;
-    }
-    if node.row_gap != want.row_gap {
-        node.row_gap = want.row_gap;
-    }
-    if node.border != want.border {
-        node.border = want.border;
-    }
-    if node.border_radius != want.border_radius {
-        node.border_radius = want.border_radius;
-    }
+    write_changed!(
+        node,
+        want,
+        min_width,
+        max_width,
+        padding,
+        row_gap,
+        border,
+        border_radius
+    );
 }
 
 fn write_font(font: &mut Mut<TextFont>, theme: &Theme) {

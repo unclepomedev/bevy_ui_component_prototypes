@@ -8,6 +8,7 @@ use super::{
 use crate::{
     button::{ButtonContent, ButtonIcon},
     common::{
+        layout::write_changed,
         style_targets::{drain_removed, pick_targets},
         theme_lookup::ThemeLookup,
     },
@@ -92,9 +93,7 @@ fn sync_select_popup(
         for child in children.get(entity).into_iter().flat_map(|c| c.iter()) {
             if let Ok(mut list) = lists.get_mut(child) {
                 let want = list_node(&theme.select_metrics);
-                if list.max_height != want.max_height {
-                    list.max_height = want.max_height;
-                }
+                write_changed!(list, want, max_height);
             }
         }
     }
@@ -102,15 +101,7 @@ fn sync_select_popup(
 
 /// Writes the border, the corners and the padding, only where they changed.
 fn write_popup_layout(node: &mut Mut<Node>, want: &Node) {
-    if node.border != want.border {
-        node.border = want.border;
-    }
-    if node.border_radius != want.border_radius {
-        node.border_radius = want.border_radius;
-    }
-    if node.padding != want.padding {
-        node.padding = want.padding;
-    }
+    write_changed!(node, want, border, border_radius, padding);
 }
 
 /// What the sync writes to a popup.
@@ -162,12 +153,7 @@ fn sync_select_rows(
 
 /// Writes the height and the padding, only where they changed.
 fn write_row_layout(node: &mut Mut<Node>, want: &Node) {
-    if node.height != want.height {
-        node.height = want.height;
-    }
-    if node.padding != want.padding {
-        node.padding = want.padding;
-    }
+    write_changed!(node, want, height, padding);
 }
 
 #[derive(QueryData)]
