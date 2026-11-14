@@ -1,10 +1,10 @@
 use super::{
-    ProgressBar, ProgressRange, ProgressValue,
+    ProgressBar, ProgressRange, ProgressSegments, ProgressValue,
     components::{ProgressFill, fill_node, progress_node},
     style::ProgressShape,
     variant::ProgressVariant,
 };
-use crate::common::picking::pass_through;
+use crate::common::{bar::BarSegments, picking::pass_through};
 use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     prelude::*,
@@ -14,6 +14,7 @@ pub struct ProgressBarBuilder {
     range: ProgressRange,
     value: Option<f32>,
     variant: ProgressVariant,
+    segments: Option<BarSegments>,
 }
 
 /// A progress bar over `0.0..=1.0`, at 0.
@@ -22,6 +23,7 @@ pub fn progress_bar() -> ProgressBarBuilder {
         range: ProgressRange::default(),
         value: None,
         variant: ProgressVariant::default(),
+        segments: None,
     }
 }
 
@@ -42,6 +44,12 @@ impl ProgressBarBuilder {
         self
     }
 
+    /// Draws this bar as `count` blocks, instead of what the theme says. See [`ProgressSegments`].
+    pub fn segments(mut self, count: u32, gap: f32) -> Self {
+        self.segments = Some(BarSegments { count, gap });
+        self
+    }
+
     pub fn build(self) -> impl Bundle {
         let geometry = ProgressShape::default().geometry();
         (
@@ -49,6 +57,7 @@ impl ProgressBarBuilder {
             self.range,
             ProgressValue(self.value.unwrap_or(self.range.start)),
             self.variant,
+            ProgressSegments(self.segments),
             progress_node(&geometry),
             BackgroundGradient::default(),
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {

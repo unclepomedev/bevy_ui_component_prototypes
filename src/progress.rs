@@ -5,7 +5,7 @@ mod variant;
 
 pub use self::{
     builder::{ProgressBarBuilder, progress_bar},
-    components::{ProgressBar, ProgressRange, ProgressValue},
+    components::{ProgressBar, ProgressRange, ProgressSegments, ProgressValue},
     variant::ProgressVariant,
 };
 
@@ -14,8 +14,9 @@ pub use self::style::{ProgressShape, ProgressStyle, ProgressStyles, ProgressVari
 use self::components::{ProgressFill, fill_node, progress_node};
 use self::style::ProgressGeometry;
 use crate::common::{
+    bar::BarSegments,
     bar_paint::{paint_fill, paint_rail},
-    style_targets::pick_targets,
+    style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
 };
 use bevy::{ecs::query::QueryData, prelude::*, ui::UiSystems};
@@ -38,6 +39,7 @@ type ChangedBars<'w, 's> = Query<
             Changed<ProgressValue>,
             Changed<ProgressRange>,
             Changed<ProgressVariant>,
+            Changed<ProgressSegments>,
         )>,
     ),
 >;
@@ -45,20 +47,25 @@ type ChangedBars<'w, 's> = Query<
 fn sync_progress_style(
     mut lookup: ThemeLookup,
     changed: ChangedBars,
+    mut removed_segments: RemovedComponents<ProgressSegments>,
     all: Query<Entity, With<ProgressBar>>,
     mut bars: Query<BarRow, With<ProgressBar>>,
     mut fills: Query<FillRow, (With<ProgressFill>, Without<ProgressBar>)>,
     children: Query<&Children>,
 ) {
     let resync = lookup.needs_resync();
-    let targets = pick_targets(resync, all.iter(), changed.iter(), [], []);
+    let removed = drain_removed(&mut removed_segments);
+    let targets = pick_targets(resync, all.iter(), changed.iter(), removed, []);
 
     for entity in targets {
         let Ok(mut bar) = bars.get_mut(entity) else {
             continue;
         };
         let style = *bar.variant.resolve(lookup.for_entity(entity));
-        let geometry = style.shape.geometry();
+        let mut geometry = style.shape.geometry();
+        if let Some(&ProgressSegments(Some(own))) = bar.segments {
+            geometry.segments = BarSegments::usable(Some(own));
+        }
         let share = bar.range.fraction(**bar.value);
 
         write_bar(&mut bar, &style, &geometry);
@@ -72,6 +79,7 @@ struct BarRow {
     variant: &'static ProgressVariant,
     value: &'static ProgressValue,
     range: &'static ProgressRange,
+    segments: Option<&'static ProgressSegments>,
     bg: &'static mut BackgroundColor,
     gradient: &'static mut BackgroundGradient,
     node: &'static mut Node,

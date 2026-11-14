@@ -7,6 +7,7 @@ mod surface;
 mod variant;
 
 pub use self::{
+    content::{ButtonIcon, ButtonLabel, KeepFontSize},
     icon_button::{IconButton, IconButtonBuilder, icon_button},
     size::ButtonSize,
     style::{
@@ -17,7 +18,7 @@ pub use self::{
 };
 
 pub(crate) use self::{
-    content::{ButtonContent, ButtonIcon, ButtonLabel},
+    content::ButtonContent,
     layout::{button_node, write_button_layout},
     surface::ButtonSurface,
 };
