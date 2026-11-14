@@ -179,6 +179,7 @@ fn sliced_theme(assets: &Assets) -> Theme {
             },
             shape: ButtonShape::default(),
             surface: Some(surface.clone()),
+            fill: None,
         }
     };
     Theme {

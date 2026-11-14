@@ -267,6 +267,7 @@ fn button_style(seed: f32) -> ButtonStyle {
             radius: 5.0,
         },
         surface: None,
+        fill: None,
     }
 }
 
