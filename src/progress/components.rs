@@ -2,7 +2,7 @@ use super::{
     style::{ProgressGeometry, ProgressShape},
     variant::ProgressVariant,
 };
-use crate::common::picking::pass_through;
+use crate::common::{bar::BarSegments, picking::pass_through};
 use bevy::{picking::Pickable, prelude::*};
 
 /// A themed horizontal bar: a rail and a filled part of it that follows a value.
@@ -51,6 +51,15 @@ impl ProgressRange {
         }
     }
 }
+
+/// Draws this bar as blocks of its own, whatever the theme says: the theme's
+/// [`ProgressShape::segments`] is for every bar of a variant, while this is for one bar,
+/// for example one whose number of blocks is only known at run time.
+///
+/// `None` leaves the choice to the theme, as does having no such component. Fewer than two blocks
+/// draw a plain bar, also under a theme that draws blocks.
+#[derive(Component, Clone, Copy, Debug, Default, PartialEq)]
+pub struct ProgressSegments(pub Option<BarSegments>);
 
 /// The filled part of a [`ProgressBar`].
 #[derive(Component, Clone, Copy, Default)]

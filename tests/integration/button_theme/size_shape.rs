@@ -8,7 +8,10 @@ use crate::{
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     GlobalTheme, Theme,
-    button::{ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonVariantId, icon_button},
+    button::{
+        ButtonLabel, ButtonMetrics, ButtonShape, ButtonSize, ButtonSizeId, ButtonVariant,
+        ButtonVariantId, IconButton, KeepFontSize, icon_button,
+    },
     common::StateColors,
 };
 
@@ -108,6 +111,124 @@ fn changing_the_size_of_a_button_resizes_it() {
 
     assert_eq!(node(&app, button).height, roomy_row().height);
     assert_eq!(label_size(&app, button), roomy_row().font_size);
+}
+
+#[test]
+fn a_label_that_keeps_its_font_size_is_colored_but_not_resized() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(roomy_theme()));
+    let small = FontSize::Px(11.0);
+    let text = |label: &'static str| {
+        (
+            Text::new(label),
+            TextFont {
+                font_size: small,
+                ..default()
+            },
+        )
+    };
+    // A card: the labels sit at different depths, as in content the builder cannot make.
+    let card = app
+        .world_mut()
+        .spawn((
+            IconButton,
+            ButtonSize::Named(ROW),
+            ButtonVariant::Named(ButtonVariantId::PRIMARY),
+            children![
+                (ButtonLabel, text("sized")),
+                (
+                    Node::default(),
+                    children![(ButtonLabel, KeepFontSize, text("kept"))]
+                ),
+            ],
+        ))
+        .id();
+
+    app.update();
+
+    let world = app.world();
+    let label = |text: &str| {
+        world
+            .iter_entities()
+            .find(|e| e.get::<Text>().is_some_and(|t| t.0 == text))
+            .map(|e| {
+                (
+                    e.get::<TextFont>().unwrap().font_size,
+                    e.get::<TextColor>().unwrap().0,
+                )
+            })
+            .unwrap()
+    };
+    let fg = primary(&roomy_theme()).fg.normal;
+    assert_eq!(label("sized"), (roomy_row().font_size, fg));
+    assert_eq!(label("kept"), (small, fg));
+    assert_eq!(node(&app, card).height, roomy_row().height);
+}
+
+#[test]
+fn a_label_that_stops_keeping_its_font_size_is_resized_with_no_other_change() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(roomy_theme()));
+    let small = FontSize::Px(11.0);
+    let card = app
+        .world_mut()
+        .spawn((
+            IconButton,
+            ButtonSize::Named(ROW),
+            ButtonVariant::Named(ButtonVariantId::PRIMARY),
+            children![(
+                Node::default(),
+                children![(
+                    ButtonLabel,
+                    KeepFontSize,
+                    Text::new("nested"),
+                    TextFont {
+                        font_size: small,
+                        ..default()
+                    },
+                )]
+            )],
+        ))
+        .id();
+    app.update();
+    let label = app
+        .world()
+        .iter_entities()
+        .find(|e| e.get::<Text>().is_some_and(|t| t.0 == "nested"))
+        .map(|e| e.id())
+        .unwrap();
+    let size = |app: &App| app.world().get::<TextFont>(label).unwrap().font_size;
+    assert_eq!(size(&app), small);
+
+    app.world_mut().entity_mut(label).remove::<KeepFontSize>();
+    app.update();
+
+    assert_eq!(size(&app), roomy_row().font_size);
+    assert_eq!(node(&app, card).height, roomy_row().height);
+}
+
+#[test]
+fn a_keeping_label_despawned_or_outside_any_button_is_harmless() {
+    let mut app = test_app();
+    let button = app
+        .world_mut()
+        .spawn((
+            IconButton,
+            children![(ButtonLabel, KeepFontSize, Text::new("a"))],
+        ))
+        .id();
+    let stray = app
+        .world_mut()
+        .spawn((ButtonLabel, KeepFontSize, Text::new("stray")))
+        .id();
+    app.update();
+    let label = app.world().get::<Children>(button).unwrap()[0];
+
+    app.world_mut().entity_mut(label).despawn();
+    app.world_mut().entity_mut(stray).remove::<KeepFontSize>();
+    app.update();
+
+    assert!(app.world().get_entity(button).is_ok());
 }
 
 fn spawn_sized(app: &mut App, size: impl Into<ButtonSize>) -> Entity {

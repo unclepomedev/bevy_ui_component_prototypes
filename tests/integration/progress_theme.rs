@@ -13,8 +13,8 @@ use bevy_ui_component_prototypes::{
     GlobalTheme, Theme,
     common::BarSegments,
     progress::{
-        ProgressRange, ProgressShape, ProgressValue, ProgressVariant, ProgressVariantId,
-        progress_bar,
+        ProgressRange, ProgressSegments, ProgressShape, ProgressValue, ProgressVariant,
+        ProgressVariantId, progress_bar,
     },
 };
 
@@ -357,6 +357,93 @@ fn swapping_between_segmented_and_plain_themes_switches_the_look_back_and_forth(
     assert!(stops(&app, bar).is_empty());
     assert!(stops(&app, fill_part(&app, bar)).is_empty());
     assert_eq!(fill(&app, bar), probe_theme().progress.base.fill);
+    assert_eq!(fill_width(&app, bar), Val::Percent(50.0));
+}
+
+// ---------------------------------------------------------------------------
+// Segments of one bar
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_bar_can_ask_for_blocks_of_its_own_under_a_plain_theme() {
+    let mut app = test_app();
+    let bar = app
+        .world_mut()
+        .spawn(
+            progress_bar()
+                .range(0.0, 40.0)
+                .value(12.0)
+                .segments(40, 0.25)
+                .build(),
+        )
+        .id();
+
+    app.update();
+
+    let style = probe_theme().progress.base;
+    assert_eq!(rail(&app, bar), Color::NONE);
+    assert_eq!(painted_blocks(&stops(&app, bar), style.rail), 40);
+    assert_eq!(
+        painted_blocks(&stops(&app, fill_part(&app, bar)), style.fill),
+        12
+    );
+    assert_eq!(fill_width(&app, bar), Val::Percent(100.0));
+}
+
+#[test]
+fn the_blocks_of_a_bar_win_over_the_blocks_of_the_theme() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(blocks_theme()));
+    let bar = app
+        .world_mut()
+        .spawn(progress_bar().value(0.5).segments(4, 0.2).build())
+        .id();
+
+    app.update();
+
+    let style = blocks_theme().progress.base;
+    assert_eq!(painted_blocks(&stops(&app, bar), style.rail), 4);
+    assert_eq!(
+        painted_blocks(&stops(&app, fill_part(&app, bar)), style.fill),
+        2
+    );
+}
+
+#[test]
+fn changing_and_removing_the_blocks_of_a_bar_restyles_it() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(blocks_theme()));
+    let bar = app
+        .world_mut()
+        .spawn(progress_bar().value(0.5).segments(4, 0.2).build())
+        .id();
+    app.update();
+    let style = blocks_theme().progress.base;
+
+    app.world_mut()
+        .entity_mut(bar)
+        .insert(ProgressSegments(Some(BarSegments { count: 8, gap: 0.2 })));
+    app.update();
+    assert_eq!(painted_blocks(&stops(&app, bar), style.rail), 8);
+
+    app.world_mut().entity_mut(bar).remove::<ProgressSegments>();
+    app.update();
+    assert_eq!(painted_blocks(&stops(&app, bar), style.rail), 10);
+}
+
+#[test]
+fn fewer_than_two_blocks_of_a_bar_draw_a_plain_bar_even_under_a_segmented_theme() {
+    let mut app = test_app();
+    app.insert_resource(GlobalTheme(blocks_theme()));
+    let bar = app
+        .world_mut()
+        .spawn(progress_bar().value(0.5).segments(1, 0.2).build())
+        .id();
+
+    app.update();
+
+    assert!(stops(&app, bar).is_empty());
+    assert_eq!(fill(&app, bar), blocks_theme().progress.base.fill);
     assert_eq!(fill_width(&app, bar), Val::Percent(50.0));
 }
 
