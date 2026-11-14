@@ -1,6 +1,9 @@
 use super::style::ButtonMetrics;
 use crate::theme::Theme;
-use bevy::{ecs::system::SystemParam, prelude::*};
+use bevy::{
+    ecs::{query::QueryData, system::SystemParam},
+    prelude::*,
+};
 
 /// Marks a text inside a button as its label: the button gives it its foreground color,
 /// the theme font and, from its size, the font size.
@@ -22,59 +25,78 @@ pub struct ButtonIcon;
 #[derive(Component, Clone, Default)]
 pub struct KeepFontSize;
 
+/// On a [`ButtonLabel`] or a [`ButtonIcon`]: the button colors it with the style's
+/// [`accent`](super::ButtonStyle::accent) instead of `fg`, so one part of the content can stand
+/// out, such as the chevron of a card. A style without an accent colors it with `fg` as usual.
+#[derive(Component, Clone, Default)]
+pub struct ButtonAccent;
+
 #[derive(SystemParam)]
 pub(crate) struct ButtonContent<'w, 's> {
     children: Query<'w, 's, &'static Children>,
-    labels: Query<
-        'w,
-        's,
-        (
-            &'static mut TextColor,
-            &'static mut TextFont,
-            Has<KeepFontSize>,
-        ),
-        With<ButtonLabel>,
-    >,
-    icons: Query<'w, 's, (&'static mut ImageNode, &'static mut Node), With<ButtonIcon>>,
+    labels: Query<'w, 's, LabelRow, With<ButtonLabel>>,
+    icons: Query<'w, 's, IconRow, With<ButtonIcon>>,
+}
+
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct LabelRow {
+    color: &'static mut TextColor,
+    font: &'static mut TextFont,
+    keeps_size: Has<KeepFontSize>,
+    accented: Has<ButtonAccent>,
+}
+
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct IconRow {
+    image: &'static mut ImageNode,
+    node: &'static mut Node,
+    accented: Has<ButtonAccent>,
 }
 
 impl ButtonContent<'_, '_> {
-    /// Applies the foreground color, the theme font and the size to the button's descendants.
+    /// Applies the colors, the theme font and the size to the button's descendants: `accent` to
+    /// the content marked [`ButtonAccent`], `fg` to the rest.
     /// Without `metrics`, the sizes are left as they are.
     pub(crate) fn apply(
         &mut self,
         root: Entity,
         fg: Color,
+        accent: Color,
         metrics: Option<&ButtonMetrics>,
         theme: &Theme,
     ) {
         for descendant in self.children.iter_descendants(root) {
-            if let Ok((mut color, mut text_font, keeps_size)) = self.labels.get_mut(descendant) {
-                color.set_if_neq(TextColor(fg));
-                if text_font.font != theme.font {
-                    text_font.font = theme.font.clone();
+            if let Ok(mut label) = self.labels.get_mut(descendant) {
+                label
+                    .color
+                    .set_if_neq(TextColor(if label.accented { accent } else { fg }));
+                if label.font.font != theme.font {
+                    label.font.font = theme.font.clone();
                 }
-                if text_font.font_smoothing != theme.font_smoothing {
-                    text_font.font_smoothing = theme.font_smoothing;
+                if label.font.font_smoothing != theme.font_smoothing {
+                    label.font.font_smoothing = theme.font_smoothing;
                 }
                 if let Some(metrics) = metrics
-                    && !keeps_size
-                    && text_font.font_size != metrics.font_size
+                    && !label.keeps_size
+                    && label.font.font_size != metrics.font_size
                 {
-                    text_font.font_size = metrics.font_size;
+                    label.font.font_size = metrics.font_size;
                 }
             }
-            if let Ok((mut icon, mut node)) = self.icons.get_mut(descendant) {
-                if icon.color != fg {
-                    icon.color = fg;
+            if let Ok(mut icon) = self.icons.get_mut(descendant) {
+                let color = if icon.accented { accent } else { fg };
+                if icon.image.color != color {
+                    icon.image.color = color;
                 }
                 if let Some(metrics) = metrics {
                     let side = Val::Px(metrics.icon_size);
-                    if node.width != side {
-                        node.width = side;
+                    if icon.node.width != side {
+                        icon.node.width = side;
                     }
-                    if node.height != side {
-                        node.height = side;
+                    if icon.node.height != side {
+                        icon.node.height = side;
                     }
                 }
             }

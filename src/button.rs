@@ -1,4 +1,5 @@
 mod content;
+mod dashed;
 mod icon_button;
 mod layout;
 mod size;
@@ -7,7 +8,8 @@ mod surface;
 mod variant;
 
 pub use self::{
-    content::{ButtonIcon, ButtonLabel, KeepFontSize},
+    content::{ButtonAccent, ButtonIcon, ButtonLabel, KeepFontSize},
+    dashed::DashedFrame,
     icon_button::{IconButton, IconButtonBuilder, icon_button},
     size::ButtonSize,
     style::{
@@ -106,8 +108,11 @@ struct StyleTargets<'w, 's> {
     changed: ChangedButtons<'w, 's>,
     all: Query<'w, 's, Entity, (With<Button>, With<ButtonVariant>)>,
     removed_disabled: RemovedComponents<'w, 's, InteractionDisabled>,
-    // A label that stops keeping its size is resized by the button that owns it.
+    // Content whose marker changes is restyled by the button that owns it: a label that stops
+    // keeping its size, content that gains or loses the accent.
     removed_keep_size: RemovedComponents<'w, 's, KeepFontSize>,
+    removed_accent: RemovedComponents<'w, 's, ButtonAccent>,
+    added_accent: Query<'w, 's, Entity, Added<ButtonAccent>>,
     parents: Query<'w, 's, &'static ChildOf>,
     owners: Query<'w, 's, (), With<Button>>,
 }
@@ -117,8 +122,12 @@ impl StyleTargets<'_, '_> {
     /// (including both ends of a focus move).
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
         let mut removed = drain_removed(&mut self.removed_disabled);
-        for label in drain_removed(&mut self.removed_keep_size) {
-            // The nearest button above the label. A despawned label has no parent: nothing to restyle.
+        let marked = drain_removed(&mut self.removed_keep_size)
+            .into_iter()
+            .chain(drain_removed(&mut self.removed_accent))
+            .chain(self.added_accent.iter().collect::<Vec<_>>());
+        for label in marked {
+            // The nearest button above the content. A despawned one has no parent: nothing to restyle.
             let owner = self
                 .parents
                 .iter_ancestors(label)
@@ -170,7 +179,8 @@ impl ButtonParts<'_, '_> {
     ) {
         self.surface
             .apply(button, style.surface.as_ref(), look.tint);
-        self.content.apply(button, look.fg, metrics, theme);
+        self.content
+            .apply(button, look.fg, look.accent, metrics, theme);
     }
 }
 

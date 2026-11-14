@@ -259,6 +259,7 @@ fn button_style(seed: f32) -> ButtonStyle {
     ButtonStyle {
         bg: tones(seed, 0.1),
         fg: tones(seed, 0.5),
+        accent: Some(tones(seed, 0.7)),
         border: tones(seed, 0.9),
         focus_ring: ring(seed),
         shape: ButtonShape {

@@ -169,6 +169,7 @@ fn sliced_theme(assets: &Assets) -> Theme {
                 disabled: Color::srgb(0.4, 0.4, 0.4),
             },
             fg: StateColors::uniform(Color::srgb(0.08, 0.08, 0.12)),
+            accent: None,
             // The frame carries its own outline.
             border: StateColors::uniform(Color::NONE),
             focus_ring: FocusRing {

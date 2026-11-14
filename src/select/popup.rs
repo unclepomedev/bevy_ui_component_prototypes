@@ -155,7 +155,8 @@ fn sync_select_rows(
 
         row.bg.set_if_neq(BackgroundColor(look.bg));
         write_row_layout(&mut row.node, &row_node(metrics));
-        content.apply(entity, look.fg, Some(&metrics.trigger), theme);
+        // A row has no accent: marked content takes `fg` like the rest.
+        content.apply(entity, look.fg, look.fg, Some(&metrics.trigger), theme);
     }
 }
 

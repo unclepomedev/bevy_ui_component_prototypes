@@ -422,7 +422,7 @@ fn changing_and_removing_the_blocks_of_a_bar_restyles_it() {
 
     app.world_mut()
         .entity_mut(bar)
-        .insert(ProgressSegments(Some(BarSegments { count: 8, gap: 0.2 })));
+        .insert(ProgressSegments::blocks(8, 0.2));
     app.update();
     assert_eq!(painted_blocks(&stops(&app, bar), style.rail), 8);
 
