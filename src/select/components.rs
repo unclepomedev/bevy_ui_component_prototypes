@@ -31,8 +31,7 @@ pub(crate) type LabelSpawner = Arc<dyn Fn(&mut EntityWorldMut) + Send + Sync>;
 /// A themed select: a box that shows the chosen option, and a list that opens under it.
 ///
 /// Choosing an option in the list emits `ValueChange<V>` (`V` is the type of the option values) with
-/// this entity as `source`, and the app applies it by inserting [`SelectedOption`] (or
-/// [`SelectedIndex`]) on this entity.
+/// this entity as `source`, and the app applies it by inserting [`SelectedOption`] on this entity.
 ///
 /// Insert `InteractionDisabled` on this entity to disable the select.
 ///
@@ -41,11 +40,10 @@ pub(crate) type LabelSpawner = Arc<dyn Fn(&mut EntityWorldMut) + Send + Sync>;
 #[require(SelectedIndex, Node = select_node())]
 pub struct Select;
 
-/// Which option is chosen, by position. `None`, or a position past the last option, shows the placeholder.
-/// Inserting [`SelectedOption`] sets this for you. Use one of the two, not both.
+/// The position of the chosen option, derived from [`SelectedOption`]. `None` shows the placeholder.
 #[derive(Component, Clone, Copy, Debug, Default, PartialEq, Eq, Deref)]
-pub struct SelectedIndex {
-    pub index: Option<usize>,
+pub(crate) struct SelectedIndex {
+    pub(crate) index: Option<usize>,
 }
 
 /// The chosen option, by value. Insert it on a [`Select`] built with the same `V`; removing it shows the placeholder.

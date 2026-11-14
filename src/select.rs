@@ -12,7 +12,7 @@ mod trigger;
 
 pub use self::{
     builder::{SelectBuilder, select},
-    components::{Select, SelectKey, SelectedIndex, SelectedOption},
+    components::{Select, SelectKey, SelectedOption},
     style::{
         OptionColors, SelectMetrics, SelectPopupStyle, SelectShape, SelectStyle, SelectionColors,
     },

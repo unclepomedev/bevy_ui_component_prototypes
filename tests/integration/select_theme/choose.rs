@@ -1,7 +1,7 @@
 //! Tests of Choosing.
 
 use super::{
-    Fruit, Requests, app_that_logs_requests, focus_state, index, list, menu_event, popup,
+    Fruit, Requests, app_that_logs_requests, chosen, focus_state, list, menu_event, popup,
     report_row, rows, selected_rows, spawn_fruit, spawn_fruit_under, trigger, visibility,
 };
 use crate::support::test_app;
@@ -38,7 +38,7 @@ fn a_request_never_changes_the_choice_by_itself() {
 
     report_row(&mut app, list, row);
 
-    assert_eq!(index(&app, root), None);
+    assert_eq!(chosen(&app, root), None);
     assert_eq!(selected_rows(&app, root), [false, false, false]);
 }
 

@@ -11,7 +11,7 @@ use bevy::{
     ui::{ComputedNode, ScrollPosition, UiGlobalTransform},
     ui_widgets::{MenuAction, MenuEvent, MenuFocusState, ScrollAreaPlugin, ScrollIntoView},
 };
-use bevy_ui_component_prototypes::select::{SelectedIndex, SelectedOption};
+use bevy_ui_component_prototypes::select::SelectedOption;
 
 #[test]
 fn toggling_opens_the_popup_and_toggling_again_closes_it() {
@@ -230,13 +230,13 @@ fn opening_a_list_with_nothing_chosen_brings_it_back_to_the_top() {
 }
 
 #[test]
-fn a_position_past_the_last_option_is_treated_as_nothing_chosen() {
+fn a_value_that_is_not_an_option_is_treated_as_nothing_chosen() {
     let mut app = app_that_records_scrolling();
     let root = spawn_fruit(&mut app);
     let list = list(&app, root);
-    app.world_mut()
-        .entity_mut(root)
-        .insert(SelectedIndex { index: Some(9) });
+    app.world_mut().entity_mut(root).insert(SelectedOption {
+        value: Fruit::Durian,
+    });
     app.world_mut()
         .entity_mut(list)
         .insert(ScrollPosition(Vec2::new(0.0, 100.0)));
@@ -261,9 +261,9 @@ fn the_list_scrolls_only_when_it_opens() {
     toggle(&mut app, root);
     assert_eq!(scrolled(&app), vec![rows[0]]);
 
-    app.world_mut()
-        .entity_mut(root)
-        .insert(SelectedIndex { index: Some(1) });
+    app.world_mut().entity_mut(root).insert(SelectedOption {
+        value: Fruit::Banana,
+    });
     app.update();
     assert_eq!(scrolled(&app).len(), 1);
 

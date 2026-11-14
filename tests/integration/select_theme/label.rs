@@ -1,15 +1,15 @@
 //! Tests of The label that is shown.
 
 use super::{
-    Fruit, Marker, Requests, app_that_logs_requests, content, index, list, menu_event, popup,
-    report_row, rows, shown, spawn_fruit, spawn_preselected, text, trigger, visibility,
+    Fruit, Marker, Requests, app_that_logs_requests, content, list, menu_event, popup, report_row,
+    rows, shown, spawn_fruit, spawn_preselected, text, trigger, visibility,
 };
 use crate::support::test_app;
 use bevy::{
     prelude::*,
     ui_widgets::{MenuAction, ReselectListRow},
 };
-use bevy_ui_component_prototypes::select::{SelectedIndex, SelectedOption, select};
+use bevy_ui_component_prototypes::select::{SelectedOption, select};
 
 #[test]
 fn nothing_chosen_shows_the_placeholder() {
@@ -57,20 +57,19 @@ fn the_initial_choice_shows_its_label_after_one_update() {
 
     app.update();
 
-    assert_eq!(index(&app, root), Some(1));
     assert_eq!(shown_text(&app, root), Some("Banana".to_string()));
 }
 
 #[test]
-fn changing_the_index_replaces_the_label() {
+fn changing_the_choice_replaces_the_label() {
     let mut app = test_app();
     let root = spawn_fruit(&mut app);
     app.update();
     let placeholder = shown(&app, root).unwrap();
 
-    app.world_mut()
-        .entity_mut(root)
-        .insert(SelectedIndex { index: Some(2) });
+    app.world_mut().entity_mut(root).insert(SelectedOption {
+        value: Fruit::Cherry,
+    });
     app.update();
 
     assert_eq!(shown_text(&app, root), Some("Cherry".to_string()));
@@ -111,14 +110,12 @@ fn a_value_chooses_its_option_and_removing_it_shows_the_placeholder_again() {
         value: Fruit::Banana,
     });
     app.update();
-    assert_eq!(index(&app, root), Some(1));
     assert_eq!(shown_text(&app, root), Some("Banana".to_string()));
 
     app.world_mut()
         .entity_mut(root)
         .remove::<SelectedOption<Fruit>>();
     app.update();
-    assert_eq!(index(&app, root), None);
     assert_eq!(shown_text(&app, root), Some("Pick one".to_string()));
 }
 
@@ -141,7 +138,6 @@ fn a_value_that_is_not_an_option_shows_the_placeholder() {
     });
     app.update();
 
-    assert_eq!(index(&app, root), None);
     assert_eq!(shown_text(&app, root), Some("Pick one".to_string()));
 }
 
@@ -191,7 +187,6 @@ fn a_preselected_option_is_a_selected_option_like_any_other() {
             value: Fruit::Banana
         })
     );
-    assert_eq!(index(&app, root), Some(1));
 }
 
 #[test]
@@ -205,7 +200,6 @@ fn a_preselected_select_can_be_cleared_by_removing_the_value() {
         .remove::<SelectedOption<Fruit>>();
     app.update();
 
-    assert_eq!(index(&app, root), None);
     assert_eq!(shown_text(&app, root), Some("Pick one".to_string()));
 }
 
@@ -225,7 +219,6 @@ fn a_preselected_value_that_is_not_an_option_chooses_nothing() {
     app.update();
 
     assert!(app.world().get::<SelectedOption<Fruit>>(root).is_none());
-    assert_eq!(index(&app, root), None);
     assert_eq!(shown_text(&app, root), Some("Pick one".to_string()));
 }
 
