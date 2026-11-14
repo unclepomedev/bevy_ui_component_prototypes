@@ -1,7 +1,11 @@
 use super::style::{SelectMetrics, SelectShape};
 use crate::{
     button::{ButtonShape, button_node},
-    common::{focus::hidden_outline, tab_order::KeyboardNavigable},
+    common::{
+        chevron::{Direction, chevron},
+        focus::hidden_outline,
+        tab_order::KeyboardNavigable,
+    },
 };
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
@@ -17,7 +21,6 @@ use bevy::{
 use std::sync::Arc;
 
 const ARROW_SIZE: f32 = 10.0;
-const ARROW_STROKE: f32 = 2.0;
 const WINDOW_MARGIN: f32 = 8.0;
 
 /// What the value of an option must be: `Clone + PartialEq + Send + Sync + 'static`.
@@ -253,24 +256,6 @@ pub(crate) fn content_node() -> Node {
     }
 }
 
-/// A square with only two sides drawn, turned by 45 degrees: a chevron that needs no glyph.
-pub(crate) fn arrow_node() -> Node {
-    Node {
-        width: px(ARROW_SIZE),
-        height: px(ARROW_SIZE),
-        border: UiRect {
-            right: px(ARROW_STROKE),
-            bottom: px(ARROW_STROKE),
-            ..default()
-        },
-        margin: UiRect::bottom(px(ARROW_SIZE / 2.0)),
-        ..default()
-    }
-}
-
-pub(crate) fn arrow_transform() -> UiTransform {
-    UiTransform {
-        rotation: Rot2::degrees(45.0),
-        ..default()
-    }
+pub(crate) fn arrow() -> (Node, UiTransform) {
+    chevron(ARROW_SIZE, Direction::Down)
 }

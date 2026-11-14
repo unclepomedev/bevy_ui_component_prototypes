@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 /// Picks the widgets to restyle this frame: all of them on a `resync`, otherwise those that
 /// changed, those in `removed` (read with [`drain_removed`]) and those whose focus ring moved.
-/// Each widget is listed once, in entity order, however many times it was reported.
+/// Each widget is listed once, however many times it was reported, in a fixed order that
+/// callers should not rely on.
 pub(crate) fn pick_targets(
     resync: bool,
     all: impl IntoIterator<Item = Entity>,
@@ -40,12 +41,26 @@ mod tests {
             .collect()
     }
 
+    // The order of the result is not part of the contract, so the tests compare it sorted.
+    fn sorted(mut targets: Vec<Entity>) -> Vec<Entity> {
+        targets.sort();
+        targets
+    }
+
+    fn expected<const N: usize>(mut want: [Entity; N]) -> Vec<Entity> {
+        want.sort();
+        want.to_vec()
+    }
+
     #[test]
     fn a_resync_picks_every_widget_and_nothing_else() {
         let [a, b, c, d] = entities(4)[..] else {
             unreachable!()
         };
-        assert_eq!(pick_targets(true, [a, b], [c], [d], [c]), vec![a, b]);
+        assert_eq!(
+            sorted(pick_targets(true, [a, b], [c], [d], [c])),
+            expected([a, b])
+        );
     }
 
     #[test]
@@ -54,8 +69,8 @@ mod tests {
             unreachable!()
         };
         assert_eq!(
-            pick_targets(false, [a, b, c, d], [a], [b], [c]),
-            vec![a, b, c]
+            sorted(pick_targets(false, [a, b, c, d], [a], [b], [c])),
+            expected([a, b, c])
         );
     }
 
@@ -65,10 +80,13 @@ mod tests {
             unreachable!()
         };
         assert_eq!(
-            pick_targets(false, [a, b, c], [c, a], [a], [c, b]),
-            vec![a, b, c]
+            sorted(pick_targets(false, [a, b, c], [c, a], [a], [c, b])),
+            expected([a, b, c])
         );
-        assert_eq!(pick_targets(true, [b, a, b], [], [], []), vec![a, b]);
+        assert_eq!(
+            sorted(pick_targets(true, [b, a, b], [], [], [])),
+            expected([a, b])
+        );
     }
 
     #[test]

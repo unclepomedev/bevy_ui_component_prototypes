@@ -96,8 +96,7 @@ struct StepperTargets<'w, 's> {
 }
 
 impl StepperTargets<'_, '_> {
-    /// Every stepper after a theme change, otherwise only the ones that changed: the stepper
-    /// itself, one of its cells or buttons, or either end of a focus move.
+    /// A stepper is also restyled when one of its cells or buttons changed.
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
         let enabled = drain_removed(&mut self.enabled);
         let enabled = enabled.into_iter().filter_map(|part| self.owners.of(part));

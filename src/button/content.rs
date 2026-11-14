@@ -1,8 +1,9 @@
 use super::style::ButtonMetrics;
 use crate::theme::Theme;
 use bevy::{
-    ecs::{query::QueryData, system::SystemParam},
+    ecs::{lifecycle::HookContext, query::QueryData, system::SystemParam, world::DeferredWorld},
     prelude::*,
+    ui_widgets::Button,
 };
 
 /// Marks a text inside a button as its label: the button gives it its foreground color,
@@ -23,13 +24,32 @@ pub struct ButtonIcon;
 /// On a [`ButtonLabel`]: the button colors the text but leaves its font size alone.
 /// For a button that holds texts of several sizes.
 #[derive(Component, Clone, Default)]
+#[component(on_remove = restyle_owner)]
 pub struct KeepFontSize;
 
 /// On a [`ButtonLabel`] or a [`ButtonIcon`]: the button colors it with the style's
 /// [`accent`](super::ButtonStyle::accent) instead of `fg`, so one part of the content can stand
 /// out, such as the chevron of a card. A style without an accent colors it with `fg` as usual.
 #[derive(Component, Clone, Default)]
+#[component(on_add = restyle_owner, on_remove = restyle_owner)]
 pub struct ButtonAccent;
+
+/// Put on a button when a marker of its content changes, so that the next style sync visits it.
+#[derive(Component)]
+pub(crate) struct RestyleRequest;
+
+/// Asks the button that owns the content `context.entity` to restyle it: the nearest button above it,
+/// if there is one.
+fn restyle_owner(mut world: DeferredWorld, context: HookContext) {
+    let mut entity = context.entity;
+    while let Some(parent) = world.get::<ChildOf>(entity).map(ChildOf::parent) {
+        if world.get::<Button>(parent).is_some() {
+            world.commands().entity(parent).try_insert(RestyleRequest);
+            return;
+        }
+        entity = parent;
+    }
+}
 
 #[derive(SystemParam)]
 pub(crate) struct ButtonContent<'w, 's> {

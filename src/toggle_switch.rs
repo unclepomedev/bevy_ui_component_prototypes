@@ -79,8 +79,6 @@ struct SwitchTargets<'w, 's> {
 }
 
 impl SwitchTargets<'_, '_> {
-    /// Every switch after a theme change, otherwise only the ones that changed
-    /// (including both ends of a focus move).
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
         let mut removed = drain_removed(&mut self.unchecked);
         removed.extend(drain_removed(&mut self.enabled));

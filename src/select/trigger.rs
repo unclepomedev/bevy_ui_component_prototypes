@@ -136,8 +136,8 @@ pub(super) struct SelectTargets<'w, 's> {
 }
 
 impl SelectTargets<'_, '_> {
-    /// Every trigger after a theme change, otherwise only the ones that changed: the label is
-    /// replaced when the choice changes, and the new one has to be styled.
+    /// A trigger is also restyled when the choice changes: the label is replaced, and the new one
+    /// has to be styled.
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
         let mut removed = drain_removed(&mut self.enabled);
         removed.extend(

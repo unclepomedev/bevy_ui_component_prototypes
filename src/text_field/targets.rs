@@ -28,8 +28,7 @@ impl FieldTargets<'_, '_> {
         self.all.contains(parent).then_some(parent)
     }
 
-    /// Every field after a theme change, otherwise only the ones that changed or whose input changed
-    /// (including both ends of a focus move).
+    /// A field is also restyled when its input changed.
     pub(super) fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
         let mut removed = drain_removed(&mut self.enabled);
         removed.extend(drain_removed(&mut self.unfocused));

@@ -177,8 +177,7 @@ struct RowTargets<'w, 's> {
 }
 
 impl RowTargets<'_, '_> {
-    /// Every row after a theme change, otherwise the ones that changed, and all the rows of a list
-    /// whose highlight moved (the old row and the new one).
+    /// All the rows of a list whose highlight moved are restyled too (the old row and the new one).
     fn collect(&mut self, resync: bool) -> Vec<Entity> {
         let mut removed = drain_removed(&mut self.deselected);
         removed.extend(drain_removed(&mut self.enabled));

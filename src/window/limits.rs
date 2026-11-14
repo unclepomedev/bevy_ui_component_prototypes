@@ -29,11 +29,11 @@ impl Default for WindowLimits {
 
 impl WindowLimits {
     /// `position` of a window of `size`, moved into the limits in a node of `area`.
-    /// An `area` that is empty (the node has not been laid out yet) puts no limit.
-    pub(crate) fn clamp(&self, position: Vec2, size: Vec2, area: Vec2) -> Vec2 {
-        if area.x <= 0.0 || area.y <= 0.0 {
+    /// Without an `area` the position is kept.
+    pub(crate) fn clamp(&self, position: Vec2, size: Vec2, area: Option<Vec2>) -> Vec2 {
+        let Some(area) = area else {
             return position;
-        }
+        };
         let visible = self.visible_width.min(size.x);
         let min_x = visible - size.x;
         let max_x = (area.x - visible).max(min_x);
@@ -42,60 +42,83 @@ impl WindowLimits {
     }
 
     /// `rect` with `edge` moved by `delta`, in a node of `area`.
-    /// An `area` that is empty (the node has not been laid out yet) does not hold the edges in.
+    /// Without an `area` the edges are not held in.
     pub(crate) fn resize(
         &self,
         rect: WindowRect,
         edge: WindowEdge,
         delta: Vec2,
-        area: Vec2,
+        area: Option<Vec2>,
     ) -> WindowRect {
-        let known = area.x > 0.0 && area.y > 0.0;
-        let (old_left, old_top) = (rect.x, rect.y);
-        let (old_right, old_bottom) = (rect.x + rect.width, rect.y + rect.height);
-        let (mut left, mut top, mut right, mut bottom) = (old_left, old_top, old_right, old_bottom);
-
-        if edge.has_left() {
-            left += delta.x;
-            if known {
-                left = left.max(old_left.min(0.0));
-            }
-        }
-        if edge.has_right() {
-            right += delta.x;
-            if known {
-                right = right.min(old_right.max(area.x));
-            }
-        }
-        if edge.has_top() {
-            top += delta.y;
-            if known {
-                top = top.max(old_top.min(0.0));
-            }
-        }
-        if edge.has_bottom() {
-            bottom += delta.y;
-            if known {
-                bottom = bottom.min(old_bottom.max(area.y));
-            }
-        }
-
-        let min_width = self.min_width.min(rect.width);
-        let min_height = self.min_height.min(rect.height);
-        if edge.has_left() {
-            left = left.min(right - min_width);
-        }
-        if edge.has_right() {
-            right = right.max(left + min_width);
-        }
-        if edge.has_top() {
-            top = top.min(bottom - min_height);
-        }
-        if edge.has_bottom() {
-            bottom = bottom.max(top + min_height);
-        }
-        WindowRect::new(left, top, right - left, bottom - top)
+        let (x, width) = resize_axis(
+            Span::new(rect.x, rect.width),
+            delta.x,
+            (edge.has_left(), edge.has_right()),
+            area.map(|area| area.x),
+            self.min_width,
+        );
+        let (y, height) = resize_axis(
+            Span::new(rect.y, rect.height),
+            delta.y,
+            (edge.has_top(), edge.has_bottom()),
+            area.map(|area| area.y),
+            self.min_height,
+        );
+        WindowRect::new(x, y, width, height)
     }
+}
+
+/// A window's extent along one axis.
+#[derive(Clone, Copy)]
+struct Span {
+    start: f32,
+    length: f32,
+}
+
+impl Span {
+    fn new(start: f32, length: f32) -> Self {
+        Self { start, length }
+    }
+}
+
+/// One axis of [`WindowLimits::resize`]: `span` with its start and/or its end (`moves`) shifted by
+/// `delta`, as `(start, length)`.
+///
+/// An end does not go further out of `0..extent` than it already is, and the length does not fall
+/// below `min`, or below what it already is when that is smaller. Without an `extent` the ends are
+/// not held in.
+fn resize_axis(
+    span: Span,
+    delta: f32,
+    moves: (bool, bool),
+    extent: Option<f32>,
+    min: f32,
+) -> (f32, f32) {
+    let (moves_start, moves_end) = moves;
+    let old_end = span.start + span.length;
+    let (mut start, mut end) = (span.start, old_end);
+
+    if moves_start {
+        start += delta;
+        if extent.is_some() {
+            start = start.max(span.start.min(0.0));
+        }
+    }
+    if moves_end {
+        end += delta;
+        if let Some(extent) = extent {
+            end = end.min(old_end.max(extent));
+        }
+    }
+
+    let min = min.min(span.length);
+    if moves_start {
+        start = start.min(end - min);
+    }
+    if moves_end {
+        end = end.max(start + min);
+    }
+    (start, end - start)
 }
 
 #[cfg(test)]
@@ -109,7 +132,7 @@ mod tests {
         min_height: 40.0,
     };
     const SIZE: Vec2 = Vec2::new(200.0, 100.0);
-    const AREA: Vec2 = Vec2::new(800.0, 600.0);
+    const AREA: Option<Vec2> = Some(Vec2::new(800.0, 600.0));
 
     fn clamp(x: f32, y: f32) -> Vec2 {
         LIMITS.clamp(Vec2::new(x, y), SIZE, AREA)
@@ -148,15 +171,15 @@ mod tests {
     }
 
     #[test]
-    fn an_empty_area_puts_no_limit() {
+    fn no_area_puts_no_limit() {
         let position = Vec2::new(-999.0, -999.0);
-        assert_eq!(LIMITS.clamp(position, SIZE, Vec2::ZERO), position);
+        assert_eq!(LIMITS.clamp(position, SIZE, None), position);
     }
 
     #[test]
     fn a_node_smaller_than_the_limits_does_not_panic() {
         let tiny = Vec2::new(10.0, 10.0);
-        let _ = LIMITS.clamp(Vec2::new(5.0, 5.0), SIZE, tiny);
+        let _ = LIMITS.clamp(Vec2::new(5.0, 5.0), SIZE, Some(tiny));
     }
 
     // The window of the tests below: from (100, 100) to (300, 200) in the node of 800 x 600.
@@ -250,13 +273,8 @@ mod tests {
     }
 
     #[test]
-    fn an_empty_area_does_not_hold_the_edges_in() {
-        let moved = LIMITS.resize(
-            RECT,
-            WindowEdge::TopLeft,
-            Vec2::new(-500.0, -500.0),
-            Vec2::ZERO,
-        );
+    fn no_area_does_not_hold_the_edges_in() {
+        let moved = LIMITS.resize(RECT, WindowEdge::TopLeft, Vec2::new(-500.0, -500.0), None);
         assert_eq!(moved, WindowRect::new(-400.0, -400.0, 700.0, 600.0));
     }
 }

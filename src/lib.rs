@@ -23,6 +23,11 @@
 //! is drawn with the widget's own `Outline` while the focus indicator is visible, so do not set an
 //! `Outline` on it yourself.
 //!
+//! **Disabled widgets.** A widget with `InteractionDisabled` leaves keyboard navigation: its `TabIndex`
+//! becomes -1 and its `AutoDirectionalNavigation` is removed, and both come back when it is enabled
+//! again. A widget that holds the focus when it becomes disabled keeps it, and the arrows cannot leave
+//! it (Tab can). Moving the focus first is up to the app.
+//!
 //! **Width.** A slider, a stepper and a select follow the parent layout (`100%`).
 pub mod button;
 pub mod common;

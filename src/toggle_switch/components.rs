@@ -4,12 +4,11 @@ use bevy::{
     ui_widgets::Checkbox,
 };
 
-// Track: 52 x 30 with a 2px border and 2px padding leaves a 22px square for the thumb.
 const TRACK_WIDTH: f32 = 52.0;
 const TRACK_HEIGHT: f32 = 30.0;
 const TRACK_BORDER: f32 = 2.0;
 const TRACK_PADDING: f32 = 2.0;
-const THUMB_SIZE: f32 = 22.0;
+const THUMB_SIZE: f32 = TRACK_HEIGHT - 2.0 * (TRACK_BORDER + TRACK_PADDING);
 
 /// A themed toggle switch: a track with a sliding thumb.
 ///

@@ -193,8 +193,6 @@ struct SliderTargets<'w, 's> {
 }
 
 impl SliderTargets<'_, '_> {
-    /// Every slider after a theme change, otherwise only the ones that changed
-    /// (including both ends of a focus move).
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
         let mut removed = drain_removed(&mut self.released);
         removed.extend(drain_removed(&mut self.stopped_editing));
