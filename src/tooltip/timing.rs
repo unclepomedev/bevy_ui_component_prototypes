@@ -9,10 +9,12 @@ pub(super) struct Step {
     pub(super) show: Option<Entity>,
 }
 
-/// When the delay of a widget and how long it was shown.
+/// How long a widget makes a tooltip wait.
 #[derive(Clone, Copy, Debug)]
 pub(super) struct Timing {
+    /// Seconds to wait before the tooltip shows.
     pub(super) delay: f32,
+    /// For this many seconds after a tooltip was last on screen, the next one shows without waiting.
     pub(super) warmup: f32,
 }
 
@@ -23,11 +25,9 @@ pub(super) struct Tracker {
     /// The widget whose tooltip is shown, or waits to be.
     target: Option<Entity>,
     shown: bool,
-    /// When the widget of `target` was first seen.
     seen_at: f64,
     /// The widget whose tooltip was dismissed, and stays so until something else is wanted.
     dismissed: Option<Entity>,
-    /// When a tooltip was last on screen.
     last_shown_at: f64,
 }
 
@@ -96,9 +96,6 @@ impl Tracker {
     }
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -115,7 +115,6 @@ pub(super) fn sync_select_style(
     }
 }
 
-/// What the sync reads from a trigger and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 pub(super) struct TriggerRow {
@@ -127,7 +126,6 @@ pub(super) struct TriggerRow {
     node: &'static mut Node,
 }
 
-/// Finds the triggers whose look may have changed from the last run.
 #[derive(SystemParam)]
 pub(super) struct SelectTargets<'w, 's> {
     changed: ChangedTriggers<'w, 's>,
@@ -138,8 +136,8 @@ pub(super) struct SelectTargets<'w, 's> {
 }
 
 impl SelectTargets<'_, '_> {
-    /// Every trigger after a theme change, otherwise only the ones that changed: the label is
-    /// replaced when the choice changes, and the new one has to be styled.
+    /// A trigger is also restyled when the choice changes: the label is replaced, and the new one
+    /// has to be styled.
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
         let mut removed = drain_removed(&mut self.enabled);
         removed.extend(

@@ -4,23 +4,20 @@ use bevy::{
     ui_widgets::Checkbox,
 };
 
-// Track: 52 x 30 with a 2px border and 2px padding leaves a 22px square for the thumb.
 const TRACK_WIDTH: f32 = 52.0;
 const TRACK_HEIGHT: f32 = 30.0;
 const TRACK_BORDER: f32 = 2.0;
 const TRACK_PADDING: f32 = 2.0;
-const THUMB_SIZE: f32 = 22.0;
+const THUMB_SIZE: f32 = TRACK_HEIGHT - 2.0 * (TRACK_BORDER + TRACK_PADDING);
 
 /// A themed toggle switch: a track with a sliding thumb.
 ///
 /// Behavior comes from [`Checkbox`]: a click or Enter/Space on the focused switch emits [`bevy::ui_widgets::ValueChange<bool>`]
 /// carrying the requested value, and the on/off state is the presence of [`bevy::ui::Checked`].
-/// The switch never changes its own state: the app applies the change by inserting or removing `Checked`
-/// (or adds [`bevy::ui_widgets::checkbox_self_update`] to let Bevy do exactly that).
+/// The app applies the change by inserting or removing `Checked`.
 /// The initial state is the same: spawn `(toggle_switch().build(), Checked)` for a switch that starts on.
 ///
-/// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
-/// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
+/// See the [Conventions](crate#conventions) for the controlled value, the Tab key and the focus ring.
 #[derive(Component)]
 #[require(
     Checkbox,
@@ -37,7 +34,6 @@ pub struct ToggleSwitch;
 pub(crate) struct SwitchThumb;
 
 /// The thumb rests at the start edge when off and at the end edge when on.
-/// Flex alignment instead of pixel offsets keeps it correct for any track size.
 pub(crate) fn thumb_side(checked: bool) -> JustifyContent {
     if checked {
         JustifyContent::End

@@ -8,6 +8,7 @@ use super::{
 use crate::{
     button::{ButtonContent, ButtonIcon},
     common::{
+        layout::write_changed,
         style_targets::{drain_removed, pick_targets},
         theme_lookup::ThemeLookup,
     },
@@ -92,9 +93,7 @@ fn sync_select_popup(
         for child in children.get(entity).into_iter().flat_map(|c| c.iter()) {
             if let Ok(mut list) = lists.get_mut(child) {
                 let want = list_node(&theme.select_metrics);
-                if list.max_height != want.max_height {
-                    list.max_height = want.max_height;
-                }
+                write_changed!(list, want, max_height);
             }
         }
     }
@@ -102,15 +101,7 @@ fn sync_select_popup(
 
 /// Writes the border, the corners and the padding, only where they changed.
 fn write_popup_layout(node: &mut Mut<Node>, want: &Node) {
-    if node.border != want.border {
-        node.border = want.border;
-    }
-    if node.border_radius != want.border_radius {
-        node.border_radius = want.border_radius;
-    }
-    if node.padding != want.padding {
-        node.padding = want.padding;
-    }
+    write_changed!(node, want, border, border_radius, padding);
 }
 
 /// What the sync writes to a popup.
@@ -162,15 +153,9 @@ fn sync_select_rows(
 
 /// Writes the height and the padding, only where they changed.
 fn write_row_layout(node: &mut Mut<Node>, want: &Node) {
-    if node.height != want.height {
-        node.height = want.height;
-    }
-    if node.padding != want.padding {
-        node.padding = want.padding;
-    }
+    write_changed!(node, want, height, padding);
 }
 
-/// What the sync reads from a row and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct OptionRow {
@@ -182,7 +167,6 @@ struct OptionRow {
     node: &'static mut Node,
 }
 
-/// Finds the rows whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct RowTargets<'w, 's> {
     changed: ChangedRows<'w, 's>,
@@ -193,8 +177,7 @@ struct RowTargets<'w, 's> {
 }
 
 impl RowTargets<'_, '_> {
-    /// Every row after a theme change, otherwise the ones that changed, and all the rows of a list
-    /// whose highlight moved (the old row and the new one).
+    /// All the rows of a list whose highlight moved are restyled too (the old row and the new one).
     fn collect(&mut self, resync: bool) -> Vec<Entity> {
         let mut removed = drain_removed(&mut self.deselected);
         removed.extend(drain_removed(&mut self.enabled));

@@ -13,6 +13,7 @@ use self::style::{SliderGeometry, SliderLook};
 use crate::common::{
     bar_paint::{paint_fill, paint_rail},
     focus::FocusRingTracker,
+    layout::write_changed,
     state::VisualState,
     style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
@@ -63,7 +64,6 @@ fn sync_slider_style(
     }
 }
 
-/// What the sync reads from a slider.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct SliderRow {
@@ -99,9 +99,7 @@ fn write_ring(outline: &mut Mut<Outline>, look: &SliderLook) {
 
 fn write_height(node: &mut Mut<Node>, geometry: &SliderGeometry) {
     let want = slider_node(geometry);
-    if node.height != want.height {
-        node.height = want.height;
-    }
+    write_changed!(node, want, height);
 }
 
 /// Colors every part and moves the fill and the thumb.
@@ -139,9 +137,7 @@ fn write_rail(part: &mut PartRowItem, look: &SliderLook, geometry: &SliderGeomet
 
 fn write_travel(part: &mut PartRowItem, geometry: &SliderGeometry) {
     let want = travel_node(geometry);
-    if part.node.right != want.right {
-        part.node.right = want.right;
-    }
+    write_changed!(part.node, want, right);
 }
 
 fn write_fill(part: &mut PartRowItem, look: &SliderLook, geometry: &SliderGeometry, share: f32) {
@@ -167,15 +163,12 @@ fn write_thumb(
     part.bg.set_if_neq(BackgroundColor(look.thumb));
     let want = thumb_node(geometry);
     write_bar(&mut part.node, &want);
-    if part.node.width != want.width {
-        part.node.width = want.width;
-    }
+    write_changed!(part.node, want, width);
     if part.node.left != position {
         part.node.left = position;
     }
 }
 
-/// What the sync reads from a part of a slider.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct PartRow {
@@ -187,18 +180,9 @@ struct PartRow {
 }
 
 fn write_bar(node: &mut Mut<Node>, want: &Node) {
-    if node.top != want.top {
-        node.top = want.top;
-    }
-    if node.height != want.height {
-        node.height = want.height;
-    }
-    if node.border_radius != want.border_radius {
-        node.border_radius = want.border_radius;
-    }
+    write_changed!(node, want, top, height, border_radius);
 }
 
-/// Finds the sliders whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct SliderTargets<'w, 's> {
     changed: ChangedSliders<'w, 's>,
@@ -209,8 +193,6 @@ struct SliderTargets<'w, 's> {
 }
 
 impl SliderTargets<'_, '_> {
-    /// Every slider after a theme change, otherwise only the ones that changed
-    /// (including both ends of a focus move).
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
         let mut removed = drain_removed(&mut self.released);
         removed.extend(drain_removed(&mut self.stopped_editing));

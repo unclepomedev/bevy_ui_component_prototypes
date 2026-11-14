@@ -1,7 +1,11 @@
 use super::style::{SelectMetrics, SelectShape};
 use crate::{
     button::{ButtonShape, button_node},
-    common::{focus::hidden_outline, tab_order::KeyboardNavigable},
+    common::{
+        chevron::{Direction, chevron},
+        focus::hidden_outline,
+        tab_order::KeyboardNavigable,
+    },
 };
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
@@ -17,8 +21,6 @@ use bevy::{
 use std::sync::Arc;
 
 const ARROW_SIZE: f32 = 10.0;
-const ARROW_STROKE: f32 = 2.0;
-/// How close to the window edge the popup may go, in pixels.
 const WINDOW_MARGIN: f32 = 8.0;
 
 /// What the value of an option must be: `Clone + PartialEq + Send + Sync + 'static`.
@@ -31,22 +33,20 @@ pub(crate) type LabelSpawner = Arc<dyn Fn(&mut EntityWorldMut) + Send + Sync>;
 
 /// A themed select: a box that shows the chosen option, and a list that opens under it.
 ///
-/// It is controlled, like the other widgets: the select never changes its own choice. Choosing an option in
-/// the list emits `ValueChange<V>` (`V` is the type of the option values) with this entity as `source`,
-/// and the app applies it by inserting [`SelectedOption`] (or [`SelectedIndex`]) on this entity.
+/// Choosing an option in the list emits `ValueChange<V>` (`V` is the type of the option values) with
+/// this entity as `source`, and the app applies it by inserting [`SelectedOption`] on this entity.
 ///
 /// Insert `InteractionDisabled` on this entity to disable the select.
 ///
-/// The width follows the parent layout (`100%`).
+/// See the [Conventions](crate#conventions) for the controlled value and the width.
 #[derive(Component)]
 #[require(SelectedIndex, Node = select_node())]
 pub struct Select;
 
-/// Which option is chosen, by position. `None`, or a position past the last option, shows the placeholder.
-/// Inserting [`SelectedOption`] sets this for you. Use one of the two, not both.
+/// The position of the chosen option, derived from [`SelectedOption`]. `None` shows the placeholder.
 #[derive(Component, Clone, Copy, Debug, Default, PartialEq, Eq, Deref)]
-pub struct SelectedIndex {
-    pub index: Option<usize>,
+pub(crate) struct SelectedIndex {
+    pub(crate) index: Option<usize>,
 }
 
 /// The chosen option, by value. Insert it on a [`Select`] built with the same `V`; removing it shows the placeholder.
@@ -70,7 +70,6 @@ pub(crate) struct SelectLabels {
     pub(crate) placeholder: Option<LabelSpawner>,
 }
 
-/// Triggers the choice of the option at a position, given the select and the position.
 pub(crate) type EmitChoice = Arc<dyn Fn(&mut Commands, Entity, usize) + Send + Sync>;
 
 /// Emits the choice of the option at a position: a `ValueChange<V>` from the select. The type of the
@@ -153,7 +152,6 @@ pub(crate) struct SelectTrigger;
 #[derive(Component, Clone, Copy, Default)]
 pub(crate) struct SelectContent;
 
-/// The chevron at the end of the trigger.
 #[derive(Component, Clone, Copy, Default)]
 pub(crate) struct SelectArrow;
 
@@ -178,7 +176,6 @@ pub(crate) struct SelectPopup;
 #[require(ListBox, ScrollArea, TabIndex(0), Node = list_node(&SelectMetrics::default()))]
 pub(crate) struct SelectList;
 
-/// One option of the list. `index` is its position among the options.
 #[derive(Component, Clone, Copy)]
 #[require(
     ListItem,
@@ -198,8 +195,6 @@ pub(crate) fn select_node() -> Node {
     }
 }
 
-/// The popup floats over what is below it; the size and the shape come from the theme.
-/// It is as wide as the select at least.
 pub(crate) fn popup_node(metrics: &SelectMetrics, shape: &SelectShape) -> Node {
     Node {
         position_type: PositionType::Absolute,
@@ -245,7 +240,6 @@ pub(crate) fn row_node(metrics: &SelectMetrics) -> Node {
     }
 }
 
-/// The trigger is a button that fills the select, with the label at one end and the chevron at the other.
 pub(crate) fn trigger_node(metrics: &SelectMetrics, shape: &ButtonShape) -> Node {
     Node {
         width: percent(100),
@@ -262,24 +256,6 @@ pub(crate) fn content_node() -> Node {
     }
 }
 
-/// A square with only two sides drawn, turned by 45 degrees: a chevron that needs no glyph.
-pub(crate) fn arrow_node() -> Node {
-    Node {
-        width: px(ARROW_SIZE),
-        height: px(ARROW_SIZE),
-        border: UiRect {
-            right: px(ARROW_STROKE),
-            bottom: px(ARROW_STROKE),
-            ..default()
-        },
-        margin: UiRect::bottom(px(ARROW_SIZE / 2.0)),
-        ..default()
-    }
-}
-
-pub(crate) fn arrow_transform() -> UiTransform {
-    UiTransform {
-        rotation: Rot2::degrees(45.0),
-        ..default()
-    }
+pub(crate) fn arrow() -> (Node, UiTransform) {
+    chevron(ARROW_SIZE, Direction::Down)
 }

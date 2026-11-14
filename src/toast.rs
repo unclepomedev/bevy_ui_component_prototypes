@@ -12,7 +12,7 @@ pub use self::{
 };
 
 use self::components::{ToastLabel, toast_node};
-use crate::common::theme_lookup::ThemeLookup;
+use crate::common::{layout::write_changed, theme_lookup::ThemeLookup};
 use crate::theme::Theme;
 use bevy::{ecs::query::QueryData, prelude::*, ui::UiSystems};
 
@@ -129,21 +129,15 @@ fn write_slide(transform: &mut Mut<UiTransform>, start: Val2, slide: f32) {
 
 /// Writes the size, the border, and the corners, only where they changed.
 fn write_layout(node: &mut Mut<Node>, want: &Node) {
-    if node.min_width != want.min_width {
-        node.min_width = want.min_width;
-    }
-    if node.max_width != want.max_width {
-        node.max_width = want.max_width;
-    }
-    if node.padding != want.padding {
-        node.padding = want.padding;
-    }
-    if node.border != want.border {
-        node.border = want.border;
-    }
-    if node.border_radius != want.border_radius {
-        node.border_radius = want.border_radius;
-    }
+    write_changed!(
+        node,
+        want,
+        min_width,
+        max_width,
+        padding,
+        border,
+        border_radius
+    );
 }
 
 fn write_font(font: &mut Mut<TextFont>, theme: &Theme, metrics: &ToastMetrics) {
@@ -158,7 +152,6 @@ fn write_font(font: &mut Mut<TextFont>, theme: &Theme, metrics: &ToastMetrics) {
     }
 }
 
-/// What the sync reads from a toast and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct ToastRow {

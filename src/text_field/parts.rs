@@ -28,7 +28,6 @@ pub(super) type Placeholders<'w, 's> = Query<
     ),
 >;
 
-/// What the sync reads from a text field, and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 pub(super) struct FieldRow {
@@ -40,7 +39,6 @@ pub(super) struct FieldRow {
     pub(super) node: &'static mut Node,
 }
 
-/// What the sync reads from the input of a text field, and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 pub(super) struct InputRow {

@@ -220,7 +220,6 @@ struct TitleRow {
     layout: &'static mut TextLayout,
 }
 
-/// Finds the windows whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct WindowTargets<'w, 's> {
     added: Query<'w, 's, Entity, Added<UiWindow>>,
@@ -234,8 +233,8 @@ struct WindowTargets<'w, 's> {
 }
 
 impl WindowTargets<'_, '_> {
-    /// Every window after a theme change, otherwise the new ones, those whose close button was touched,
-    /// those whose close button gained or lost the focus ring, and those that gained or lost [`ActiveWindow`].
+    /// A window is also restyled when its close button was touched or gained or lost the focus ring,
+    /// and when it gained or lost [`ActiveWindow`].
     fn collect(&mut self, resync: bool) -> Vec<Entity> {
         let unfocused = drain_removed(&mut self.unfocused);
         let touched: Vec<Entity> = self

@@ -16,14 +16,12 @@ struct SavedTabIndex(i32);
 #[derive(Component)]
 struct SavedAutoNavigation(AutoDirectionalNavigation);
 
-/// Keeps a disabled [`KeyboardNavigable`] widget out of keyboard navigation until it is enabled again.
+/// Keeps a disabled [`KeyboardNavigable`] widget out of keyboard navigation until it is enabled again
+/// (see the [Conventions](crate#conventions)).
 ///
 /// - Tab: `TabIndex` is -1 while disabled, and the previous value is restored.
 /// - Arrows: [`AutoDirectionalNavigation`] is removed while disabled and put back if the widget had it.
 ///   One added to a disabled widget is removed the same way.
-///
-/// A widget that holds the focus when it becomes disabled keeps it, and the arrows cannot leave it
-/// (Tab can). Moving the focus first is up to the app.
 pub(crate) struct TabOrderPlugin;
 impl Plugin for TabOrderPlugin {
     fn build(&self, app: &mut App) {
@@ -109,9 +107,6 @@ fn restore_directional_navigation(
     }
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

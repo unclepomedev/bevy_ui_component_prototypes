@@ -4,6 +4,7 @@ use super::{
 };
 use crate::common::style_targets::drain_removed;
 use bevy::{prelude::*, ui::InteractionDisabled};
+use std::collections::BTreeSet;
 
 type ChangedSteppers<'w, 's> = Query<
     'w,
@@ -33,13 +34,11 @@ pub(super) fn sync_part_disabled(
     )>,
     mut commands: Commands,
 ) {
-    // Removals are read every run: of the parts too, which are not ours to follow.
+    // Drain every removal, those on the parts too, which this system ignores.
     let enabled = drain_removed(&mut enabled)
         .into_iter()
         .filter(|entity| steppers.contains(*entity));
-    let mut targets: Vec<Entity> = changed.iter().chain(enabled).collect();
-    targets.sort();
-    targets.dedup();
+    let targets: BTreeSet<Entity> = changed.iter().chain(enabled).collect();
 
     for entity in targets {
         let Ok(stepper) = steppers.get(entity) else {

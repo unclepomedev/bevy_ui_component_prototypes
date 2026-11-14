@@ -25,6 +25,7 @@ pub(crate) use self::{
     surface::ButtonSurface,
 };
 
+use self::content::RestyleRequest;
 use self::style::ButtonLook;
 use crate::{
     Theme,
@@ -50,7 +51,6 @@ impl Plugin for ButtonStylePlugin {
     }
 }
 
-/// Resolves each button's look from its theme and state and writes it to the button and its content.
 fn sync_button_style(
     mut lookup: ThemeLookup,
     mut ring: FocusRingTracker,
@@ -102,38 +102,16 @@ pub(crate) fn write_button_colors(
     ));
 }
 
-/// Finds the buttons whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct StyleTargets<'w, 's> {
     changed: ChangedButtons<'w, 's>,
     all: Query<'w, 's, Entity, (With<Button>, With<ButtonVariant>)>,
     removed_disabled: RemovedComponents<'w, 's, InteractionDisabled>,
-    // Content whose marker changes is restyled by the button that owns it: a label that stops
-    // keeping its size, content that gains or loses the accent.
-    removed_keep_size: RemovedComponents<'w, 's, KeepFontSize>,
-    removed_accent: RemovedComponents<'w, 's, ButtonAccent>,
-    added_accent: Query<'w, 's, Entity, Added<ButtonAccent>>,
-    parents: Query<'w, 's, &'static ChildOf>,
-    owners: Query<'w, 's, (), With<Button>>,
 }
 
 impl StyleTargets<'_, '_> {
-    /// Every button after a theme change, otherwise only the ones that changed
-    /// (including both ends of a focus move).
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
-        let mut removed = drain_removed(&mut self.removed_disabled);
-        let marked = drain_removed(&mut self.removed_keep_size)
-            .into_iter()
-            .chain(drain_removed(&mut self.removed_accent))
-            .chain(self.added_accent.iter().collect::<Vec<_>>());
-        for label in marked {
-            // The nearest button above the content. A despawned one has no parent: nothing to restyle.
-            let owner = self
-                .parents
-                .iter_ancestors(label)
-                .find(|ancestor| self.owners.contains(*ancestor));
-            removed.extend(owner);
-        }
+        let removed = drain_removed(&mut self.removed_disabled);
         pick_targets(
             resync,
             self.all.iter(),
@@ -155,6 +133,7 @@ type ChangedButtons<'w, 's> = Query<
             Changed<PickingInteraction>,
             Changed<ButtonVariant>,
             Changed<ButtonSize>,
+            Changed<RestyleRequest>,
             Added<InteractionDisabled>,
         )>,
     ),
@@ -168,7 +147,6 @@ pub(crate) struct ButtonParts<'w, 's> {
 }
 
 impl ButtonParts<'_, '_> {
-    /// Draws the image surface of `style` and styles the content, for the `look` the button has now.
     pub(crate) fn paint(
         &mut self,
         button: Entity,
@@ -184,10 +162,9 @@ impl ButtonParts<'_, '_> {
     }
 }
 
-// Without the icon, which the content writes a `Node` of its own to.
+// Icon buttons are left out: their content writes the `Node`.
 type ButtonQuery<'w, 's> = Query<'w, 's, ButtonRow, (With<Button>, Without<ButtonIcon>)>;
 
-/// What the sync reads from a button and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct ButtonRow {

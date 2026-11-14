@@ -1,5 +1,5 @@
 use super::components::{Tooltip, TooltipLabel, TooltipPopup, placement, popup_node};
-use crate::common::{layer::layer_above, theme_lookup::ThemeLookup};
+use crate::common::{layer::layer_above, layout::write_changed, theme_lookup::ThemeLookup};
 use bevy::{ecs::query::QueryData, prelude::*, ui_widgets::popover::Popover};
 
 /// Gives the box of each tooltip on screen its colors, its shape and its place.
@@ -74,21 +74,9 @@ pub(super) fn sync_popup_labels(
 
 /// Writes the size, the border, and the corners, only where they changed.
 fn write_layout(node: &mut Mut<Node>, want: &Node) {
-    if node.max_width != want.max_width {
-        node.max_width = want.max_width;
-    }
-    if node.padding != want.padding {
-        node.padding = want.padding;
-    }
-    if node.border != want.border {
-        node.border = want.border;
-    }
-    if node.border_radius != want.border_radius {
-        node.border_radius = want.border_radius;
-    }
+    write_changed!(node, want, max_width, padding, border, border_radius);
 }
 
-/// What the sync reads from the box of a tooltip and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 pub(super) struct PopupBox {

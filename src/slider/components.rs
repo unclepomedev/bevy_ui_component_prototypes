@@ -11,19 +11,15 @@ use bevy::{
 ///
 /// Behavior comes from Bevy's [`Slider`]: dragging the thumb or clicking the rail, and the arrow
 /// keys, Home and End on the focused slider, emit [`bevy::ui_widgets::ValueChange<f32>`] carrying
-/// the requested value. The slider never changes its own value: the app applies the change by
-/// inserting a new [`bevy::ui_widgets::SliderValue`] (or adds
-/// [`bevy::ui_widgets::slider_self_update`] to let Bevy do exactly that).
+/// the requested value. Apply it by inserting a new [`bevy::ui_widgets::SliderValue`].
 ///
 /// The requested value is continuous. `SliderStep` is what a key press moves by; to make the slider
 /// discrete, round the value in the app's `ValueChange` observer.
 ///
 /// The shape comes from the theme's `SliderStyle::shape`.
 ///
-/// The width follows the parent layout (`100%`).
-///
-/// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
-/// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
+/// See the [Conventions](crate#conventions) for the controlled value, the width, the Tab key and the
+/// focus ring.
 #[derive(Component)]
 #[require(
     // Clicking the rail moves the value there; the thumb is still dragged relative to where it is.
@@ -60,7 +56,6 @@ pub(crate) fn slider_node(geometry: &SliderGeometry) -> Node {
 }
 
 pub(crate) fn rail_node(geometry: &SliderGeometry) -> Node {
-    // The rail spans the whole width, centered vertically.
     Node {
         position_type: PositionType::Absolute,
         left: px(0),

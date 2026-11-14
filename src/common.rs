@@ -1,5 +1,6 @@
 pub(crate) mod bar;
 pub(crate) mod bar_paint;
+pub(crate) mod chevron;
 pub(crate) mod choice;
 pub(crate) mod color;
 pub(crate) mod focus;

@@ -16,6 +16,7 @@ use self::style::ProgressGeometry;
 use crate::common::{
     bar::BarSegments,
     bar_paint::{paint_fill, paint_rail},
+    layout::write_changed,
     style_targets::{drain_removed, pick_targets},
     theme_lookup::ThemeLookup,
 };
@@ -95,12 +96,7 @@ struct FillRow {
 
 fn write_bar(bar: &mut BarRowItem, style: &ProgressStyle, geometry: &ProgressGeometry) {
     let want = progress_node(geometry);
-    if bar.node.height != want.height {
-        bar.node.height = want.height;
-    }
-    if bar.node.border_radius != want.border_radius {
-        bar.node.border_radius = want.border_radius;
-    }
+    write_changed!(bar.node, want, height, border_radius);
     paint_rail(
         &mut bar.bg,
         Some(&mut bar.gradient),
@@ -122,9 +118,7 @@ fn write_fill(
             continue;
         };
         let want = fill_node(geometry);
-        if fill.node.border_radius != want.border_radius {
-            fill.node.border_radius = want.border_radius;
-        }
+        write_changed!(fill.node, want, border_radius);
         let width = paint_fill(
             &mut fill.bg,
             Some(&mut fill.gradient),

@@ -1,16 +1,20 @@
 use super::{components::StepperButton, style::StepperShape};
+use crate::common::{
+    chevron::{Direction, chevron},
+    layout::write_changed,
+};
 use bevy::prelude::*;
 
-// How far a mark sits below its cell.
 const MARK_GAP: f32 = 3.0;
+
+/// How far the marks hang below the cells, which the track reserves.
+fn mark_room(shape: &StepperShape) -> f32 {
+    shape.mark_size + MARK_GAP
+}
+
 // The share of the cell height taken by the side of the square an arrow is cut from.
-// The arrow is that square's corner turned 45 degrees, so it reaches about 1.4 times the side.
 const ARROW_SHARE: f32 = 0.3;
-const ARROW_STROKE: f32 = 2.0;
-// The share of the cell height taken by a replacement icon on a button.
 const ICON_SHARE: f32 = 0.6;
-// The visible half of the turned square sits to one side of its center, so it is moved back by this share of the side.
-const ARROW_NUDGE: f32 = 0.2;
 
 pub(crate) fn stepper_node(shape: &StepperShape, inline: bool) -> Node {
     if inline {
@@ -35,12 +39,14 @@ pub(crate) fn stepper_node(shape: &StepperShape, inline: bool) -> Node {
 /// Writes the fields of the root that the layout decides and leaves the rest to the app.
 pub(crate) fn lay_out(node: &mut Mut<Node>, shape: &StepperShape, inline: bool) {
     let wanted = stepper_node(shape, inline);
-    let mut next = node.clone();
-    next.flex_direction = wanted.flex_direction;
-    next.align_items = wanted.align_items;
-    next.row_gap = wanted.row_gap;
-    next.column_gap = wanted.column_gap;
-    node.set_if_neq(next);
+    write_changed!(
+        node,
+        wanted,
+        flex_direction,
+        align_items,
+        row_gap,
+        column_gap
+    );
 }
 
 pub(crate) fn header_node(shape: &StepperShape) -> Node {
@@ -70,8 +76,7 @@ pub(crate) fn track_node(shape: &StepperShape, inline: bool) -> Node {
     };
     Node {
         column_gap: px(shape.gap),
-        // The marks hang below the cells, so the room for them is reserved here.
-        padding: UiRect::bottom(px(shape.mark_size + MARK_GAP)),
+        padding: UiRect::bottom(px(mark_room(shape))),
         ..width
     }
 }
@@ -95,7 +100,7 @@ pub(crate) fn mark_node(shape: &StepperShape) -> Node {
         position_type: PositionType::Absolute,
         left: percent(50),
         margin: UiRect::left(px(-size / 2.0)),
-        bottom: px(-(size + MARK_GAP)),
+        bottom: px(-mark_room(shape)),
         width: px(size),
         height: px(size),
         border_radius: BorderRadius::all(px(size / 2.0)),
@@ -132,40 +137,15 @@ pub(crate) fn icon_node(shape: &StepperShape) -> Node {
     }
 }
 
-/// The arrow of a button: two edges of a square, turned to point left or right.
+/// The arrow of a button: a chevron pointing left or right.
 pub(crate) fn arrow_glyph(shape: &StepperShape, button: StepperButton) -> (Node, UiTransform) {
-    let side = shape.cell_height * ARROW_SHARE;
-    let nudge = -button.delta() as f32 * side * ARROW_NUDGE;
-    (
-        Node {
-            width: px(side),
-            height: px(side),
-            border: UiRect {
-                right: px(ARROW_STROKE),
-                bottom: px(ARROW_STROKE),
-                ..default()
-            },
-            ..default()
-        },
-        UiTransform {
-            translation: Val2::px(nudge, 0.0),
-            rotation: Rot2::degrees(arrow_degrees(button)),
-            ..default()
-        },
-    )
+    let direction = match button {
+        StepperButton::Prev => Direction::Left,
+        StepperButton::Next => Direction::Right,
+    };
+    chevron(shape.cell_height * ARROW_SHARE, direction)
 }
 
-// The corner of the square that points to the left or to the right. Rotation is clockwise.
-fn arrow_degrees(button: StepperButton) -> f32 {
-    match button {
-        StepperButton::Prev => 135.0,
-        StepperButton::Next => -45.0,
-    }
-}
-
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -178,30 +158,6 @@ mod tests {
         // The visible half of the arrow lies on its pointing side, so each is moved back from it.
         assert!(matches!(prev.translation.x, Val::Px(x) if x > 0.0));
         assert!(matches!(next.translation.x, Val::Px(x) if x < 0.0));
-    }
-
-    #[test]
-    fn the_arrow_tips_point_to_their_own_sides() {
-        // The tip is the bottom right corner of the square, where its two borders meet.
-        // With y pointing down, a clockwise rotation by an angle moves (1, 1) to this.
-        let tip = |button| {
-            let (sin, cos) = arrow_degrees(button).to_radians().sin_cos();
-            (cos - sin, sin + cos)
-        };
-
-        let (x, y) = tip(StepperButton::Prev);
-        assert!(x < -1.0 && y.abs() < 1e-5, "{x}, {y}");
-        let (x, y) = tip(StepperButton::Next);
-        assert!(x > 1.0 && y.abs() < 1e-5, "{x}, {y}");
-    }
-
-    #[test]
-    fn the_track_reserves_the_room_the_marks_hang_in() {
-        let shape = StepperShape::default();
-        let track = track_node(&shape, false);
-        let mark = mark_node(&shape);
-        // The mark's far edge below its cell is where the reserved room ends.
-        assert_eq!(mark.bottom, px(-track_room(&track)));
     }
 
     #[test]
@@ -233,12 +189,5 @@ mod tests {
         let cell = cell_node(&StepperShape::default());
         assert_eq!(cell.flex_grow, 1.0);
         assert_eq!(cell.flex_basis, px(0));
-    }
-
-    fn track_room(track: &Node) -> f32 {
-        match track.padding.bottom {
-            Val::Px(room) => room,
-            other => panic!("not in pixels: {other:?}"),
-        }
     }
 }

@@ -1,6 +1,6 @@
 //! Tests of Styling.
 
-use super::{label_color, shown, spawn_fruit, trigger};
+use super::{Fruit, label_color, shown, spawn_fruit, trigger};
 use crate::{
     probe::probe_theme,
     support::{bg, outline, test_app},
@@ -11,7 +11,7 @@ use bevy::{
     prelude::*,
     ui::InteractionDisabled,
 };
-use bevy_ui_component_prototypes::select::SelectedIndex;
+use bevy_ui_component_prototypes::select::SelectedOption;
 
 #[test]
 fn the_trigger_and_its_label_are_styled_after_one_update() {
@@ -59,9 +59,9 @@ fn a_label_that_replaces_another_is_styled_in_the_same_update() {
     let root = spawn_fruit(&mut app);
     app.update();
 
-    app.world_mut()
-        .entity_mut(root)
-        .insert(SelectedIndex { index: Some(0) });
+    app.world_mut().entity_mut(root).insert(SelectedOption {
+        value: Fruit::Apple,
+    });
     app.update();
 
     let label = shown(&app, root).unwrap();

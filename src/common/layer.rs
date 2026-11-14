@@ -4,9 +4,6 @@ pub(crate) fn layer_above(ancestor: Option<i32>, gap: i32) -> i32 {
     ancestor.unwrap_or(0).saturating_add(gap.max(1))
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -77,7 +77,6 @@ fn sync_stepper_style(
     }
 }
 
-/// What the sync reads from a stepper and writes to it.
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct StepperRow {
@@ -87,7 +86,6 @@ struct StepperRow {
     node: &'static mut Node,
 }
 
-/// Finds the steppers whose look may have changed from the last run.
 #[derive(SystemParam)]
 struct StepperTargets<'w, 's> {
     changed: ChangedSteppers<'w, 's>,
@@ -98,8 +96,7 @@ struct StepperTargets<'w, 's> {
 }
 
 impl StepperTargets<'_, '_> {
-    /// Every stepper after a theme change, otherwise only the ones that changed
-    /// including both ends of a focus move, and the owner of a cell or a button that changed.
+    /// A stepper is also restyled when one of its cells or buttons changed.
     fn collect(&mut self, resync: bool, focus_moved: Vec<Entity>) -> Vec<Entity> {
         let enabled = drain_removed(&mut self.enabled);
         let enabled = enabled.into_iter().filter_map(|part| self.owners.of(part));
@@ -107,17 +104,13 @@ impl StepperTargets<'_, '_> {
             .changed_parts
             .iter()
             .filter_map(|part| self.owners.of(part));
-        let mut targets = pick_targets(
+        pick_targets(
             resync,
             self.all.iter(),
             self.changed.iter().chain(parts),
             enabled,
             focus_moved,
-        );
-        // A stepper can be reached through several of its parts in one run.
-        targets.sort();
-        targets.dedup();
-        targets
+        )
     }
 }
 

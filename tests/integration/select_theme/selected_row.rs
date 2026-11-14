@@ -2,7 +2,7 @@
 
 use super::{Fruit, selected_rows, spawn_fruit, text};
 use crate::support::test_app;
-use bevy_ui_component_prototypes::select::{SelectedIndex, SelectedOption, select};
+use bevy_ui_component_prototypes::select::{SelectedOption, select};
 
 #[test]
 fn the_row_of_the_initial_choice_is_selected() {
@@ -62,14 +62,14 @@ fn the_mark_follows_the_choice_and_goes_with_it() {
 }
 
 #[test]
-fn a_position_past_the_last_option_selects_no_row() {
+fn a_value_that_is_not_an_option_selects_no_row() {
     let mut app = test_app();
     let root = spawn_fruit(&mut app);
     app.update();
 
-    app.world_mut()
-        .entity_mut(root)
-        .insert(SelectedIndex { index: Some(9) });
+    app.world_mut().entity_mut(root).insert(SelectedOption {
+        value: Fruit::Durian,
+    });
     app.update();
 
     assert_eq!(selected_rows(&app, root), [false, false, false]);

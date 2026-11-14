@@ -186,9 +186,6 @@ fn write_thumb(thumb: &mut ThumbRowItem, placed: Option<(f32, f32)>, theme: &The
         .set_if_neq(BackgroundColor(theme.scroll_indicator.thumb));
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

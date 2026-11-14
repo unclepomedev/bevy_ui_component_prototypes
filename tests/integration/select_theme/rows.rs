@@ -1,8 +1,8 @@
 //! Tests of The rows of the popup.
 
 use super::{
-    label_color, list, menu_event, point_at, pointer_moves_over, row_label, rows, spawn_fruit,
-    spawn_fruit_under, trigger,
+    Fruit, label_color, list, menu_event, point_at, pointer_moves_over, row_label, rows,
+    spawn_fruit, spawn_fruit_under, trigger,
 };
 use crate::{
     probe::probe_theme,
@@ -14,7 +14,7 @@ use bevy::{
     ui::InteractionDisabled,
     ui_widgets::{ActiveDescendant, MenuAction, ScrollArea},
 };
-use bevy_ui_component_prototypes::{GlobalTheme, Theme, select::SelectedIndex};
+use bevy_ui_component_prototypes::{GlobalTheme, Theme, select::SelectedOption};
 
 #[test]
 fn the_list_shows_as_many_rows_as_the_theme_says_and_scrolls_beyond() {
@@ -98,9 +98,9 @@ fn the_selected_row_takes_the_checked_colors() {
     let root = spawn_fruit(&mut app);
     app.update();
 
-    app.world_mut()
-        .entity_mut(root)
-        .insert(SelectedIndex { index: Some(1) });
+    app.world_mut().entity_mut(root).insert(SelectedOption {
+        value: Fruit::Banana,
+    });
     app.update();
 
     let style = probe_theme().select;
@@ -113,9 +113,9 @@ fn the_selected_row_takes_the_checked_colors() {
     assert_eq!(bg(&app, rows[0]), style.option_bg.unselected.normal);
 
     // The choice moves, and the old row goes back.
-    app.world_mut()
-        .entity_mut(root)
-        .insert(SelectedIndex { index: Some(2) });
+    app.world_mut().entity_mut(root).insert(SelectedOption {
+        value: Fruit::Cherry,
+    });
     app.update();
     assert_eq!(bg(&app, rows[1]), style.option_bg.unselected.normal);
     assert_eq!(bg(&app, rows[2]), style.option_bg.selected.normal);

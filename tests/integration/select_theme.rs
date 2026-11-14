@@ -15,7 +15,7 @@ use bevy::{
     ui::Selected,
     ui_widgets::{MenuAction, MenuEvent, MenuFocusState, ValueChange},
 };
-use bevy_ui_component_prototypes::select::{SelectedIndex, select};
+use bevy_ui_component_prototypes::select::{SelectedOption, select};
 
 mod choose;
 mod disabled;
@@ -34,6 +34,8 @@ enum Fruit {
     Apple,
     Banana,
     Cherry,
+    /// Not one of the options of `fruit_select`.
+    Durian,
 }
 
 #[derive(Component, Clone)]
@@ -141,8 +143,10 @@ fn shown(app: &App, root: Entity) -> Option<Entity> {
         .and_then(|children| children.first().copied())
 }
 
-fn index(app: &App, root: Entity) -> Option<usize> {
-    app.world().get::<SelectedIndex>(root).unwrap().index
+fn chosen(app: &App, root: Entity) -> Option<Fruit> {
+    app.world()
+        .get::<SelectedOption<Fruit>>(root)
+        .map(|chosen| chosen.value)
 }
 
 fn label_color(app: &App, label: Entity) -> Color {

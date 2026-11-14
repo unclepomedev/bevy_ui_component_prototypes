@@ -12,7 +12,6 @@ use std::{
     sync::Arc,
 };
 
-/// How close to the window edge a tooltip may go, in pixels.
 const WINDOW_MARGIN: f32 = 4.0;
 
 /// A text that appears next to a widget while the pointer rests on it, or while it holds the visible
@@ -21,7 +20,7 @@ const WINDOW_MARGIN: f32 = 4.0;
 /// - The tooltip shows after a delay (the theme's, or [`Tooltip::delay`]) and hides when the pointer leaves,
 ///   when the focus moves away, when a pointer button is pressed, or when Escape is pressed.
 /// - The keyboard focus counts as long as Bevy's `InputFocusVisible` is set: a click hides it, a key shows it
-///   again. `FocusIndicator` does not matter here.
+///   again.
 /// - Only the nearest `Tooltip` up from the hovered or focused entity shows, so a child can have its own.
 /// - A disabled widget still shows its tooltip: that is the place to say why it is disabled.
 /// - Changing the component changes the tooltip on screen.
@@ -31,7 +30,7 @@ const WINDOW_MARGIN: f32 = 4.0;
 ///
 /// For a text that has to follow something the app owns (the language, say), give the label a bundle
 /// with [`Tooltip::bundle`] instead of a string.
-#[derive(Component, Clone, Debug, PartialEq)]
+#[derive(Component, Clone, Debug)]
 pub struct Tooltip {
     pub text: String,
     /// Where the tooltip goes. It goes to the opposite side when there is no room.
@@ -77,7 +76,7 @@ impl Tooltip {
     }
 }
 
-/// What the label of a tooltip is given when it shows. Two are equal when one is the clone of the other.
+/// What the label of a tooltip is given when it shows.
 #[derive(Clone)]
 struct LabelBundle(Arc<dyn Fn(&mut EntityCommands) + Send + Sync>);
 
@@ -95,12 +94,6 @@ impl Debug for LabelBundle {
     }
 }
 
-impl PartialEq for LabelBundle {
-    fn eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
-    }
-}
-
 /// The box that shows a tooltip. The child of the widget it is for.
 #[derive(Component, Clone, Copy)]
 #[require(
@@ -113,7 +106,6 @@ impl PartialEq for LabelBundle {
     Node = popup_node(&TooltipMetrics::default(), &TooltipShape::default())
 )]
 pub(crate) struct TooltipPopup {
-    /// The widget the tooltip is for.
     pub(crate) target: Entity,
 }
 
@@ -134,7 +126,6 @@ pub(crate) fn spawn_popup(commands: &mut Commands, target: Entity, tooltip: &Too
     popup
 }
 
-/// The popup floats over what is below it, shrunk to its text.
 pub(crate) fn popup_node(metrics: &TooltipMetrics, shape: &TooltipShape) -> Node {
     Node {
         position_type: PositionType::Absolute,
@@ -163,9 +154,6 @@ pub(crate) fn placement(side: PopoverSide, metrics: &TooltipMetrics) -> Popover 
     }
 }
 
-// ============================================================================================
-// UNIT TESTS
-// ============================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -184,13 +172,6 @@ mod tests {
         assert_eq!(tooltip.text, "");
         assert!(tooltip.has_bundle());
         assert!(!Tooltip::new("Save").has_bundle());
-    }
-
-    #[test]
-    fn a_clone_is_equal_to_its_tooltip_but_another_bundle_is_not() {
-        let tooltip = Tooltip::bundle(Text::new("Save"));
-        assert_eq!(tooltip, tooltip.clone());
-        assert_ne!(tooltip, Tooltip::bundle(Text::new("Save")));
     }
 
     #[test]

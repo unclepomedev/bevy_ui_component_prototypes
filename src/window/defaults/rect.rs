@@ -37,9 +37,10 @@ pub(super) fn on_resize_window(
     rect.set_if_neq(resized);
 }
 
-/// The size of the node a window is placed in, in logical pixels; zero if it is not laid out yet.
-fn area_of(parent: Option<&ChildOf>, areas: &Query<&ComputedNode>) -> Vec2 {
-    parent
-        .and_then(|parent| areas.get(parent.parent()).ok())
-        .map_or(Vec2::ZERO, |node| node.size() * node.inverse_scale_factor())
+/// The size of the node a window is placed in, in logical pixels; `None` if the window has no
+/// parent or the parent is not laid out yet.
+fn area_of(parent: Option<&ChildOf>, areas: &Query<&ComputedNode>) -> Option<Vec2> {
+    let node = areas.get(parent?.parent()).ok()?;
+    let size = node.size() * node.inverse_scale_factor();
+    (size.x > 0.0 && size.y > 0.0).then_some(size)
 }

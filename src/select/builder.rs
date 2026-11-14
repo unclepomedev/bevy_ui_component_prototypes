@@ -1,7 +1,7 @@
 use super::components::{
     InitialOption, LabelSpawner, Select, SelectArrow, SelectContent, SelectKey, SelectLabels,
-    SelectList, SelectOptions, SelectPopup, SelectRequest, SelectRow, SelectTrigger, arrow_node,
-    arrow_transform, content_node,
+    SelectList, SelectOptions, SelectPopup, SelectRequest, SelectRow, SelectTrigger, arrow,
+    content_node,
 };
 use crate::{
     button::ButtonLabel, common::picking::pass_through, scroll_indicator::scroll_indicator,
@@ -140,8 +140,7 @@ fn spawn_trigger(parent: &mut RelatedSpawner<ChildOf>) {
         trigger.spawn((SelectContent, content_node(), pass_through()));
         trigger.spawn((
             SelectArrow,
-            arrow_node(),
-            arrow_transform(),
+            arrow(),
             BorderColor::all(Color::NONE),
             pass_through(),
         ));
