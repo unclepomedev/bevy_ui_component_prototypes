@@ -105,17 +105,13 @@ impl StepperTargets<'_, '_> {
             .changed_parts
             .iter()
             .filter_map(|part| self.owners.of(part));
-        let mut targets = pick_targets(
+        pick_targets(
             resync,
             self.all.iter(),
             self.changed.iter().chain(parts),
             enabled,
             focus_moved,
-        );
-        // A stepper can be reached through several of its parts in one run.
-        targets.sort();
-        targets.dedup();
-        targets
+        )
     }
 }
 

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 /// Picks the widgets to restyle this frame: all of them on a `resync`, otherwise those that
 /// changed, those in `removed` (read with [`drain_removed`]) and those whose focus ring moved.
+/// Each widget is listed once, in entity order, however many times it was reported.
 pub(crate) fn pick_targets(
     resync: bool,
     all: impl IntoIterator<Item = Entity>,
@@ -9,7 +10,7 @@ pub(crate) fn pick_targets(
     removed: impl IntoIterator<Item = Entity>,
     focus_moved: impl IntoIterator<Item = Entity>,
 ) -> Vec<Entity> {
-    if resync {
+    let mut targets: Vec<Entity> = if resync {
         all.into_iter().collect()
     } else {
         changed
@@ -17,7 +18,10 @@ pub(crate) fn pick_targets(
             .chain(removed)
             .chain(focus_moved)
             .collect()
-    }
+    };
+    targets.sort();
+    targets.dedup();
+    targets
 }
 
 /// Reads every pending removal. It has to run every frame, also when the removals are not used:
@@ -53,6 +57,18 @@ mod tests {
             pick_targets(false, [a, b, c, d], [a], [b], [c]),
             vec![a, b, c]
         );
+    }
+
+    #[test]
+    fn a_widget_reported_twice_is_picked_once() {
+        let [a, b, c, _] = entities(4)[..] else {
+            unreachable!()
+        };
+        assert_eq!(
+            pick_targets(false, [a, b, c], [c, a], [a], [c, b]),
+            vec![a, b, c]
+        );
+        assert_eq!(pick_targets(true, [b, a, b], [], [], []), vec![a, b]);
     }
 
     #[test]
