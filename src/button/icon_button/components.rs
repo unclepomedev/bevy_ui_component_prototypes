@@ -11,8 +11,8 @@ use bevy::{
 ///
 /// Behavior comes from [`Button`]: it emits [`bevy::ui_widgets::Activate`] on click and on Enter/Space while focused,
 /// and uses [`bevy::ui::InteractionDisabled`].
-/// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
-/// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
+///
+/// See the [Conventions](crate#conventions) for the Tab key and the focus ring.
 ///
 /// Its height, padding, border, and corners come from the theme (`Theme::button_sizes` for
 /// [`ButtonSize`], `ButtonStyle::shape` for the variant), so they follow a theme change.

@@ -20,9 +20,8 @@ pub const RECOMMENDED_MAX_STEPS: usize = 20;
 /// A themed stepper: one of a fixed number of ordered positions, shown as a row of cells
 /// between a previous and a next button.
 ///
-/// The stepper is controlled: it never changes its own [`StepperValue`]. It emits
-/// [`bevy::ui_widgets::ValueChange<usize>`] carrying the requested index, and the app applies it by
-/// inserting a new value (or adds [`super::stepper_self_update`] to let the stepper do exactly that).
+/// It emits [`bevy::ui_widgets::ValueChange<usize>`] carrying the requested index, and the app applies
+/// it by inserting a new [`StepperValue`].
 /// A request equal to the current value is not emitted.
 ///
 /// A press on a cell requests its position, and the buttons request one position away. On the
@@ -33,17 +32,14 @@ pub const RECOMMENDED_MAX_STEPS: usize = 20;
 /// The number of positions is fixed when it is built; to change it, build a new stepper. It is meant
 /// for up to [`RECOMMENDED_MAX_STEPS`] positions.
 ///
-/// The width follows the parent layout (`100%`).
-///
 /// An inline stepper has the buttons on either side of the cells in one row and no label,
 /// where the others have the buttons above them.
 ///
 /// It has no parts of its own: build it with [`stepper`](super::stepper) rather than adding this
 /// component alone.
 ///
-/// To reach it with the Tab key, put it under a `TabGroup`. It is the only stop: its buttons and
-/// cells have no `TabIndex`. The focus ring is drawn with the entity's own `Outline`, so do not set
-/// an `Outline` on it yourself.
+/// It is the only Tab stop: its buttons and cells have no `TabIndex`. See the
+/// [Conventions](crate#conventions) for the controlled value, the width, the Tab key and the focus ring.
 #[derive(Component, Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[require(
     StepperValue,

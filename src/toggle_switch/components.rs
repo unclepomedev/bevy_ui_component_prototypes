@@ -15,12 +15,10 @@ const THUMB_SIZE: f32 = 22.0;
 ///
 /// Behavior comes from [`Checkbox`]: a click or Enter/Space on the focused switch emits [`bevy::ui_widgets::ValueChange<bool>`]
 /// carrying the requested value, and the on/off state is the presence of [`bevy::ui::Checked`].
-/// The switch never changes its own state: the app applies the change by inserting or removing `Checked`
-/// (or adds [`bevy::ui_widgets::checkbox_self_update`] to let Bevy do exactly that).
+/// The app applies the change by inserting or removing `Checked`.
 /// The initial state is the same: spawn `(toggle_switch().build(), Checked)` for a switch that starts on.
 ///
-/// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the entity's
-/// own `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
+/// See the [Conventions](crate#conventions) for the controlled value, the Tab key and the focus ring.
 #[derive(Component)]
 #[require(
     Checkbox,

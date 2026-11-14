@@ -28,8 +28,7 @@ use bevy::{
 ///
 /// A placeholder, given to the builder, shows while the field is empty and not disabled.
 ///
-/// To reach it with the Tab key, put it under a `TabGroup`. The focus ring is drawn with the field's own
-/// `Outline` while the focus indicator is visible, so do not set an `Outline` on it yourself.
+/// See the [Conventions](crate#conventions) for the Tab key and the focus ring.
 #[derive(Component)]
 #[require(
     Hovered,

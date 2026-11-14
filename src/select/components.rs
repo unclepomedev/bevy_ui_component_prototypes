@@ -30,13 +30,13 @@ pub(crate) type LabelSpawner = Arc<dyn Fn(&mut EntityWorldMut) + Send + Sync>;
 
 /// A themed select: a box that shows the chosen option, and a list that opens under it.
 ///
-/// It is controlled, like the other widgets: the select never changes its own choice. Choosing an option in
-/// the list emits `ValueChange<V>` (`V` is the type of the option values) with this entity as `source`,
-/// and the app applies it by inserting [`SelectedOption`] (or [`SelectedIndex`]) on this entity.
+/// Choosing an option in the list emits `ValueChange<V>` (`V` is the type of the option values) with
+/// this entity as `source`, and the app applies it by inserting [`SelectedOption`] (or
+/// [`SelectedIndex`]) on this entity.
 ///
 /// Insert `InteractionDisabled` on this entity to disable the select.
 ///
-/// The width follows the parent layout (`100%`).
+/// See the [Conventions](crate#conventions) for the controlled value and the width.
 #[derive(Component)]
 #[require(SelectedIndex, Node = select_node())]
 pub struct Select;

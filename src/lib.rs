@@ -8,6 +8,22 @@
 //! - [`button`], [`slider`], [`stepper`], [`select`], [`text_field`], [`toggle_switch`]
 //! - [`popup`], [`progress`], [`scroll_indicator`], [`toast`], [`tooltip`], [`window`]
 //! - [`common`]: types shared by several widgets (focus ring, state colors, ...)
+//!
+//! # Conventions
+//!
+//! **Controlled values.** A widget never changes its own value. It emits a
+//! [`ValueChange<T>`](bevy::ui_widgets::ValueChange) with the widget as `source`, carrying the
+//! requested value, and the app applies it by inserting the new value on the widget. To let a widget
+//! update itself instead, add one of the observers
+//! [`slider_self_update`](bevy::ui_widgets::slider_self_update),
+//! [`checkbox_self_update`](bevy::ui_widgets::checkbox_self_update) or
+//! [`stepper_self_update`](stepper::stepper_self_update).
+//!
+//! **Keyboard focus.** To reach a widget with the Tab key, put it under a `TabGroup`. The focus ring
+//! is drawn with the widget's own `Outline` while the focus indicator is visible, so do not set an
+//! `Outline` on it yourself.
+//!
+//! **Width.** A slider, a stepper and a select follow the parent layout (`100%`).
 pub mod button;
 pub mod common;
 pub mod popup;
