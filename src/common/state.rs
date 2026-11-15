@@ -37,7 +37,7 @@ impl VisualState {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct StateColors {
     pub normal: Color,
     pub hovered: Color,

@@ -94,7 +94,7 @@ fn show_popups(keys: Res<ButtonInput<KeyCode>>, mut commands: Commands) {
         commands.spawn(
             popup()
                 .message("Your settings were saved.")
-                .button("OK", PopupChoice::Confirm, ButtonVariantId::PRIMARY)
+                .button_with("OK", PopupChoice::Confirm, ButtonVariantId::PRIMARY)
                 .build(),
         );
     }
@@ -135,8 +135,8 @@ fn confirm(message: &str, yes: &str, no: &str, destructive: bool) -> impl Bundle
     };
     popup()
         .message(message)
-        .button(yes, PopupChoice::Confirm, yes_variant)
-        .button(no, PopupChoice::Cancel, ButtonVariant::Default)
+        .button_with(yes, PopupChoice::Confirm, yes_variant)
+        .button(no, PopupChoice::Cancel)
         .build()
 }
 
@@ -171,6 +171,7 @@ fn terminal_theme() -> Theme {
                 border_width: 2.0,
                 radius: 0.0,
             },
+            button: ButtonVariant::Default,
         },
         font: FontSource::monospace(),
         ..default()

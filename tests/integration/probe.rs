@@ -4,7 +4,10 @@
 use bevy::prelude::*;
 use bevy_ui_component_prototypes::{
     Theme,
-    button::{ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariantId},
+    button::{
+        ButtonMetrics, ButtonShape, ButtonSizes, ButtonStyle, ButtonStyles, ButtonVariant,
+        ButtonVariantId,
+    },
     common::{CheckedColors, FocusRing, StateColors},
     popup::{PopupMetrics, PopupShape, PopupStyle},
     progress::{ProgressShape, ProgressStyle, ProgressStyles, ProgressVariantId},
@@ -239,6 +242,7 @@ pub fn probe_theme() -> Theme {
                 border_width: 5.0,
                 radius: 13.0,
             },
+            button: ButtonVariant::Named(ButtonVariantId::new("probe-popup")),
         },
         popup_metrics: PopupMetrics {
             min_width: Val::Px(333.0),
