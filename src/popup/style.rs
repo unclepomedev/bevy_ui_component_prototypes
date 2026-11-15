@@ -1,7 +1,10 @@
-use crate::common::{
-    color::{BORDER, TEXT_MAIN},
-    font_size::FONT_SIZE_MD,
-    spacing::SPACING_LG,
+use crate::{
+    button::ButtonVariant,
+    common::{
+        color::{BORDER, TEXT_MAIN},
+        font_size::FONT_SIZE_MD,
+        spacing::SPACING_LG,
+    },
 };
 use bevy::prelude::*;
 
@@ -24,7 +27,7 @@ impl Default for PopupShape {
     }
 }
 
-/// Colors and shape of a popup. The buttons are styled by their own variants, not by this.
+/// Colors and shape of a popup, and the look of its buttons.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct PopupStyle {
     /// Covers the screen behind the panel.
@@ -35,6 +38,8 @@ pub struct PopupStyle {
     /// The color of the message.
     pub fg: Color,
     pub shape: PopupShape,
+    /// The variant of the buttons added with [`PopupBuilder::button`](super::PopupBuilder::button).
+    pub button: ButtonVariant,
 }
 
 impl Default for PopupStyle {
@@ -45,6 +50,7 @@ impl Default for PopupStyle {
             border: BORDER,
             fg: TEXT_MAIN,
             shape: PopupShape::default(),
+            button: ButtonVariant::Default,
         }
     }
 }

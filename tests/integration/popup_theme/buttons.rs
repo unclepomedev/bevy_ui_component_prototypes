@@ -30,8 +30,8 @@ pub(super) fn spawn_confirm_popup(app: &mut App) -> Entity {
         .spawn(
             popup()
                 .message("Delete?")
-                .button("Delete", PopupChoice::Confirm, ButtonVariantId::DANGER)
-                .button("Keep", PopupChoice::Cancel, ButtonVariant::Default)
+                .button_with("Delete", PopupChoice::Confirm, ButtonVariantId::DANGER)
+                .button("Keep", PopupChoice::Cancel)
                 .build(),
         )
         .id()
@@ -79,7 +79,38 @@ fn a_button_takes_the_variant_it_was_given() {
         variant(buttons[0]),
         ButtonVariant::Named(ButtonVariantId::DANGER)
     );
-    assert_eq!(variant(buttons[1]), ButtonVariant::Default);
+}
+
+#[test]
+fn a_button_without_a_variant_takes_the_one_of_the_theme_and_follows_it() {
+    let mut app = test_app();
+    let root = spawn_confirm_popup(&mut app);
+    app.update();
+
+    let buttons = buttons(&app, root);
+    let variant = |app: &App, b: Entity| *app.world().get::<ButtonVariant>(b).unwrap();
+    let probe_variant = probe_theme().popup.button;
+    assert_ne!(probe_variant, ButtonVariant::Default);
+    assert_eq!(variant(&app, buttons[1]), probe_variant);
+    assert_eq!(
+        variant(&app, buttons[0]),
+        ButtonVariant::Named(ButtonVariantId::DANGER),
+        "a variant given to the button wins over the theme's"
+    );
+
+    let mut theme = probe_theme();
+    theme.popup.button = ButtonVariant::Named(ButtonVariantId::PRIMARY);
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+
+    assert_eq!(
+        variant(&app, buttons[1]),
+        ButtonVariant::Named(ButtonVariantId::PRIMARY)
+    );
+    assert_eq!(
+        variant(&app, buttons[0]),
+        ButtonVariant::Named(ButtonVariantId::DANGER)
+    );
 }
 
 #[test]

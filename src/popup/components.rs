@@ -1,4 +1,5 @@
 use super::style::{PopupMetrics, PopupShape};
+use crate::button::ButtonVariant;
 use bevy::{input_focus::tab_navigation::TabGroup, picking::Pickable, prelude::*};
 
 /// The `GlobalZIndex` of a popup unless the spawner sets one.
@@ -49,6 +50,8 @@ pub enum PopupChoice {
 #[derive(Component, Clone, Copy, Debug)]
 pub(crate) struct PopupButton {
     pub(crate) choice: PopupChoice,
+    /// `None` takes the variant of `PopupStyle::button`, and follows the theme.
+    pub(crate) variant: Option<ButtonVariant>,
 }
 
 fn popup_root_node() -> Node {

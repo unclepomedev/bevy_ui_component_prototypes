@@ -18,7 +18,7 @@ use bevy::{
 struct ButtonSpec {
     label: String,
     choice: PopupChoice,
-    variant: ButtonVariant,
+    variant: Option<ButtonVariant>,
 }
 
 pub struct PopupBuilder {
@@ -43,7 +43,20 @@ impl PopupBuilder {
 
     /// Adds a button after the ones added before it. Activating it makes the popup emit
     /// [`PopupChosen`](super::PopupChosen) with `choice`.
-    pub fn button(
+    ///
+    /// Its look is the theme's: [`PopupStyle::button`](super::PopupStyle::button).
+    pub fn button(mut self, label: impl Into<String>, choice: PopupChoice) -> Self {
+        self.buttons.push(ButtonSpec {
+            label: label.into(),
+            choice,
+            variant: None,
+        });
+        self
+    }
+
+    /// Like [`button`](Self::button), but with a variant of the app's choosing, such as a danger
+    /// button for a destructive choice, instead of the theme's popup button.
+    pub fn button_with(
         mut self,
         label: impl Into<String>,
         choice: PopupChoice,
@@ -52,7 +65,7 @@ impl PopupBuilder {
         self.buttons.push(ButtonSpec {
             label: label.into(),
             choice,
-            variant: variant.into(),
+            variant: Some(variant.into()),
         });
         self
     }
@@ -93,11 +106,13 @@ fn spawn_buttons(panel: &mut RelatedSpawner<ChildOf>, buttons: Vec<ButtonSpec>) 
                 variant,
             } in buttons
             {
-                row.spawn((
-                    icon_button().label(label).variant(variant).build(),
-                    PopupButton { choice },
-                ))
-                .observe(choose_on_activate);
+                // Until the first style sync, a button without a variant of its own has the base one.
+                let button = icon_button()
+                    .label(label)
+                    .variant(variant.unwrap_or_default())
+                    .build();
+                row.spawn((button, PopupButton { choice, variant }))
+                    .observe(choose_on_activate);
             }
         });
 }

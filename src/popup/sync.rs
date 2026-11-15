@@ -1,8 +1,10 @@
 use super::components::{
     PopupButton, PopupButtons, PopupMessage, PopupPanel, PopupRoot, popup_panel_node,
 };
+use super::style::PopupStyle;
 use crate::{
     Theme,
+    button::{ButtonStyles, ButtonVariant},
     common::{layout::write_changed, theme_lookup::ThemeLookup},
 };
 use bevy::prelude::*;
@@ -30,6 +32,7 @@ pub(super) fn sync_popup_style(
     mut messages: Query<(Entity, &mut TextColor, &mut TextFont), With<PopupMessage>>,
 ) {
     for (entity, mut bg) in &mut roots {
+        warn_if_unstyled(lookup.for_entity(entity));
         bg.set_if_neq(BackgroundColor(lookup.for_entity(entity).popup.scrim));
     }
     for (entity, mut bg, mut border, mut node) in &mut panels {
@@ -46,6 +49,18 @@ pub(super) fn sync_popup_style(
         let theme = lookup.for_entity(entity);
         color.set_if_neq(TextColor(theme.popup.fg));
         write_font(&mut font, theme);
+    }
+}
+
+fn warn_if_unstyled(theme: &Theme) {
+    let library = ButtonStyles::default();
+    let restyled =
+        theme.buttons.base.bg != library.base.bg || theme.buttons.base.fg != library.base.fg;
+    if restyled && theme.popup == PopupStyle::default() {
+        // A theme that restyles the buttons but leaves `Theme::popup` at the library's look is most likely one that forgot the popup.
+        warn_once!(
+            "A popup is shown with the library's default `Theme::popup`, while the theme restyles its buttons: set `Theme::popup` to match"
+        );
     }
 }
 
@@ -76,10 +91,20 @@ fn write_font(font: &mut Mut<TextFont>, theme: &Theme) {
 }
 
 // Disjoint, because both write `Node`.
-type ButtonNodes<'w, 's> =
-    Query<'w, 's, (Entity, &'static mut Node), (With<PopupButton>, Without<PopupButtons>)>;
+type ButtonNodes<'w, 's> = Query<
+    'w,
+    's,
+    (
+        Entity,
+        &'static PopupButton,
+        &'static mut Node,
+        &'static mut ButtonVariant,
+    ),
+    Without<PopupButtons>,
+>;
 
-/// Writes the gap between the buttons and the width of each button.
+/// Writes the gap between the buttons, the width of each button, and the variant of each button
+/// that has none of its own.
 pub(super) fn sync_popup_buttons(
     lookup: ThemeLookup,
     mut rows: Query<(Entity, &mut Node), With<PopupButtons>>,
@@ -91,10 +116,12 @@ pub(super) fn sync_popup_buttons(
             node.column_gap = gap;
         }
     }
-    for (entity, mut node) in &mut buttons {
-        let width = lookup.for_entity(entity).popup_metrics.button_width;
+    for (entity, button, mut node, mut variant) in &mut buttons {
+        let theme = lookup.for_entity(entity);
+        let width = theme.popup_metrics.button_width;
         if node.width != width {
             node.width = width;
         }
+        variant.set_if_neq(button.variant.unwrap_or(theme.popup.button));
     }
 }

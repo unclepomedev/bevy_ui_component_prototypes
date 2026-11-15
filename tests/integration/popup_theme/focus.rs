@@ -13,10 +13,7 @@ use bevy::{
     },
     prelude::*,
 };
-use bevy_ui_component_prototypes::{
-    button::ButtonVariant,
-    popup::{PopupChoice, PopupRoot, popup},
-};
+use bevy_ui_component_prototypes::popup::{PopupChoice, PopupRoot, popup};
 
 /// The layer of the popup the example puts in front, well above the one of the theme.
 const FRONT_Z: i32 = 1000;
@@ -183,7 +180,7 @@ fn a_press_outside_the_popup_leaves_the_focus_in_the_popup() {
 fn spawn_on_layer(app: &mut App, layer: i32) -> Entity {
     let bundle = popup()
         .message("Sure?")
-        .button("Yes", PopupChoice::Confirm, ButtonVariant::Default)
+        .button("Yes", PopupChoice::Confirm)
         .build();
     app.world_mut().spawn((bundle, GlobalZIndex(layer))).id()
 }
