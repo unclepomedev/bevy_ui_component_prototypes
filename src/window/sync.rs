@@ -1,9 +1,10 @@
 use super::{
     components::{
-        ActiveWindow, UiWindow, WindowGrip, WindowPart, WindowRect, WindowTitle, close_node,
-        glyph_bar_node, glyph_box_node, grip_node, title_bar_node, window_node,
+        ActiveWindow, Maximized, UiWindow, WindowGrip, WindowPart, WindowRect, WindowTitle,
+        close_node, glyph_bar_node, glyph_box_node, grip_node, maximize_back_node,
+        maximize_front_node, title_bar_node, title_button_node, window_node,
     },
-    style::{CloseLook, TitleAlign, WindowMetrics, WindowStyle},
+    style::{TitleAlign, TitleButtonLook, WindowMetrics, WindowStyle},
 };
 use crate::{
     Theme,
@@ -72,18 +73,31 @@ fn sync_window_style(
         let theme = lookup.for_entity(entity);
         let (style, metrics) = (&theme.window, &theme.window_metrics);
         let active = window.active;
-        let (state, focused) = close_state(entity, &interactions, &children);
+        let maximized = window.maximized;
+        let (state, focused) = button_state(entity, WindowPart::Close, &interactions, &children);
         let close = style.close.look(state, focused);
+        let (state, focused) = button_state(entity, WindowPart::Maximize, &interactions, &children);
+        let maximize = style.maximize.look(state, focused);
 
         sync_frame(&mut window, style);
         for part in children.iter_descendants(entity) {
             if let Ok(mut part) = parts.get_mut(part) {
                 match *part.kind {
                     WindowPart::TitleBar => sync_title_bar(&mut part, style, metrics, active),
-                    WindowPart::Close => sync_close(&mut part, style, metrics, close),
+                    WindowPart::Close => {
+                        sync_title_button(&mut part, close_node(metrics, style), close);
+                    }
                     WindowPart::GlyphBox => sync_glyph_box(&mut part, metrics),
                     WindowPart::GlyphBar => sync_glyph_bar(&mut part, metrics, close),
-                    WindowPart::Grip => sync_grip(&mut part, style, metrics),
+                    WindowPart::Grip => sync_grip(&mut part, style, metrics, maximized),
+                    WindowPart::Maximize => {
+                        let node = title_button_node(metrics, style.maximize.radius(metrics));
+                        sync_title_button(&mut part, node, maximize);
+                    }
+                    WindowPart::MaximizeBox => sync_glyph_box(&mut part, metrics),
+                    WindowPart::MaximizeFront | WindowPart::MaximizeBack => {
+                        sync_maximize_glyph(&mut part, metrics, maximize, maximized);
+                    }
                 }
             } else if let Ok(mut title) = titles.get_mut(part) {
                 sync_title(&mut title, theme, active);
@@ -92,9 +106,10 @@ fn sync_window_style(
     }
 }
 
-/// The state of the close button of `window`, from the pointer.
-fn close_state(
+/// The pointer state of the `button` of `window`.
+fn button_state(
     window: Entity,
+    button: WindowPart,
     interactions: &Query<(&WindowPart, &PickingInteraction, Has<ShowsFocus>)>,
     children: &Query<&Children>,
 ) -> (VisualState, bool) {
@@ -102,7 +117,7 @@ fn close_state(
         .iter_descendants(window)
         .find_map(|part| {
             let (kind, interaction, focused) = interactions.get(part).ok()?;
-            (*kind == WindowPart::Close).then_some((interaction, focused))
+            (*kind == button).then_some((interaction, focused))
         })
         .map_or((VisualState::Normal, false), |(interaction, focused)| {
             (VisualState::resolve(interaction, false, false), focused)
@@ -134,14 +149,10 @@ fn sync_title_bar(
         .set_if_neq(title_bar_node(metrics, &style.shape, style.close.side));
 }
 
-fn sync_close(
-    part: &mut PartRowItem,
-    style: &WindowStyle,
-    metrics: &WindowMetrics,
-    look: CloseLook,
-) {
+/// A button of the title bar: its background, its size and its focus ring.
+fn sync_title_button(part: &mut PartRowItem, node: Node, look: TitleButtonLook) {
     part.bg.set_if_neq(BackgroundColor(look.bg));
-    part.node.set_if_neq(close_node(metrics, style));
+    part.node.set_if_neq(node);
     if let Some(outline) = part.outline.as_mut() {
         outline.set_if_neq(Outline::new(
             look.ring.width,
@@ -155,15 +166,41 @@ fn sync_glyph_box(part: &mut PartRowItem, metrics: &WindowMetrics) {
     part.node.set_if_neq(glyph_box_node(metrics));
 }
 
-fn sync_glyph_bar(part: &mut PartRowItem, metrics: &WindowMetrics, look: CloseLook) {
+fn sync_glyph_bar(part: &mut PartRowItem, metrics: &WindowMetrics, look: TitleButtonLook) {
     part.bg.set_if_neq(BackgroundColor(look.glyph));
     part.node.set_if_neq(glyph_bar_node(metrics));
 }
 
-fn sync_grip(part: &mut PartRowItem, style: &WindowStyle, metrics: &WindowMetrics) {
+/// A maximized window has no edge to drag: its grips are hidden.
+fn sync_grip(
+    part: &mut PartRowItem,
+    style: &WindowStyle,
+    metrics: &WindowMetrics,
+    maximized: bool,
+) {
     if let Some(WindowGrip { edge }) = part.grip {
-        part.node
-            .set_if_neq(grip_node(*edge, metrics, &style.shape));
+        let mut node = grip_node(*edge, metrics, &style.shape);
+        if maximized {
+            node.display = Display::None;
+        }
+        part.node.set_if_neq(node);
+    }
+}
+
+/// A box of the maximize glyph, in the shape for the window's state.
+fn sync_maximize_glyph(
+    part: &mut PartRowItem,
+    metrics: &WindowMetrics,
+    look: TitleButtonLook,
+    maximized: bool,
+) {
+    let node = match *part.kind {
+        WindowPart::MaximizeBack => maximize_back_node(metrics, maximized),
+        _ => maximize_front_node(metrics, maximized),
+    };
+    part.node.set_if_neq(node);
+    if let Some(border) = part.border.as_mut() {
+        border.set_if_neq(BorderColor::all(look.glyph));
     }
 }
 
@@ -198,6 +235,7 @@ struct WindowRow {
     border: &'static mut BorderColor,
     node: &'static mut Node,
     active: Has<ActiveWindow>,
+    maximized: Has<Maximized>,
 }
 
 /// What the sync writes to a part of a window.
@@ -207,6 +245,7 @@ struct PartRow {
     kind: &'static WindowPart,
     grip: Option<&'static WindowGrip>,
     bg: &'static mut BackgroundColor,
+    border: Option<&'static mut BorderColor>,
     node: &'static mut Node,
     outline: Option<&'static mut Outline>,
 }
@@ -229,12 +268,14 @@ struct WindowTargets<'w, 's> {
     unfocused: RemovedComponents<'w, 's, ShowsFocus>,
     activated: Query<'w, 's, Entity, (With<UiWindow>, Added<ActiveWindow>)>,
     deactivated: RemovedComponents<'w, 's, ActiveWindow>,
+    maximized: Query<'w, 's, Entity, (With<UiWindow>, Added<Maximized>)>,
+    restored: RemovedComponents<'w, 's, Maximized>,
     parents: Query<'w, 's, &'static ChildOf>,
 }
 
 impl WindowTargets<'_, '_> {
-    /// A window is also restyled when its close button was touched or gained or lost the focus ring,
-    /// and when it gained or lost [`ActiveWindow`].
+    /// A window is also restyled when a button was touched or got or lost the focus ring, and when it got or lost
+    /// [`ActiveWindow`] or [`Maximized`].
     fn collect(&mut self, resync: bool) -> Vec<Entity> {
         let unfocused = drain_removed(&mut self.unfocused);
         let touched: Vec<Entity> = self
@@ -249,14 +290,16 @@ impl WindowTargets<'_, '_> {
             })
             .collect();
         let deactivated = drain_removed(&mut self.deactivated);
+        let restored = drain_removed(&mut self.restored);
         pick_targets(
             resync,
             self.all.iter(),
             self.added
                 .iter()
                 .chain(touched)
-                .chain(self.activated.iter()),
-            deactivated,
+                .chain(self.activated.iter())
+                .chain(self.maximized.iter()),
+            deactivated.into_iter().chain(restored),
             [],
         )
     }

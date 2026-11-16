@@ -1,11 +1,13 @@
 mod close;
 mod layers;
+mod maximize;
 mod raise;
 mod rect;
 
 use self::{
     close::on_close_window,
     layers::{apply_layers, track_windows},
+    maximize::{fit_maximized, on_toggle_maximize},
     raise::{on_raise_window, raise_on_focus, raise_on_press},
     rect::{on_move_window, on_resize_window},
 };
@@ -19,6 +21,8 @@ use bevy::{input_focus::InputFocus, prelude::*, ui::UiSystems};
 /// - Moves a window by the delta of [`MoveWindow`](super::MoveWindow), within its [`WindowLimits`](super::WindowLimits).
 /// - Moves an edge of a window by the delta of [`ResizeWindow`](super::ResizeWindow), within its [`WindowLimits`](super::WindowLimits).
 /// - Despawns a window on [`CloseWindow`](super::CloseWindow).
+/// - Maximizes a [`Maximizable`](super::Maximizable) window on [`ToggleMaximizeWindow`](super::ToggleMaximizeWindow),
+///   and sets it back on the next one. A [`Maximized`](super::Maximized) window follows the size of its node.
 /// - Brings a window to the front on [`RaiseWindow`](super::RaiseWindow), and asks for it when the pointer presses on the window
 ///   or on anything in it, and when the input focus moves to the window or to anything in it.
 pub struct WindowDefaultsPlugin {
@@ -26,6 +30,9 @@ pub struct WindowDefaultsPlugin {
     pub z_base: i32,
     /// The difference in `GlobalZIndex` between a window and the one above it.
     pub z_step: i32,
+    /// The `GlobalZIndex` of the lowest maximized window; the ones above it are `z_step` apart. Set it above
+    /// an overlay such as a HUD to let a maximized window cover it. `None` keeps it at its place in the stack.
+    pub maximized_z: Option<i32>,
 }
 
 impl Default for WindowDefaultsPlugin {
@@ -33,22 +40,25 @@ impl Default for WindowDefaultsPlugin {
         Self {
             z_base: 10,
             z_step: 10,
+            maximized_z: None,
         }
     }
 }
 
 impl Plugin for WindowDefaultsPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(WindowStack::new(self.z_base, self.z_step))
+        app.insert_resource(WindowStack::new(self.z_base, self.z_step, self.maximized_z))
             .add_observer(on_raise_window)
             .add_observer(raise_on_press)
             .add_observer(on_move_window)
             .add_observer(on_resize_window)
             .add_observer(on_close_window)
+            .add_observer(on_toggle_maximize)
             .add_systems(
                 Update,
                 raise_on_focus.run_if(resource_exists_and_changed::<InputFocus>),
             )
+            .add_systems(Update, fit_maximized)
             .add_systems(
                 PostUpdate,
                 (track_windows, apply_layers)

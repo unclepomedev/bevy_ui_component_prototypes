@@ -21,6 +21,7 @@ use bevy_ui_component_prototypes::{
 };
 
 mod close;
+mod maximize;
 mod raise;
 mod rect;
 mod resize;

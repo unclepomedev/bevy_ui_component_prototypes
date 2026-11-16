@@ -11,6 +11,9 @@
 //!   - The hint window is in a panel with the mac `Theme`, and the answer window in one with the Windows
 //!     `Theme`: that is all it takes to give a window its look.
 //!
+//! Both windows can be maximized. The bar at the top stands for a HUD: in front of the windows, behind a
+//! maximized one (`maximized_z`).
+//!
 //! Keys: [E] puts the answer window at the bottom right of the screen and back. [H] and [A] open the hint
 //! window and the answer window again after they were closed.
 //!
@@ -51,6 +54,17 @@
 //!      and not after a click. Enter or Space on it closes the window. Tab into a window behind the other:
 //!      it comes to the front.
 //!  11. After a window closes, the other one is the bright one.
+//!  12. Maximize button. A green circle beside the red one in the hint window; a square button left of the
+//!      close button in the answer window. Release on it: the window fills the screen and the glyph becomes
+//!      two boxes. Release away from it: nothing happens.
+//!  13. Maximized. The window is in front of the HUD bar, also if the other window is raised. It cannot be
+//!      moved or resized, and there is no resize arrow at its frame.
+//!  14. Back. Press the button again: the window is as it was before, also if you moved or resized it. It
+//!      can be moved again.
+//!  15. Screen size. Resize the screen while a window is maximized: it follows. Make the screen small and set
+//!      the window back: it comes back inside the screen.
+//!  16. Keyboard. After Tab the maximize button is the stop before the close button; Enter or Space toggles it.
+//!  17. Close. A maximized window can be closed; [H] or [A] opens it again, not maximized.
 
 use bevy::{
     input::common_conditions::input_just_pressed,
@@ -147,6 +161,9 @@ struct GripCursor {
     dragging: Option<WindowEdge>,
 }
 
+/// The layer of the HUD bar: above the windows, which start at 10.
+const HUD_LAYER: i32 = 1000;
+
 const HINT_RECT: WindowRect = WindowRect::new(40.0, 40.0, 360.0, 260.0);
 const ANSWER_RECT: WindowRect = WindowRect::new(260.0, 110.0, 360.0, 300.0);
 
@@ -156,8 +173,12 @@ fn main() {
             DefaultPlugins,
             UiComponentPrototypesPlugin,
             TabNavigationPlugin,
-            // App policy: raise, move, resize and close the windows as asked.
-            WindowDefaultsPlugin::default(),
+            // App policy: raise, move, resize, maximize and close the windows as asked.
+            // The maximized windows are above the HUD bar.
+            WindowDefaultsPlugin {
+                maximized_z: Some(HUD_LAYER + 100),
+                ..default()
+            },
         ))
         .init_resource::<AtEdge>()
         .init_resource::<GripCursor>()
@@ -200,6 +221,22 @@ fn setup(mut commands: Commands) {
     spawn_hint_window(&mut commands, panels.hint);
     spawn_answer_window(&mut commands, panels.answer);
     commands.insert_resource(panels);
+    commands.spawn((
+        Text::new("HUD: a maximized window is in front of this bar"),
+        Node {
+            position_type: PositionType::Absolute,
+            left: px(0),
+            top: px(0),
+            width: percent(100),
+            height: px(28),
+            padding: UiRect::axes(px(16), px(4)),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.1, 0.4, 0.6, 0.9)),
+        GlobalZIndex(HUD_LAYER),
+        // A window can be dragged under it.
+        Pickable::IGNORE,
+    ));
     commands.spawn((
         Text::new("[E] answer window to the screen edge   [H] hint window   [A] answer window"),
         Node {
@@ -265,6 +302,7 @@ fn spawn_hint_window(commands: &mut Commands, panel: Entity) {
     commands.spawn((
         window()
             .rect(HINT_RECT)
+            .maximizable()
             .title(Text::new(
                 "Hints, with a title that does not fit in the window",
             ))
@@ -300,6 +338,7 @@ fn spawn_answer_window(commands: &mut Commands, panel: Entity) {
     commands.spawn((
         window()
             .rect(ANSWER_RECT)
+            .maximizable()
             .title(Text::new("Answer"))
             .content_bundle(Children::spawn(Spawn((
                 Node {

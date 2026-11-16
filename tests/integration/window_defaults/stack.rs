@@ -17,6 +17,7 @@ fn the_base_and_the_step_come_from_the_plugin() {
     let mut app = app_with_defaults(WindowDefaultsPlugin {
         z_base: 100,
         z_step: 5,
+        maximized_z: None,
     });
     let [a, b] = [(); 2].map(|_| spawn_window(&mut app));
     app.update();

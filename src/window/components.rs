@@ -51,6 +51,19 @@ impl Default for WindowRect {
     }
 }
 
+/// Whether a window can be maximized. `window().maximizable()` sets it and adds the maximize button.
+#[derive(Component, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Maximizable(pub bool);
+
+/// A maximized window, and the [`WindowRect`] it goes back to.
+///
+/// `WindowDefaultsPlugin` adds it on [`ToggleMaximizeWindow`](super::ToggleMaximizeWindow). While it is there,
+/// move and resize requests are ignored and the resize grips are hidden; an app with its own policy does the same.
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct Maximized {
+    pub restore: WindowRect,
+}
+
 /// Marks the window in front of the others. At most one window has it.
 #[derive(Component, Clone, Copy, Debug, Default)]
 pub struct ActiveWindow;
@@ -73,6 +86,13 @@ pub(crate) enum WindowPart {
     GlyphBar,
     /// A strip along the frame that is dragged to resize the window; it has a [`WindowGrip`].
     Grip,
+    Maximize,
+    /// The square of the maximize glyph.
+    MaximizeBox,
+    /// The whole glyph, or the front box of it.
+    MaximizeFront,
+    /// The box behind the front one; shown when maximized.
+    MaximizeBack,
 }
 
 /// Marks an invisible strip along the frame of a [`UiWindow`] that resizes the window at the edge or the
@@ -119,14 +139,74 @@ pub(crate) fn title_bar_node(
 /// The tab index of the close button: after everything in the window.
 pub(super) const CLOSE_TAB_INDEX: i32 = i32::MAX;
 
+/// Just before the close button.
+pub(super) const MAXIMIZE_TAB_INDEX: i32 = CLOSE_TAB_INDEX - 1;
+
 pub(crate) fn close_node(metrics: &WindowMetrics, style: &WindowStyle) -> Node {
+    title_button_node(metrics, style.close.radius(metrics))
+}
+
+/// The close and the maximize button.
+pub(crate) fn title_button_node(metrics: &WindowMetrics, radius: f32) -> Node {
     Node {
         width: px(metrics.close_width),
         height: px(metrics.close_height),
         align_items: AlignItems::Center,
         justify_content: JustifyContent::Center,
-        border_radius: BorderRadius::all(px(style.close.radius(metrics))),
+        border_radius: BorderRadius::all(px(radius)),
         flex_shrink: 0.0,
+        ..default()
+    }
+}
+
+/// Thinner than the bars of the cross.
+fn maximize_stroke(metrics: &WindowMetrics) -> f32 {
+    (metrics.glyph_stroke / 2.0).max(1.0)
+}
+
+/// The side of each of the two boxes of a maximized window.
+fn maximized_side(metrics: &WindowMetrics) -> f32 {
+    (metrics.glyph_size * 0.75).round()
+}
+
+/// The box that fills the square; smaller and at the lower left when the window is maximized.
+pub(crate) fn maximize_front_node(metrics: &WindowMetrics, maximized: bool) -> Node {
+    let side = if maximized {
+        maximized_side(metrics)
+    } else {
+        metrics.glyph_size
+    };
+    Node {
+        position_type: PositionType::Absolute,
+        left: px(0),
+        top: px(metrics.glyph_size - side),
+        width: px(side),
+        height: px(side),
+        border: UiRect::all(px(maximize_stroke(metrics))),
+        ..default()
+    }
+}
+
+/// The box behind the front one, at the upper right: only its top and right sides, and only when maximized.
+pub(crate) fn maximize_back_node(metrics: &WindowMetrics, maximized: bool) -> Node {
+    let side = maximized_side(metrics);
+    let stroke = px(maximize_stroke(metrics));
+    Node {
+        display: if maximized {
+            Display::Flex
+        } else {
+            Display::None
+        },
+        position_type: PositionType::Absolute,
+        left: px(metrics.glyph_size - side),
+        top: px(0),
+        width: px(side),
+        height: px(side),
+        border: UiRect {
+            top: stroke,
+            right: stroke,
+            ..UiRect::ZERO
+        },
         ..default()
     }
 }
