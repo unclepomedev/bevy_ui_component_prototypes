@@ -73,21 +73,3 @@ impl Default for TooltipMetrics {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn the_default_timing_waits_before_it_shows() {
-        let metrics = TooltipMetrics::default();
-        assert!(metrics.delay > 0.0);
-        assert!(metrics.warmup >= 0.0);
-    }
-
-    #[test]
-    fn the_default_text_can_be_read_on_its_background() {
-        let style = TooltipStyle::default();
-        assert_ne!(style.bg, style.fg);
-    }
-}

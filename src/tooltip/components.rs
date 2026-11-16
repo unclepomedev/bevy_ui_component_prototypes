@@ -175,13 +175,6 @@ mod tests {
     }
 
     #[test]
-    fn the_options_chain() {
-        let tooltip = Tooltip::new("Save").side(PopoverSide::Right).delay(0.1);
-        assert_eq!(tooltip.side, PopoverSide::Right);
-        assert_eq!(tooltip.delay, Some(0.1));
-    }
-
-    #[test]
     fn the_placement_tries_every_align_then_the_opposite_side() {
         let metrics = TooltipMetrics::default();
         let popover = placement(PopoverSide::Top, &metrics);

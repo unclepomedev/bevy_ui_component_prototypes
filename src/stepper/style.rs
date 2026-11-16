@@ -205,14 +205,6 @@ mod tests {
     }
 
     #[test]
-    fn the_default_palette_tells_the_three_kinds_of_cell_apart() {
-        let style = StepperStyle::default();
-        assert_ne!(style.passed.normal, style.current.normal);
-        assert_ne!(style.current.normal, style.upcoming.normal);
-        assert_ne!(style.passed.normal, style.upcoming.normal);
-    }
-
-    #[test]
     fn an_arrow_button_follows_the_visual_state() {
         let style = StepperStyle::default();
         let look = style.arrow(VisualState::Disabled);

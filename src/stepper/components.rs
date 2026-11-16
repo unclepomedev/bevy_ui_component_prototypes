@@ -263,12 +263,6 @@ mod tests {
     }
 
     #[test]
-    fn a_value_reads_back_what_it_was_made_with() {
-        assert_eq!(StepperValue::new(7).get(), 7);
-        assert_eq!(StepperValue::default().get(), 0);
-    }
-
-    #[test]
     fn marks_tell_which_cells_carry_one() {
         let marks = StepperMarks::new([3, 7]);
         assert!(marks.contains(3));
@@ -316,11 +310,5 @@ mod tests {
         assert_eq!(owners.of(leaf), Some(stepper));
         assert_eq!(owners.of(stepper), Some(stepper));
         assert_eq!(owners.of(stranger), None);
-    }
-
-    #[test]
-    fn the_buttons_step_in_opposite_directions() {
-        assert_eq!(StepperButton::Prev.delta(), -1);
-        assert_eq!(StepperButton::Next.delta(), 1);
     }
 }

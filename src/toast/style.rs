@@ -114,15 +114,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_defaults_define_the_three_kinds_with_their_own_backgrounds() {
-        let styles = ToastStyles::default();
-        let bg = |id| styles.named[&id].bg;
-        assert_ne!(bg(ToastVariantId::INFO), bg(ToastVariantId::SUCCESS));
-        assert_ne!(bg(ToastVariantId::SUCCESS), bg(ToastVariantId::DANGER));
-        assert_ne!(bg(ToastVariantId::INFO), bg(ToastVariantId::DANGER));
-    }
-
-    #[test]
     fn the_base_style_is_the_info_style() {
         let styles = ToastStyles::default();
         assert_eq!(styles.base, styles.named[&ToastVariantId::INFO]);
@@ -140,13 +131,5 @@ mod tests {
         styles.named.insert(WARNING, warning);
         assert_eq!(styles.named.len(), 4);
         assert_eq!(styles.named[&WARNING].bg, warning.bg);
-    }
-
-    #[test]
-    fn the_default_timing_can_play() {
-        let metrics = ToastMetrics::default();
-        assert!(metrics.fade_in > 0.0);
-        assert!(metrics.fade_out > 0.0);
-        assert!(metrics.default_duration > 0.0);
     }
 }

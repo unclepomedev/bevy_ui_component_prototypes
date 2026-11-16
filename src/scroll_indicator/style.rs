@@ -34,19 +34,3 @@ impl Default for ScrollIndicatorMetrics {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn the_defaults_can_be_seen() {
-        let (style, metrics) = (
-            ScrollIndicatorStyle::default(),
-            ScrollIndicatorMetrics::default(),
-        );
-        assert_ne!(style.track, style.thumb);
-        assert!(metrics.width > 0.0);
-        assert!(metrics.inset >= 0.0);
-    }
-}

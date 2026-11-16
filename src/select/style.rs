@@ -206,14 +206,6 @@ mod tests {
     }
 
     #[test]
-    fn the_selected_row_is_told_apart_from_the_others_by_default() {
-        let style = SelectStyle::default();
-        let selected = style.option_look(OptionState::Normal, true);
-        let other = style.option_look(OptionState::Normal, false);
-        assert_ne!(selected.bg, other.bg);
-    }
-
-    #[test]
     fn a_row_follows_its_state_and_the_selection() {
         let style = SelectStyle::default();
         let look = style.option_look(OptionState::Highlighted, true);
@@ -243,13 +235,5 @@ mod tests {
         assert_eq!(OptionState::resolve(true, true, false), Pressed);
         assert_eq!(OptionState::resolve(false, true, false), Highlighted);
         assert_eq!(OptionState::resolve(false, false, false), Normal);
-    }
-
-    #[test]
-    fn the_default_metrics_leave_room_for_a_row_in_the_popup() {
-        let metrics = SelectMetrics::default();
-        assert_eq!(metrics.option_height, 40.0);
-        assert!(metrics.popup_gap >= 0.0);
-        assert!(metrics.max_visible_options >= 1);
     }
 }

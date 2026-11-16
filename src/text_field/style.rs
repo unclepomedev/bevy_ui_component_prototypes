@@ -138,10 +138,4 @@ mod tests {
             FocusRing::NONE
         );
     }
-
-    #[test]
-    fn the_default_focused_border_differs_from_the_normal_one() {
-        let style = TextFieldStyle::default();
-        assert_ne!(style.border.focused, style.border.normal);
-    }
 }

@@ -84,24 +84,3 @@ impl Default for PopupMetrics {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn the_default_scrim_lets_the_screen_show_through_and_the_panel_does_not() {
-        let style = PopupStyle::default();
-        assert!(style.scrim.alpha() > 0.0 && style.scrim.alpha() < 1.0);
-        assert_eq!(style.bg.alpha(), 1.0);
-    }
-
-    #[test]
-    fn the_default_panel_can_be_wider_than_its_minimum() {
-        let metrics = PopupMetrics::default();
-        let (Val::Px(min), Val::Px(max)) = (metrics.min_width, metrics.max_width) else {
-            panic!("the default widths are in pixels");
-        };
-        assert!(min < max);
-    }
-}

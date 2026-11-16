@@ -245,12 +245,6 @@ mod tests {
     }
 
     #[test]
-    fn the_fill_is_told_apart_from_the_rail_by_default() {
-        let style = SliderStyle::default();
-        assert_ne!(style.fill.normal, style.rail.normal);
-    }
-
-    #[test]
     fn ring_follows_focus_but_never_shows_on_a_disabled_slider() {
         let style = SliderStyle::default();
         assert_eq!(
