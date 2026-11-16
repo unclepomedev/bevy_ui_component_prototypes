@@ -1,6 +1,6 @@
 use super::rect::{Placed, PlacedItem, area_of};
 use crate::window::{
-    components::{Maximizable, Maximized, UiWindow, WindowRect},
+    components::{Maximized, UiWindow, WindowRect},
     limits::WindowLimits,
     requests::ToggleMaximizeWindow,
 };
@@ -16,23 +16,20 @@ pub(super) fn maximized_rect(limits: &WindowLimits, area: Vec2) -> WindowRect {
     )
 }
 
-/// Maximizes a [`Maximizable`] window, or sets it back if it is maximized.
+/// Maximizes a window, or sets it back if it is maximized.
 pub(super) fn on_toggle_maximize(
     toggle: On<ToggleMaximizeWindow>,
-    mut windows: Query<(Placed, &Maximizable, Option<&Maximized>), With<UiWindow>>,
+    mut windows: Query<(Placed, Option<&Maximized>), With<UiWindow>>,
     areas: Query<&ComputedNode>,
     mut commands: Commands,
 ) {
-    let Ok((mut placed, maximizable, maximized)) = windows.get_mut(toggle.window) else {
+    let Ok((mut placed, maximized)) = windows.get_mut(toggle.window) else {
         return;
     };
     let area = area_of(placed.parent, &areas);
     if let Some(Maximized { restore }) = maximized {
         restore_rect(&mut placed, *restore, area);
         commands.entity(toggle.window).remove::<Maximized>();
-        return;
-    }
-    if !maximizable.0 {
         return;
     }
     // The node is not laid out yet: there is no size to give the window.

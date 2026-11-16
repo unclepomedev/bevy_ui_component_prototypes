@@ -51,10 +51,6 @@ impl Default for WindowRect {
     }
 }
 
-/// Whether a window can be maximized. `window().maximizable()` sets it and adds the maximize button.
-#[derive(Component, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Maximizable(pub bool);
-
 /// A maximized window, and the [`WindowRect`] it goes back to.
 ///
 /// `WindowDefaultsPlugin` adds it on [`ToggleMaximizeWindow`](super::ToggleMaximizeWindow). While it is there,

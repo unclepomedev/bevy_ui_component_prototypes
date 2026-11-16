@@ -1,10 +1,10 @@
 use super::{
     close::close_on_activate,
     components::{
-        CLOSE_TAB_INDEX, MAXIMIZE_TAB_INDEX, Maximizable, UiWindow, WindowContent, WindowGrip,
-        WindowPart, WindowRect, WindowTitle, close_node, content_node, glyph_bar_node,
-        glyph_bar_transform, glyph_box_node, grip_node, maximize_back_node, maximize_front_node,
-        title_bar_node, title_box_node, title_button_node, title_node,
+        CLOSE_TAB_INDEX, MAXIMIZE_TAB_INDEX, UiWindow, WindowContent, WindowGrip, WindowPart,
+        WindowRect, WindowTitle, close_node, content_node, glyph_bar_node, glyph_bar_transform,
+        glyph_box_node, grip_node, maximize_back_node, maximize_front_node, title_bar_node,
+        title_box_node, title_button_node, title_node,
     },
     drag::drag_title_bar,
     maximize::maximize_on_activate,
@@ -46,7 +46,7 @@ impl WindowBuilder {
         self
     }
 
-    /// Adds a maximize button next to the close button; the window answers [`ToggleMaximizeWindow`](super::ToggleMaximizeWindow).
+    /// Adds a maximize button next to the close button. It asks for [`ToggleMaximizeWindow`](super::ToggleMaximizeWindow).
     pub fn maximizable(mut self) -> Self {
         self.maximizable = true;
         self
@@ -83,7 +83,6 @@ impl WindowBuilder {
             // Tab goes through the windows one after the other, each in its own order.
             TabGroup::new(0),
             rect,
-            Maximizable(maximizable),
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
                 spawn_title_bar(parent, title_extras, maximizable);
                 let mut content = parent.spawn((WindowContent, content_node()));

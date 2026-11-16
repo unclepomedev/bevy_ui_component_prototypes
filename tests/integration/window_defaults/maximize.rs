@@ -1,7 +1,7 @@
 //! Maximizing a window: by the request and by the maximize button, and going back.
 
 use super::*;
-use bevy_ui_component_prototypes::window::{Maximizable, Maximized, ToggleMaximizeWindow};
+use bevy_ui_component_prototypes::window::{Maximized, ToggleMaximizeWindow};
 
 const AREA: Vec2 = Vec2::new(800.0, 600.0);
 const START: WindowRect = WindowRect::new(100.0, 100.0, 200.0, 100.0);
@@ -65,22 +65,6 @@ fn maximize_button(app: &App, window: Entity) -> Entity {
 }
 
 #[test]
-fn a_window_is_not_maximizable_unless_it_is_built_so() {
-    let mut app = test_app();
-    let plain = spawn_window(&mut app);
-    let maximizable = app.world_mut().spawn(window().maximizable().build()).id();
-
-    assert_eq!(
-        app.world().get::<Maximizable>(plain),
-        Some(&Maximizable(false))
-    );
-    assert_eq!(
-        app.world().get::<Maximizable>(maximizable),
-        Some(&Maximizable(true))
-    );
-}
-
-#[test]
 fn a_maximize_request_fills_the_node_and_keeps_where_the_window_was() {
     let mut app = app_with_defaults(WindowDefaultsPlugin::default());
     let (_, window) = maximizable_in_area(&mut app);
@@ -125,16 +109,17 @@ fn a_window_goes_back_to_the_size_it_was_resized_to() {
 }
 
 #[test]
-fn a_window_that_is_not_maximizable_ignores_the_request() {
+fn a_window_without_a_maximize_button_is_maximized_by_a_request_too() {
     let mut app = app_with_defaults(WindowDefaultsPlugin::default());
     let area = spawn_area(&mut app);
     let window = spawn_in(&mut app, area, false);
     app.update();
 
     toggle(&mut app, window);
+    assert!(is_maximized(&app, window));
 
+    toggle(&mut app, window);
     assert_eq!(rect(&app, window), START);
-    assert!(!is_maximized(&app, window));
 }
 
 #[test]
@@ -356,21 +341,4 @@ fn the_maximized_layers_follow_the_stack_a_step_apart() {
     assert_eq!(layer(&app, a), Some(500));
     assert_eq!(layer(&app, c), Some(510));
     assert_eq!(layer(&app, b), Some(20));
-}
-
-#[test]
-fn a_maximized_window_goes_back_even_if_it_is_no_longer_maximizable() {
-    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
-    let area = spawn_area(&mut app);
-    let window = spawn_in(&mut app, area, false);
-    app.world_mut().entity_mut(window).insert((
-        Maximized { restore: START },
-        WindowRect::new(0.0, 0.0, 800.0, 600.0),
-    ));
-    app.update();
-
-    toggle(&mut app, window);
-
-    assert_eq!(rect(&app, window), START);
-    assert!(!is_maximized(&app, window));
 }

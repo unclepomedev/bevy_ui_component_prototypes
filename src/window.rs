@@ -13,9 +13,7 @@ mod sync;
 
 pub use self::{
     builder::{WindowBuilder, window},
-    components::{
-        ActiveWindow, Maximizable, Maximized, UiWindow, WindowContent, WindowGrip, WindowRect,
-    },
+    components::{ActiveWindow, Maximized, UiWindow, WindowContent, WindowGrip, WindowRect},
     defaults::WindowDefaultsPlugin,
     limits::WindowLimits,
     requests::{

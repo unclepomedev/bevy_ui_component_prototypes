@@ -21,7 +21,7 @@ use bevy::{input_focus::InputFocus, prelude::*, ui::UiSystems};
 /// - Moves a window by the delta of [`MoveWindow`](super::MoveWindow), within its [`WindowLimits`](super::WindowLimits).
 /// - Moves an edge of a window by the delta of [`ResizeWindow`](super::ResizeWindow), within its [`WindowLimits`](super::WindowLimits).
 /// - Despawns a window on [`CloseWindow`](super::CloseWindow).
-/// - Maximizes a [`Maximizable`](super::Maximizable) window on [`ToggleMaximizeWindow`](super::ToggleMaximizeWindow),
+/// - Maximizes a window on [`ToggleMaximizeWindow`](super::ToggleMaximizeWindow),
 ///   and sets it back on the next one. A [`Maximized`](super::Maximized) window follows the size of its node.
 /// - Brings a window to the front on [`RaiseWindow`](super::RaiseWindow), and asks for it when the pointer presses on the window
 ///   or on anything in it, and when the input focus moves to the window or to anything in it.
