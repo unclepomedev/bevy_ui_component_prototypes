@@ -19,7 +19,7 @@ use bevy::{
 )]
 pub struct ScrollIndicator;
 
-/// The thumb; it moves along the track.
+/// The thumb of a [`ScrollIndicator`].
 #[derive(Component, Clone, Copy, Default)]
 #[require(
     Pickable = pass_through(),

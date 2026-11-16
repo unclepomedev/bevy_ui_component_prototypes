@@ -1,7 +1,7 @@
 use crate::theme::{GlobalTheme, Theme};
 use bevy::{ecs::system::SystemParam, prelude::*};
 
-/// The place where "which theme applies to this entity" is resolved.
+/// Resolves which theme applies to an entity.
 #[derive(SystemParam)]
 pub(crate) struct ThemeLookup<'w, 's> {
     global: Res<'w, GlobalTheme>,

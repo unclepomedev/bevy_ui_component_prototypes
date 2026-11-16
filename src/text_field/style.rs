@@ -38,7 +38,7 @@ pub struct TextFieldStyle {
     pub shape: TextFieldShape,
 }
 
-/// The footprint of a text field. In logical pixels.
+/// The footprint of a text field, in logical pixels.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TextFieldMetrics {
     /// The space between the border and the text.

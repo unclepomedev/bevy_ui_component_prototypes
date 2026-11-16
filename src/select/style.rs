@@ -142,7 +142,6 @@ pub(crate) struct SelectOptionLook {
 }
 
 impl SelectStyle {
-    /// `selected` is whether the row is the selected option.
     pub(crate) fn option_look(&self, state: OptionState, selected: bool) -> SelectOptionLook {
         let pick = |colors: &SelectionColors| {
             let colors = if selected {

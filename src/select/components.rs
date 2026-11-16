@@ -24,7 +24,7 @@ const ARROW_SIZE: f32 = 10.0;
 const WINDOW_MARGIN: f32 = 8.0;
 
 /// What the value of an option must be: `Clone + PartialEq + Send + Sync + 'static`.
-/// Every such type is a `SelectKey` already; there is nothing to implement.
+/// Implemented for every such type.
 pub trait SelectKey: Clone + PartialEq + Send + Sync + 'static {}
 impl<T: Clone + PartialEq + Send + Sync + 'static> SelectKey for T {}
 

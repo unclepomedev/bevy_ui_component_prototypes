@@ -33,8 +33,8 @@ impl Plugin for SliderStylePlugin {
     }
 }
 
-/// Rewrites the look of each slider that needs it: which state it is in, what that looks like in its
-/// theme, and where that goes (the focus ring on the slider, the colors, and positions on the parts).
+/// Rewrites the look of each slider that needs it: the focus ring on the slider, and the colors and
+/// positions of its parts.
 fn sync_slider_style(
     mut lookup: ThemeLookup,
     mut ring: FocusRingTracker,

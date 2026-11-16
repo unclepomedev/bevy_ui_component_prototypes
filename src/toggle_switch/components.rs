@@ -33,7 +33,6 @@ pub struct ToggleSwitch;
 #[derive(Component, Clone, Copy, Default)]
 pub(crate) struct SwitchThumb;
 
-/// The thumb rests at the start edge when off and at the end edge when on.
 pub(crate) fn thumb_side(checked: bool) -> JustifyContent {
     if checked {
         JustifyContent::End

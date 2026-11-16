@@ -32,7 +32,7 @@ impl ButtonSurface<'_, '_> {
                     image: surface.image.clone(),
                     color: tint,
                     image_mode: NodeImageMode::Sliced(surface.slicer.clone()),
-                    // `ImageNode::default()`'s visual_box paints inside the padding (shrinks the frame to the label). Use this to avoid that.
+                    // The default `visual_box` paints inside the padding and shrinks the frame to the label.
                     visual_box: VisualBox::BorderBox,
                     ..default()
                 });

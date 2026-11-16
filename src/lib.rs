@@ -92,7 +92,6 @@ use bevy::{
 /// - [`InputDispatchPlugin`]: keyboard input (Enter, Space) to the focused widget
 /// - [`TabNavigationPlugin`] (not in `DefaultPlugins`): Tab-key focus navigation.
 ///   Without it, widgets can still be focused by a click, and a tooltip still shows on hover.
-///   It is only the keyboard that cannot reach them.
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {

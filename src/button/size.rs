@@ -6,7 +6,6 @@ use bevy::prelude::*;
 pub type ButtonSize = Choice<ButtonSizeId>;
 
 impl ButtonSize {
-    /// Returns the footprint this size selects from `theme`.
     pub(crate) fn resolve<'a>(&self, theme: &'a Theme) -> &'a ButtonMetrics {
         let sizes = &theme.button_sizes;
         self.select(&sizes.base, &sizes.named, |id| {

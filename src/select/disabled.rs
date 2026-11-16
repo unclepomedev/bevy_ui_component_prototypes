@@ -17,8 +17,8 @@ impl Plugin for SelectDisabledPlugin {
 type DisabledSelects<'w, 's> =
     Query<'w, 's, (Entity, &'static Children), (With<Select>, Added<InteractionDisabled>)>;
 
-/// A select that is disabled is disabled where the user touches it: the trigger, which takes the focus and
-/// the pointer. The list is closed when it is open.
+/// Forwards a select's disabled state to its trigger, which takes the focus and the pointer, and closes
+/// an open list.
 fn forward_disabled(
     disabled: DisabledSelects,
     selects: Query<(&Children, Has<InteractionDisabled>), With<Select>>,
