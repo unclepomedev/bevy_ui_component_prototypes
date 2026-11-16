@@ -63,9 +63,9 @@ fn sync_window_style(
     interactions: Query<(&WindowPart, &PickingInteraction, Has<ShowsFocus>)>,
     children: Query<&Children>,
 ) {
-    let targets = targets.collect(lookup.needs_resync());
+    let picked = targets.collect(lookup.needs_resync());
 
-    for entity in targets {
+    for entity in picked {
         let Ok(mut window) = windows.get_mut(entity) else {
             continue;
         };
@@ -74,13 +74,14 @@ fn sync_window_style(
         let (style, metrics) = (&theme.window, &theme.window_metrics);
         let active = window.active;
         let maximized = window.maximized;
-        let (state, focused) = button_state(entity, WindowPart::Close, &interactions, &children);
+        let own = own_parts(entity, &children, &targets.all);
+        let (state, focused) = button_state(&own, WindowPart::Close, &interactions);
         let close = style.close.look(state, focused);
-        let (state, focused) = button_state(entity, WindowPart::Maximize, &interactions, &children);
+        let (state, focused) = button_state(&own, WindowPart::Maximize, &interactions);
         let maximize = style.maximize.look(state, focused);
 
         sync_frame(&mut window, style);
-        for part in children.iter_descendants(entity) {
+        for part in own {
             if let Ok(mut part) = parts.get_mut(part) {
                 match *part.kind {
                     WindowPart::TitleBar => sync_title_bar(&mut part, style, metrics, active),
@@ -106,17 +107,36 @@ fn sync_window_style(
     }
 }
 
-/// The pointer state of the `button` of `window`.
-fn button_state(
+/// The descendants of `window` that belong to it: a window inside its content has parts of its own.
+fn own_parts(
     window: Entity,
+    children: &Query<&Children>,
+    frames: &Query<Entity, With<UiWindow>>,
+) -> Vec<Entity> {
+    let mut own = Vec::new();
+    let mut pending = vec![window];
+    while let Some(parent) = pending.pop() {
+        let Ok(kids) = children.get(parent) else {
+            continue;
+        };
+        for kid in kids.iter().filter(|kid| !frames.contains(*kid)) {
+            own.push(kid);
+            pending.push(kid);
+        }
+    }
+    own
+}
+
+/// The pointer state of the `button` among the `parts` of a window.
+fn button_state(
+    parts: &[Entity],
     button: WindowPart,
     interactions: &Query<(&WindowPart, &PickingInteraction, Has<ShowsFocus>)>,
-    children: &Query<&Children>,
 ) -> (VisualState, bool) {
-    children
-        .iter_descendants(window)
+    parts
+        .iter()
         .find_map(|part| {
-            let (kind, interaction, focused) = interactions.get(part).ok()?;
+            let (kind, interaction, focused) = interactions.get(*part).ok()?;
             (*kind == button).then_some((interaction, focused))
         })
         .map_or((VisualState::Normal, false), |(interaction, focused)| {

@@ -357,3 +357,20 @@ fn the_maximized_layers_follow_the_stack_a_step_apart() {
     assert_eq!(layer(&app, c), Some(510));
     assert_eq!(layer(&app, b), Some(20));
 }
+
+#[test]
+fn a_maximized_window_goes_back_even_if_it_is_no_longer_maximizable() {
+    let mut app = app_with_defaults(WindowDefaultsPlugin::default());
+    let area = spawn_area(&mut app);
+    let window = spawn_in(&mut app, area, false);
+    app.world_mut().entity_mut(window).insert((
+        Maximized { restore: START },
+        WindowRect::new(0.0, 0.0, 800.0, 600.0),
+    ));
+    app.update();
+
+    toggle(&mut app, window);
+
+    assert_eq!(rect(&app, window), START);
+    assert!(!is_maximized(&app, window));
+}

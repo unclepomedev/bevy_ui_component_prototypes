@@ -767,3 +767,58 @@ fn the_maximize_button_shows_its_focus_ring_while_it_shows_focus() {
         (ring.color, ring.width, ring.offset)
     );
 }
+
+// A window inside the content of another one.
+
+/// An inner window in the content of an outer one, both with a maximize button.
+fn nested_windows(app: &mut App) -> (Entity, Entity) {
+    let outer = spawn_maximizable(app);
+    let content = content(app, outer);
+    let inner = app
+        .world_mut()
+        .spawn((
+            window().maximizable().build(),
+            ActiveWindow,
+            ChildOf(content),
+        ))
+        .id();
+    app.update();
+    (outer, inner)
+}
+
+#[test]
+fn maximizing_the_outer_window_leaves_the_parts_of_the_inner_one_alone() {
+    let mut app = test_app();
+    let (outer, inner) = nested_windows(&mut app);
+    let size = probe_theme().window_metrics.glyph_size;
+
+    app.world_mut().entity_mut(outer).insert(Maximized {
+        restore: WindowRect::default(),
+    });
+    app.update();
+
+    for index in 0..8 {
+        assert_ne!(node(&app, grip(&app, inner, index)).display, Display::None);
+    }
+    let (front, back) = maximize_glyph(&app, inner);
+    assert_eq!(node(&app, front).width, Val::Px(size));
+    assert_eq!(node(&app, back).display, Display::None);
+}
+
+#[test]
+fn the_pointer_on_a_button_of_the_inner_window_does_not_style_the_outer_one() {
+    let mut app = test_app();
+    let (outer, inner) = nested_windows(&mut app);
+    let style = probe_theme().window;
+
+    for button in [close(&app, inner), maximize(&app, inner)] {
+        app.world_mut()
+            .entity_mut(button)
+            .insert(PickingInteraction::Hovered);
+    }
+    app.update();
+
+    assert_eq!(bg(&app, close(&app, outer)), style.close.bg.normal);
+    assert_eq!(bg(&app, maximize(&app, outer)), style.maximize.bg.normal);
+    assert_eq!(bg(&app, close(&app, inner)), style.close.bg.hovered);
+}

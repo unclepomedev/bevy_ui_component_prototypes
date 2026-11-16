@@ -26,25 +26,23 @@ pub(super) fn on_toggle_maximize(
     let Ok((mut placed, maximizable, maximized)) = windows.get_mut(toggle.window) else {
         return;
     };
+    let area = area_of(placed.parent, &areas);
+    if let Some(Maximized { restore }) = maximized {
+        restore_rect(&mut placed, *restore, area);
+        commands.entity(toggle.window).remove::<Maximized>();
+        return;
+    }
     if !maximizable.0 {
         return;
     }
-    let area = area_of(placed.parent, &areas);
-    let mut window = commands.entity(toggle.window);
-    match (maximized, area) {
-        (Some(Maximized { restore }), _) => {
-            restore_rect(&mut placed, *restore, area);
-            window.remove::<Maximized>();
-        }
-        // The node is not laid out yet: there is no size to give the window.
-        (None, Some(area)) => {
-            window.insert(Maximized {
-                restore: *placed.rect,
-            });
-            placed.rect.set_if_neq(maximized_rect(placed.limits, area));
-        }
-        (None, None) => {}
-    }
+    // The node is not laid out yet: there is no size to give the window.
+    let Some(area) = area else {
+        return;
+    };
+    commands.entity(toggle.window).insert(Maximized {
+        restore: *placed.rect,
+    });
+    placed.rect.set_if_neq(maximized_rect(placed.limits, area));
 }
 
 /// Sets `restore` back, moved into the node if that became smaller in the meantime.
