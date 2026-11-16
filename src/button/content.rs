@@ -38,8 +38,7 @@ pub struct ButtonAccent;
 #[derive(Component)]
 pub(crate) struct RestyleRequest;
 
-/// Asks the button that owns the content `context.entity` to restyle it: the nearest button above it,
-/// if there is one.
+/// Asks the nearest button above `context.entity`, if any, to restyle it.
 fn restyle_owner(mut world: DeferredWorld, context: HookContext) {
     let mut entity = context.entity;
     while let Some(parent) = world.get::<ChildOf>(entity).map(ChildOf::parent) {

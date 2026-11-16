@@ -82,7 +82,7 @@ impl Default for ButtonMetrics {
 pub struct ButtonSizeId(&'static str);
 
 impl ButtonSizeId {
-    /// Creates an ID. The name is the key into [`ButtonSizes::named`].
+    /// The name is the key into [`ButtonSizes::named`].
     /// A name with no entry there falls back to [`ButtonSizes::base`].
     pub const fn new(name: &'static str) -> Self {
         Self(name)

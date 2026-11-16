@@ -6,7 +6,6 @@ use bevy::prelude::*;
 pub type ButtonVariant = Choice<ButtonVariantId>;
 
 impl ButtonVariant {
-    /// Returns the style this variant selects from `theme`.
     pub(crate) fn resolve<'a>(&self, theme: &'a Theme) -> &'a ButtonStyle {
         let styles = &theme.buttons;
         self.select(&styles.base, &styles.named, |id| {

@@ -7,6 +7,7 @@
 //!
 //! - [`button`], [`slider`], [`stepper`], [`select`], [`text_field`], [`toggle_switch`]
 //! - [`popup`], [`progress`], [`scroll_indicator`], [`toast`], [`tooltip`], [`window`]
+//! - [`playback`]: the clock of what plays over time, which has no look of its own
 //! - [`common`]: types shared by several widgets (focus ring, state colors, ...)
 //!
 //! # Conventions
@@ -31,6 +32,7 @@
 //! **Width.** A slider, a stepper and a select follow the parent layout (`100%`).
 pub mod button;
 pub mod common;
+pub mod playback;
 pub mod popup;
 pub mod progress;
 pub mod scroll_indicator;
@@ -49,6 +51,7 @@ pub use crate::theme::{GlobalTheme, Theme};
 use crate::{
     button::ButtonStylePlugin,
     common::CommonPlugin,
+    playback::PlaybackPlugin,
     popup::PopupPlugin,
     progress::ProgressStylePlugin,
     scroll_indicator::ScrollIndicatorStylePlugin,
@@ -89,7 +92,6 @@ use bevy::{
 /// - [`InputDispatchPlugin`]: keyboard input (Enter, Space) to the focused widget
 /// - [`TabNavigationPlugin`] (not in `DefaultPlugins`): Tab-key focus navigation.
 ///   Without it, widgets can still be focused by a click, and a tooltip still shows on hover.
-///   It is only the keyboard that cannot reach them.
 pub struct UiComponentPrototypesPlugin;
 impl Plugin for UiComponentPrototypesPlugin {
     fn build(&self, app: &mut App) {
@@ -108,6 +110,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             WindowStylePlugin,
             PopupPlugin,
             TooltipPlugin,
+            PlaybackPlugin,
         ));
     }
 

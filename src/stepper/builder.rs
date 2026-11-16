@@ -116,7 +116,7 @@ impl StepperBuilder {
         self
     }
 
-    /// The whole stepper: the root and its parts. Spawn it as it is.
+    /// The root and its parts. Spawn it as it is.
     pub fn build(self) -> impl Bundle {
         let Self {
             steps,

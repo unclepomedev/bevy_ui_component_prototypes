@@ -29,8 +29,8 @@ pub const RECOMMENDED_MAX_STEPS: usize = 20;
 /// stepper consumes Left and Right, so directional navigation does not move the focus; Up and
 /// Down pass. While it has `InteractionDisabled`, nothing is requested.
 ///
-/// The number of positions is fixed when it is built; to change it, build a new stepper. It is meant
-/// for up to [`RECOMMENDED_MAX_STEPS`] positions.
+/// The number of positions is fixed when it is built; to change it, build a new stepper. Keep it
+/// within [`RECOMMENDED_MAX_STEPS`].
 ///
 /// An inline stepper has the buttons on either side of the cells in one row and no label,
 /// where the others have the buttons above them.

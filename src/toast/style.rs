@@ -75,8 +75,8 @@ impl Default for ToastStyles {
 
 /// The footprint and the timing shared by every toast of a theme.
 ///
-/// A toast is fully visible for its `duration` (the hold); the fades come on top of it, so it lives for
-/// `fade_in + duration + fade_out` in total.
+/// A toast lives for `fade_in + duration + fade_out`, where `duration` is the time it is fully
+/// visible.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ToastMetrics {
     pub min_width: Val,

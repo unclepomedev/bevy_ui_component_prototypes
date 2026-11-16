@@ -73,7 +73,7 @@ impl SliderShape {
     }
 }
 
-/// Colors, focus ring and shape of a slider: the rail, the filled part of it, and the thumb.
+/// Colors, focus ring and shape of a slider.
 #[derive(Clone, Copy, Debug)]
 pub struct SliderStyle {
     pub shape: SliderShape,
