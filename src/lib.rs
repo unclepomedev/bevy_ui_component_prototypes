@@ -7,6 +7,7 @@
 //!
 //! - [`button`], [`slider`], [`stepper`], [`select`], [`text_field`], [`toggle_switch`]
 //! - [`popup`], [`progress`], [`scroll_indicator`], [`toast`], [`tooltip`], [`window`]
+//! - [`playback`]: the clock of what plays over time, which has no look of its own
 //! - [`common`]: types shared by several widgets (focus ring, state colors, ...)
 //!
 //! # Conventions
@@ -31,6 +32,7 @@
 //! **Width.** A slider, a stepper and a select follow the parent layout (`100%`).
 pub mod button;
 pub mod common;
+pub mod playback;
 pub mod popup;
 pub mod progress;
 pub mod scroll_indicator;
@@ -49,6 +51,7 @@ pub use crate::theme::{GlobalTheme, Theme};
 use crate::{
     button::ButtonStylePlugin,
     common::CommonPlugin,
+    playback::PlaybackPlugin,
     popup::PopupPlugin,
     progress::ProgressStylePlugin,
     scroll_indicator::ScrollIndicatorStylePlugin,
@@ -108,6 +111,7 @@ impl Plugin for UiComponentPrototypesPlugin {
             WindowStylePlugin,
             PopupPlugin,
             TooltipPlugin,
+            PlaybackPlugin,
         ));
     }
 
