@@ -4,6 +4,7 @@ mod components;
 mod defaults;
 mod drag;
 mod limits;
+mod maximize;
 mod requests;
 mod resize;
 mod stack;
@@ -12,14 +13,16 @@ mod sync;
 
 pub use self::{
     builder::{WindowBuilder, window},
-    components::{ActiveWindow, UiWindow, WindowContent, WindowGrip, WindowRect},
+    components::{ActiveWindow, Maximized, UiWindow, WindowContent, WindowGrip, WindowRect},
     defaults::WindowDefaultsPlugin,
     limits::WindowLimits,
-    requests::{CloseWindow, MoveWindow, RaiseWindow, ResizeWindow, WindowEdge},
+    requests::{
+        CloseWindow, MoveWindow, RaiseWindow, ResizeWindow, ToggleMaximizeWindow, WindowEdge,
+    },
     stack::WindowStack,
     style::{
-        CloseShape, CloseStyle, TitleAlign, TitleBarStyle, WindowMetrics, WindowShape, WindowSide,
-        WindowStyle,
+        CloseShape, CloseStyle, MaximizeStyle, TitleAlign, TitleBarStyle, WindowMetrics,
+        WindowShape, WindowSide, WindowStyle,
     },
 };
 

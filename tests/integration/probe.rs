@@ -22,8 +22,8 @@ use bevy_ui_component_prototypes::{
     toggle_switch::SwitchStyle,
     tooltip::{TooltipMetrics, TooltipShape, TooltipStyle},
     window::{
-        CloseShape, CloseStyle, TitleAlign, TitleBarStyle, WindowMetrics, WindowShape, WindowSide,
-        WindowStyle,
+        CloseShape, CloseStyle, MaximizeStyle, TitleAlign, TitleBarStyle, WindowMetrics,
+        WindowShape, WindowSide, WindowStyle,
     },
 };
 use std::collections::HashMap;
@@ -219,6 +219,17 @@ pub fn probe_theme() -> Theme {
                     color: Color::srgb(0.9, 0.3, 0.6),
                     width: Val::Px(3.0),
                     offset: Val::Px(5.0),
+                },
+            },
+            // Not the same as the close button's, so that a test sees which one is used.
+            maximize: MaximizeStyle {
+                shape: CloseShape::Square,
+                bg: tones(0.2, 0.6),
+                glyph: tones(0.3, 0.5),
+                focus_ring: FocusRing {
+                    color: Color::srgb(0.3, 0.9, 0.6),
+                    width: Val::Px(2.0),
+                    offset: Val::Px(4.0),
                 },
             },
         },

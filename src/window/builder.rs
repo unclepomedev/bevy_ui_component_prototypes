@@ -1,11 +1,13 @@
 use super::{
     close::close_on_activate,
     components::{
-        CLOSE_TAB_INDEX, UiWindow, WindowContent, WindowGrip, WindowPart, WindowRect, WindowTitle,
-        close_node, content_node, glyph_bar_node, glyph_bar_transform, glyph_box_node, grip_node,
-        title_bar_node, title_box_node, title_node,
+        CLOSE_TAB_INDEX, MAXIMIZE_TAB_INDEX, UiWindow, WindowContent, WindowGrip, WindowPart,
+        WindowRect, WindowTitle, close_node, content_node, glyph_bar_node, glyph_bar_transform,
+        glyph_box_node, grip_node, maximize_back_node, maximize_front_node, title_bar_node,
+        title_box_node, title_button_node, title_node,
     },
     drag::drag_title_bar,
+    maximize::maximize_on_activate,
     requests::WindowEdge,
     resize::drag_grip,
     style::{WindowMetrics, WindowStyle},
@@ -23,6 +25,7 @@ type Extra = Box<dyn FnOnce(&mut EntityWorldMut) + Send + Sync>;
 
 pub struct WindowBuilder {
     rect: WindowRect,
+    maximizable: bool,
     title_extras: Vec<Extra>,
     content_extras: Vec<Extra>,
 }
@@ -31,6 +34,7 @@ pub struct WindowBuilder {
 pub fn window() -> WindowBuilder {
     WindowBuilder {
         rect: WindowRect::default(),
+        maximizable: false,
         title_extras: Vec::new(),
         content_extras: Vec::new(),
     }
@@ -39,6 +43,12 @@ pub fn window() -> WindowBuilder {
 impl WindowBuilder {
     pub fn rect(mut self, rect: WindowRect) -> Self {
         self.rect = rect;
+        self
+    }
+
+    /// Adds a maximize button next to the close button. It asks for [`ToggleMaximizeWindow`](super::ToggleMaximizeWindow).
+    pub fn maximizable(mut self) -> Self {
+        self.maximizable = true;
         self
     }
 
@@ -64,6 +74,7 @@ impl WindowBuilder {
     pub fn build(self) -> impl Bundle {
         let Self {
             rect,
+            maximizable,
             title_extras,
             content_extras,
         } = self;
@@ -73,7 +84,7 @@ impl WindowBuilder {
             TabGroup::new(0),
             rect,
             Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
-                spawn_title_bar(parent, title_extras);
+                spawn_title_bar(parent, title_extras, maximizable);
                 let mut content = parent.spawn((WindowContent, content_node()));
                 for extra in content_extras {
                     extra(&mut content);
@@ -91,7 +102,11 @@ impl WindowBuilder {
 }
 
 /// The parts start with the default style and metrics; the first style sync gives them the theme's.
-fn spawn_title_bar(parent: &mut RelatedSpawner<ChildOf>, title_extras: Vec<Extra>) {
+fn spawn_title_bar(
+    parent: &mut RelatedSpawner<ChildOf>,
+    title_extras: Vec<Extra>,
+    maximizable: bool,
+) {
     let style = WindowStyle::default();
     let metrics = WindowMetrics::default();
     parent
@@ -103,6 +118,10 @@ fn spawn_title_bar(parent: &mut RelatedSpawner<ChildOf>, title_extras: Vec<Extra
         .observe(drag_title_bar)
         .with_children(|bar| {
             spawn_close(bar, &style, &metrics);
+            // The buttons sit at the end of the bar in this order.
+            if maximizable {
+                spawn_maximize(bar, &style, &metrics);
+            }
             bar.spawn((title_box_node(), pass_through()))
                 .with_children(|title_box| {
                     let mut title = title_box.spawn((
@@ -166,6 +185,45 @@ fn spawn_close(bar: &mut RelatedSpawner<ChildOf>, style: &WindowStyle, metrics: 
                         pass_through(),
                     ));
                 }
+            });
+    });
+}
+
+fn spawn_maximize(bar: &mut RelatedSpawner<ChildOf>, style: &WindowStyle, metrics: &WindowMetrics) {
+    bar.spawn((
+        WindowPart::Maximize,
+        title_button_node(metrics, style.maximize.radius(metrics)),
+        BackgroundColor(Color::NONE),
+        PickingInteraction::default(),
+        WidgetButton,
+        TabIndex(MAXIMIZE_TAB_INDEX),
+        KeyboardNavigable,
+        hidden_outline(),
+    ))
+    .observe(maximize_on_activate)
+    .with_children(|maximize| {
+        maximize
+            .spawn((
+                WindowPart::MaximizeBox,
+                glyph_box_node(metrics),
+                BackgroundColor(Color::NONE),
+                pass_through(),
+            ))
+            .with_children(|glyph| {
+                glyph.spawn((
+                    WindowPart::MaximizeFront,
+                    maximize_front_node(metrics, false),
+                    BackgroundColor(Color::NONE),
+                    BorderColor::all(Color::NONE),
+                    pass_through(),
+                ));
+                glyph.spawn((
+                    WindowPart::MaximizeBack,
+                    maximize_back_node(metrics, false),
+                    BackgroundColor(Color::NONE),
+                    BorderColor::all(Color::NONE),
+                    pass_through(),
+                ));
             });
     });
 }

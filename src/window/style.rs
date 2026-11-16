@@ -89,7 +89,18 @@ pub struct CloseStyle {
     pub focus_ring: FocusRing,
 }
 
-/// Colors and shape of a window: the frame, the title bar, and the close button.
+/// Colors and shape of the maximize button. It has the size of the close button, see [`WindowMetrics`].
+#[derive(Clone, Copy, Debug)]
+pub struct MaximizeStyle {
+    /// The corners, as for the close button.
+    pub shape: CloseShape,
+    pub bg: StateColors,
+    pub glyph: StateColors,
+    /// Drawn around the button while it has the keyboard focus.
+    pub focus_ring: FocusRing,
+}
+
+/// Colors and shape of a window: the frame, the title bar, and its buttons.
 #[derive(Clone, Copy, Debug)]
 pub struct WindowStyle {
     /// The color of the frame and of the content area.
@@ -98,6 +109,7 @@ pub struct WindowStyle {
     pub shape: WindowShape,
     pub title_bar: TitleBarStyle,
     pub close: CloseStyle,
+    pub maximize: MaximizeStyle,
 }
 
 /// The footprint of a window: the title bar, the close button and its glyph, and the strips that resize it. In logical pixels.
@@ -121,6 +133,9 @@ pub struct WindowMetrics {
 const MAC_CLOSE: Color = Color::srgb(0.925, 0.404, 0.396);
 const MAC_CLOSE_PRESSED: Color = Color::srgb(0.784, 0.345, 0.337);
 const MAC_CROSS: Color = Color::srgb(0.420, 0.114, 0.106);
+const MAC_MAXIMIZE: Color = Color::srgb(0.384, 0.769, 0.333);
+const MAC_MAXIMIZE_PRESSED: Color = Color::srgb(0.310, 0.616, 0.267);
+const MAC_BOX: Color = Color::srgb(0.082, 0.302, 0.063);
 /// The title of a window that is not in front: a little dimmer than `TEXT_MAIN`, not as dim as `TEXT_MUTED`.
 const TEXT_INACTIVE: Color = Color::srgb(0.78, 0.78, 0.78);
 
@@ -168,6 +183,12 @@ impl WindowStyle {
                 glyph: states(Color::NONE, MAC_CROSS, MAC_CROSS),
                 focus_ring: close_ring(),
             },
+            maximize: MaximizeStyle {
+                shape: CloseShape::Circle,
+                bg: states(MAC_MAXIMIZE, MAC_MAXIMIZE, MAC_MAXIMIZE_PRESSED),
+                glyph: states(Color::NONE, MAC_BOX, MAC_BOX),
+                focus_ring: close_ring(),
+            },
         }
     }
 
@@ -188,6 +209,12 @@ impl WindowStyle {
                 side: WindowSide::Right,
                 shape: CloseShape::Square,
                 bg: states(Color::NONE, DANGER_NORMAL, DANGER_PRESSED),
+                glyph: StateColors::uniform(TEXT_MAIN),
+                focus_ring: close_ring(),
+            },
+            maximize: MaximizeStyle {
+                shape: CloseShape::Square,
+                bg: states(Color::NONE, BG_HOVERED, BG_PRESSED),
                 glyph: StateColors::uniform(TEXT_MAIN),
                 focus_ring: close_ring(),
             },
@@ -237,17 +264,17 @@ impl Default for WindowMetrics {
     }
 }
 
-/// What the close button looks like in one state, resolved from a [`CloseStyle`].
+/// What a button of the title bar looks like in one state.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct CloseLook {
+pub(crate) struct TitleButtonLook {
     pub(crate) bg: Color,
     pub(crate) glyph: Color,
     pub(crate) ring: FocusRing,
 }
 
 impl CloseStyle {
-    pub(crate) fn look(&self, state: VisualState, focused: bool) -> CloseLook {
-        CloseLook {
+    pub(crate) fn look(&self, state: VisualState, focused: bool) -> TitleButtonLook {
+        TitleButtonLook {
             bg: self.bg.pick(state),
             glyph: self.glyph.pick(state),
             ring: if focused {
@@ -260,7 +287,32 @@ impl CloseStyle {
 
     /// The radius of the button: half of its shorter side for a circle.
     pub(crate) fn radius(&self, metrics: &WindowMetrics) -> f32 {
-        match self.shape {
+        self.shape.radius(metrics)
+    }
+}
+
+impl MaximizeStyle {
+    pub(crate) fn look(&self, state: VisualState, focused: bool) -> TitleButtonLook {
+        TitleButtonLook {
+            bg: self.bg.pick(state),
+            glyph: self.glyph.pick(state),
+            ring: if focused {
+                self.focus_ring
+            } else {
+                FocusRing::NONE
+            },
+        }
+    }
+
+    pub(crate) fn radius(&self, metrics: &WindowMetrics) -> f32 {
+        self.shape.radius(metrics)
+    }
+}
+
+impl CloseShape {
+    /// The radius of a button of this shape: half of its shorter side for a circle.
+    fn radius(self, metrics: &WindowMetrics) -> f32 {
+        match self {
             CloseShape::Circle => metrics.close_width.min(metrics.close_height) / 2.0,
             CloseShape::Square => 0.0,
         }
@@ -287,6 +339,35 @@ mod tests {
             WindowStyle::windows().close.side
         );
         assert_eq!(WindowMetrics::default(), WindowMetrics::windows());
+    }
+
+    #[test]
+    fn the_maximize_look_follows_the_visual_state() {
+        let maximize = WindowStyle::windows().maximize;
+        let look = maximize.look(VisualState::Hovered, false);
+        assert_eq!(look.bg, maximize.bg.hovered);
+        assert_eq!(look.glyph, maximize.glyph.hovered);
+        assert_ne!(
+            maximize.look(VisualState::Normal, false).bg,
+            maximize.look(VisualState::Hovered, false).bg
+        );
+    }
+
+    #[test]
+    fn the_maximize_button_of_the_presets_has_the_shape_of_their_close_button() {
+        for style in [WindowStyle::mac(), WindowStyle::windows()] {
+            assert_eq!(style.maximize.shape, style.close.shape);
+        }
+    }
+
+    #[test]
+    fn the_mac_box_shows_only_under_the_pointer() {
+        let maximize = WindowStyle::mac().maximize;
+        assert_eq!(maximize.look(VisualState::Normal, false).glyph, Color::NONE);
+        assert_ne!(
+            maximize.look(VisualState::Hovered, false).glyph,
+            Color::NONE
+        );
     }
 
     #[test]

@@ -22,6 +22,13 @@ pub struct CloseWindow {
     pub window: Entity,
 }
 
+/// Asks for `window` to be maximized to fill its node, or to go back if it is maximized.
+#[derive(EntityEvent, Clone, Copy, Debug)]
+pub struct ToggleMaximizeWindow {
+    #[event_target]
+    pub window: Entity,
+}
+
 /// An edge or a corner of a window.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum WindowEdge {

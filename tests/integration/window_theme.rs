@@ -17,8 +17,8 @@ use bevy::{
 use bevy_ui_component_prototypes::{
     GlobalTheme, Theme,
     window::{
-        ActiveWindow, CloseShape, TitleAlign, WindowContent, WindowMetrics, WindowRect, WindowSide,
-        WindowStyle, window,
+        ActiveWindow, CloseShape, Maximized, TitleAlign, WindowContent, WindowMetrics, WindowRect,
+        WindowSide, WindowStyle, window,
     },
 };
 
@@ -551,4 +551,274 @@ fn the_close_button_shows_the_focus_ring_of_the_theme_while_it_shows_focus() {
     app.update();
     app.update();
     assert_eq!(outline(&app).color, Color::NONE);
+}
+
+// The maximize button.
+
+/// A window with a maximize button, active.
+fn spawn_maximizable(app: &mut App) -> Entity {
+    app.world_mut()
+        .spawn((
+            window().title(Text::new("Title")).maximizable().build(),
+            ActiveWindow,
+        ))
+        .id()
+}
+
+/// It follows the close button in the title bar, and the title after both.
+fn maximize(app: &App, window: Entity) -> Entity {
+    app.world().get::<Children>(title_bar(app, window)).unwrap()[1]
+}
+
+fn maximize_glyph(app: &App, window: Entity) -> (Entity, Entity) {
+    let glyph_box = app.world().get::<Children>(maximize(app, window)).unwrap()[0];
+    let boxes = app.world().get::<Children>(glyph_box).unwrap();
+    (boxes[0], boxes[1])
+}
+
+#[test]
+fn a_maximize_button_is_only_there_if_asked_for() {
+    let mut app = test_app();
+    let plain = spawn_window(&mut app);
+    let maximizable = spawn_maximizable(&mut app);
+    app.update();
+
+    let buttons = |window| {
+        app.world()
+            .get::<Children>(title_bar(&app, window))
+            .unwrap()
+            .len()
+    };
+    // The close button and the title box, and the maximize button between them.
+    assert_eq!(buttons(plain), 2);
+    assert_eq!(buttons(maximizable), 3);
+    // The title is still the last one.
+    assert!(
+        app.world()
+            .get::<Text>(title_of(&app, maximizable))
+            .is_some()
+    );
+}
+
+/// The title is in its box, which is the last child of the title bar.
+fn title_of(app: &App, window: Entity) -> Entity {
+    let bar = app.world().get::<Children>(title_bar(app, window)).unwrap();
+    let title_box = bar[bar.len() - 1];
+    app.world().get::<Children>(title_box).unwrap()[0]
+}
+
+#[test]
+fn the_maximize_button_follows_the_pointer() {
+    let mut app = test_app();
+    let window = spawn_maximizable(&mut app);
+    app.update();
+    let button = maximize(&app, window);
+    let (front, back) = maximize_glyph(&app, window);
+    let style = probe_theme().window.maximize;
+
+    for (state, bg_color, glyph) in [
+        (
+            PickingInteraction::None,
+            style.bg.normal,
+            style.glyph.normal,
+        ),
+        (
+            PickingInteraction::Hovered,
+            style.bg.hovered,
+            style.glyph.hovered,
+        ),
+        (
+            PickingInteraction::Pressed,
+            style.bg.pressed,
+            style.glyph.pressed,
+        ),
+    ] {
+        app.world_mut().entity_mut(button).insert(state);
+        app.update();
+        assert_eq!(bg(&app, button), bg_color);
+        for part in [front, back] {
+            assert_eq!(border_color(&app, part), BorderColor::all(glyph));
+        }
+    }
+    // The close button is not touched by the pointer on the other one.
+    assert_eq!(
+        bg(&app, close(&app, window)),
+        probe_theme().window.close.bg.normal
+    );
+}
+
+#[test]
+fn the_maximize_button_has_the_size_of_the_close_button_and_its_own_corners() {
+    let mut app = test_app();
+    let window = spawn_maximizable(&mut app);
+    app.update();
+
+    let metrics = probe_theme().window_metrics;
+    let button = node(&app, maximize(&app, window));
+    assert_eq!(button.width, Val::Px(metrics.close_width));
+    assert_eq!(button.height, Val::Px(metrics.close_height));
+    // The probe theme has a circle for the close button and a square for this one.
+    assert_eq!(button.border_radius, BorderRadius::all(Val::Px(0.0)));
+
+    let mut theme = probe_theme();
+    theme.window.maximize.shape = CloseShape::Circle;
+    app.insert_resource(GlobalTheme(theme));
+    app.update();
+    assert_eq!(
+        node(&app, maximize(&app, window)).border_radius,
+        BorderRadius::all(Val::Px(metrics.close_width.min(metrics.close_height) / 2.0))
+    );
+}
+
+#[test]
+fn the_glyph_is_one_box_and_becomes_two_when_the_window_is_maximized() {
+    let mut app = test_app();
+    let window = spawn_maximizable(&mut app);
+    app.update();
+    let (front, back) = maximize_glyph(&app, window);
+    let size = probe_theme().window_metrics.glyph_size;
+
+    assert_eq!(node(&app, front).width, Val::Px(size));
+    assert_eq!(node(&app, front).height, Val::Px(size));
+    assert_eq!(node(&app, back).display, Display::None);
+
+    app.world_mut().entity_mut(window).insert(Maximized {
+        restore: WindowRect::default(),
+    });
+    app.update();
+    let (front_node, back_node) = (node(&app, front), node(&app, back));
+    assert_eq!(back_node.display, Display::Flex);
+    let Val::Px(side) = front_node.width else {
+        panic!("the side of the box is in pixels");
+    };
+    assert!(side < size);
+    assert_eq!(front_node.height, Val::Px(side));
+    // The back box is at the upper right and the front one at the lower left.
+    assert_eq!(front_node.top, Val::Px(size - side));
+    assert_eq!(back_node.left, Val::Px(size - side));
+    assert_eq!(back_node.top, Val::Px(0.0));
+
+    app.world_mut().entity_mut(window).remove::<Maximized>();
+    app.update();
+    assert_eq!(node(&app, back).display, Display::None);
+    assert_eq!(node(&app, front).width, Val::Px(size));
+}
+
+#[test]
+fn the_grips_are_not_shown_while_the_window_is_maximized() {
+    let mut app = test_app();
+    let window = spawn_maximizable(&mut app);
+    app.update();
+    let grips: Vec<Entity> = (0..8).map(|index| grip(&app, window, index)).collect();
+    assert!(
+        grips
+            .iter()
+            .all(|g| node(&app, *g).display != Display::None)
+    );
+
+    app.world_mut().entity_mut(window).insert(Maximized {
+        restore: WindowRect::default(),
+    });
+    app.update();
+    assert!(
+        grips
+            .iter()
+            .all(|g| node(&app, *g).display == Display::None)
+    );
+
+    app.world_mut().entity_mut(window).remove::<Maximized>();
+    app.update();
+    assert!(
+        grips
+            .iter()
+            .all(|g| node(&app, *g).display != Display::None)
+    );
+}
+
+#[test]
+fn the_maximize_button_is_second_to_last_in_the_tab_order() {
+    let mut app = test_app();
+    let window = spawn_maximizable(&mut app);
+    app.update();
+
+    assert_eq!(
+        app.world().get::<TabIndex>(maximize(&app, window)),
+        Some(&TabIndex(i32::MAX - 1))
+    );
+}
+
+#[test]
+fn the_maximize_button_shows_its_focus_ring_while_it_shows_focus() {
+    let mut app = test_app();
+    let ring = probe_theme().window.maximize.focus_ring;
+    let window = spawn_maximizable(&mut app);
+    app.update();
+    let button = maximize(&app, window);
+    let outline = |app: &App| *app.world().get::<Outline>(button).unwrap();
+
+    assert_eq!(outline(&app).color, Color::NONE);
+
+    focus(&mut app, button, true);
+    app.update();
+    app.update();
+    let shown = outline(&app);
+    assert_eq!(
+        (shown.color, shown.width, shown.offset),
+        (ring.color, ring.width, ring.offset)
+    );
+}
+
+// A window inside the content of another one.
+
+/// An inner window in the content of an outer one, both with a maximize button.
+fn nested_windows(app: &mut App) -> (Entity, Entity) {
+    let outer = spawn_maximizable(app);
+    let content = content(app, outer);
+    let inner = app
+        .world_mut()
+        .spawn((
+            window().maximizable().build(),
+            ActiveWindow,
+            ChildOf(content),
+        ))
+        .id();
+    app.update();
+    (outer, inner)
+}
+
+#[test]
+fn maximizing_the_outer_window_leaves_the_parts_of_the_inner_one_alone() {
+    let mut app = test_app();
+    let (outer, inner) = nested_windows(&mut app);
+    let size = probe_theme().window_metrics.glyph_size;
+
+    app.world_mut().entity_mut(outer).insert(Maximized {
+        restore: WindowRect::default(),
+    });
+    app.update();
+
+    for index in 0..8 {
+        assert_ne!(node(&app, grip(&app, inner, index)).display, Display::None);
+    }
+    let (front, back) = maximize_glyph(&app, inner);
+    assert_eq!(node(&app, front).width, Val::Px(size));
+    assert_eq!(node(&app, back).display, Display::None);
+}
+
+#[test]
+fn the_pointer_on_a_button_of_the_inner_window_does_not_style_the_outer_one() {
+    let mut app = test_app();
+    let (outer, inner) = nested_windows(&mut app);
+    let style = probe_theme().window;
+
+    for button in [close(&app, inner), maximize(&app, inner)] {
+        app.world_mut()
+            .entity_mut(button)
+            .insert(PickingInteraction::Hovered);
+    }
+    app.update();
+
+    assert_eq!(bg(&app, close(&app, outer)), style.close.bg.normal);
+    assert_eq!(bg(&app, maximize(&app, outer)), style.maximize.bg.normal);
+    assert_eq!(bg(&app, close(&app, inner)), style.close.bg.hovered);
 }
